@@ -1,6 +1,11 @@
+use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
+use uuid::Uuid;
 
-pub async fn delete(path: web::Path<i64>) -> impl Responder {
+pub async fn delete(state: web::Data<AppState>, path: web::Path<Uuid>) -> impl Responder {
     let project_id = path.into_inner();
-    HttpResponse::Ok().body(project_id.to_string())
+    match state.project_service.delete_project(project_id).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+    }
 }

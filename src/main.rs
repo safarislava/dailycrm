@@ -1,6 +1,16 @@
 mod endpoint;
-mod models;
+mod model;
+mod repository;
+mod service;
+mod state;
 
+use crate::repository::project_repository::ProjectRepository;
+use crate::repository::stage_repository::StageRepository;
+use crate::repository::user_repository::UserRepository;
+use crate::service::project_service::ProjectService;
+use crate::service::stage_service::StageService;
+use crate::service::user_service::UserService;
+use crate::state::AppState;
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web};
 use sqlx::postgres::PgPoolOptions;
@@ -23,10 +33,29 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to migrate the database");
 
-    HttpServer::new(|| App::new().wrap(Cors::permissive()).configure(configure_api))
-        .bind(("localhost", 8080))?
-        .run()
-        .await
+    let user_repo = UserRepository::new(pool.clone());
+    let project_repo = ProjectRepository::new(pool.clone());
+    let stage_repo = StageRepository::new(pool.clone());
+
+    let user_service = UserService::new(user_repo);
+    let project_service = ProjectService::new(project_repo);
+    let stage_service = StageService::new(stage_repo);
+
+    let state = web::Data::new(AppState {
+        user_service,
+        project_service,
+        stage_service,
+    });
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(state.clone())
+            .wrap(Cors::permissive())
+            .configure(configure_api)
+    })
+    .bind(("localhost", 8080))?
+    .run()
+    .await
 }
 
 fn configure_api(config: &mut web::ServiceConfig) {
@@ -56,9 +85,7 @@ fn configure_api(config: &mut web::ServiceConfig) {
             )
             .service(
                 web::scope("/users")
-                    .service(
-                        web::resource("")
-                            .get(endpoint::users::get::get)),
+                    .service(web::resource("").post(endpoint::users::create::create)),
             ),
     );
 }

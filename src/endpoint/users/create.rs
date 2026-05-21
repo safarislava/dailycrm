@@ -1,0 +1,20 @@
+use crate::state::AppState;
+use actix_web::{HttpResponse, Responder, web};
+
+#[derive(serde::Deserialize)]
+pub struct CreateUserDto {
+    username: String,
+    password_hash: String,
+}
+
+pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
+    match state
+        .user_service
+        .create_user(body.username.clone(), body.password_hash.clone())
+        .await
+    {
+        Ok(_) => HttpResponse::Created().finish(),
+        Err(sqlx::Error::Database(_)) => HttpResponse::Conflict().body("User already exists"),
+        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+    }
+}
