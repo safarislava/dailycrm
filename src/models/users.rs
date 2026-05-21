@@ -1,4 +1,4 @@
-use crate::user::User;
+use crate::models::user::User;
 use std::sync::Arc;
 
 struct Users {

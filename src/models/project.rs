@@ -1,4 +1,4 @@
-use crate::stages::Stages;
+use crate::models::stages::Stages;
 
 pub struct Project {
     title: String,

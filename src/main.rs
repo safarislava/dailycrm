@@ -1,10 +1,5 @@
 mod endpoint;
-mod user;
-mod users;
-mod project;
-mod projects;
-mod stage;
-mod stages;
+mod models;
 
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web};
