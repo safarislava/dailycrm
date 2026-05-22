@@ -7,6 +7,7 @@ import {
   useCreateProjectMutation,
   useDeleteProjectMutation,
 } from '../../store/crmApi'
+import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './Sidebar.module.scss'
 
 const AVATAR_COLORS = [
@@ -29,6 +30,8 @@ export default function Sidebar() {
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
   const [deleteProject] = useDeleteProjectMutation()
 
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
+
   const filtered = useMemo(
     () => projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase())),
     [projects, search],
@@ -47,14 +50,28 @@ export default function Sidebar() {
     if (e.key === 'Escape') { setComposing(false); setNewTitle('') }
   }
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const handleDelete = (e: React.MouseEvent, id: string, title: string) => {
     e.stopPropagation()
-    await deleteProject(id)
-    if (selectedId === id) dispatch(selectProject(null))
+    setPendingDelete({ id, title })
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    await deleteProject(pendingDelete.id)
+    if (selectedId === pendingDelete.id) dispatch(selectProject(null))
+    setPendingDelete(null)
   }
 
   return (
     <aside className={styles.sidebar}>
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          heading="Удалить проект"
+          name={pendingDelete.title}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
       <header className={styles.header}>
         <span className={styles.logo}>CRM</span>
         <button
@@ -128,7 +145,7 @@ export default function Sidebar() {
             <span className={styles.itemTitle}>{project.title}</span>
             <button
               className={styles.itemDelete}
-              onClick={(e) => handleDelete(e, project.id)}
+              onClick={(e) => handleDelete(e, project.id, project.title)}
               title="Удалить"
             >
               <CloseIcon size={11} />

@@ -16,6 +16,7 @@ import {
   useUpdateStageCostMutation,
   useRenameProjectMutation,
 } from '../../store/crmApi'
+import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
 
 export default function MainPanel() {
@@ -48,6 +49,11 @@ export default function MainPanel() {
   const [title, setTitle]       = useState('')
   const [position, setPosition] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  type PendingDelete =
+    | { kind: 'project' }
+    | { kind: 'stage'; pos: number; stageTitle: string }
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
   const creating = appending || inserting
 
   const canSend = title.trim() !== '' && !creating
@@ -65,17 +71,32 @@ export default function MainPanel() {
     setPosition('')
   }
 
-  const handleDeleteStage = async (pos: number) => {
-    if (!projectId) return
-    await deleteStage({ projectId, position: pos })
-    if (stagePos !== null && Number(stagePos) === pos) dispatch(selectStage(null))
+  const handleDeleteStage = (pos: number, stageTitle: string) => {
+    setPendingDelete({ kind: 'stage', pos, stageTitle })
   }
 
-  const handleDeleteProject = async () => {
-    if (!projectId) return
-    await deleteProject(projectId)
-    dispatch(selectProject(null))
+  const handleDeleteProject = () => {
+    setPendingDelete({ kind: 'project' })
   }
+
+  const confirmDelete = async () => {
+    if (!pendingDelete || !projectId) return
+    if (pendingDelete.kind === 'project') {
+      await deleteProject(projectId)
+      dispatch(selectProject(null))
+    } else {
+      await deleteStage({ projectId, position: pendingDelete.pos })
+      if (stagePos !== null && Number(stagePos) === pendingDelete.pos) dispatch(selectStage(null))
+    }
+    setPendingDelete(null)
+  }
+
+  const pendingDeleteName =
+    pendingDelete?.kind === 'project'
+      ? (project?.title ?? '')
+      : pendingDelete?.kind === 'stage'
+      ? pendingDelete.stageTitle
+      : ''
 
   // ── Empty state ────────────────────────────────────────
   if (!projectId) {
@@ -92,6 +113,14 @@ export default function MainPanel() {
   if (stagePos !== null) {
     return (
       <div className={styles.panel}>
+        {pendingDelete && (
+          <ConfirmDeleteModal
+            heading={pendingDelete.kind === 'project' ? 'Удалить проект' : 'Удалить этап'}
+            name={pendingDeleteName}
+            onConfirm={confirmDelete}
+            onCancel={() => setPendingDelete(null)}
+          />
+        )}
         <header className={styles.header}>
           <button className={styles.backBtn} onClick={() => dispatch(selectStage(null))}>
             <ArrowLeftIcon />
@@ -101,7 +130,7 @@ export default function MainPanel() {
           </div>
           <button
             className={styles.dangerBtn}
-            onClick={() => handleDeleteStage(Number(stagePos))}
+            onClick={() => detail && handleDeleteStage(Number(stagePos), detail.stage.title)}
             title="Удалить этап"
           >
             <TrashIcon />
@@ -179,6 +208,14 @@ export default function MainPanel() {
   // ── Stages list ────────────────────────────────────────
   return (
     <div className={styles.panel}>
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          heading={pendingDelete.kind === 'project' ? 'Удалить проект' : 'Удалить этап'}
+          name={pendingDeleteName}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
       <header className={styles.header}>
         <button
           className={`${styles.backBtn} ${styles.mobileOnly}`}
@@ -231,7 +268,7 @@ export default function MainPanel() {
             </div>
             <button
               className={styles.stageDelete}
-              onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position) }}
+              onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position, stage.title) }}
               title="Удалить этап"
             >
               <CloseIcon />

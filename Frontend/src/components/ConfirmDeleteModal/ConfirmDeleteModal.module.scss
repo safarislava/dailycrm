@@ -1,0 +1,95 @@
+@use '../../styles/variables' as v;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: v.$bg-secondary;
+  border-radius: v.$radius-lg;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.warning {
+  font-size: 14px;
+  color: v.$text-secondary;
+  line-height: 1.5;
+
+  strong {
+    color: v.$text-primary;
+    font-family: monospace;
+  }
+}
+
+.input {
+  height: 44px;
+  padding: 0 14px;
+  background: v.$bg-input;
+  border-radius: v.$radius-md;
+  font-size: 15px;
+  font-family: monospace;
+  color: v.$text-primary;
+  outline: none;
+  border: 1px solid transparent;
+  transition: border-color v.$transition-fast;
+
+  &:focus { border-color: v.$accent; }
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  transition: background v.$transition-fast, color v.$transition-fast;
+
+  &:hover {
+    background: v.$bg-input;
+    color: v.$text-primary;
+  }
+}
+
+.deleteBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 600;
+  background: v.$danger;
+  color: #fff;
+  transition: background v.$transition-fast;
+
+  &:hover:not(:disabled) { background: #c62828; }
+  &:disabled {
+    background: v.$bg-input;
+    color: v.$text-secondary;
+    cursor: default;
+  }
+}
