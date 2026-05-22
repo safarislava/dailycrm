@@ -186,7 +186,7 @@ impl Stages {
              FROM stages s
              JOIN projects p ON p.id = s.project_id
              WHERE s.deadline IS NOT NULL
-             ORDER BY s.deadline ASC",
+             ORDER BY s.deadline",
         )
         .fetch_all(&self.pool)
         .await?;
