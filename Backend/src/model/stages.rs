@@ -1,4 +1,4 @@
-use crate::model::stage::{DetailedStage, Stage};
+use crate::model::stage::{DeadlineItem, DetailedStage, Stage};
 use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -168,6 +168,39 @@ impl Stages {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    pub async fn deadlines(&self) -> Result<Vec<DeadlineItem>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            project_id: Uuid,
+            project_title: String,
+            position: i32,
+            stage_title: String,
+            deadline: NaiveDateTime,
+            completed: bool,
+        }
+        let rows = sqlx::query_as::<_, Row>(
+            "SELECT s.project_id, p.title AS project_title, s.position,
+                    s.title AS stage_title, s.deadline, s.completed
+             FROM stages s
+             JOIN projects p ON p.id = s.project_id
+             WHERE s.deadline IS NOT NULL
+             ORDER BY s.deadline ASC",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|r| DeadlineItem {
+                project_id: r.project_id,
+                project_title: r.project_title,
+                position: r.position,
+                stage_title: r.stage_title,
+                deadline: r.deadline,
+                completed: r.completed,
+            })
+            .collect())
     }
 
     pub async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error> {

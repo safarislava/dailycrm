@@ -1,11 +1,16 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { Project, Stage, DetailedStage } from '../types'
+import type { Project, Stage, DetailedStage, DeadlineItem } from '../types'
 
 export const crmApi = createApi({
   reducerPath: 'crmApi',
   baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
-  tagTypes: ['Project', 'Stage'],
+  tagTypes: ['Project', 'Stage', 'Deadline'],
   endpoints: (builder) => ({
+
+    getDeadlines: builder.query<DeadlineItem[], void>({
+      query: () => '/deadlines',
+      providesTags: ['Deadline'],
+    }),
 
     getProjects: builder.query<Project[], void>({
       query: () => '/projects',
@@ -17,7 +22,7 @@ export const crmApi = createApi({
     }),
     deleteProject: builder.mutation<void, string>({
       query: (id) => ({ url: `/projects/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Project'],
+      invalidatesTags: ['Project', 'Deadline'],
     }),
     renameProject: builder.mutation<void, { id: string; title: string }>({
       query: ({ id, title }) => ({
@@ -53,7 +58,7 @@ export const crmApi = createApi({
         url: `/projects/${projectId}/stages/${position}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project'],
+      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project', 'Deadline'],
     }),
 
     getDetailedStage: builder.query<DetailedStage, { projectId: string; position: number }>({
@@ -86,6 +91,7 @@ export const crmApi = createApi({
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
         { type: 'Stage' as const, id: projectId },
         'Project',
+        'Deadline',
       ],
     }),
 
@@ -122,6 +128,7 @@ export const crmApi = createApi({
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
         { type: 'Stage' as const, id: projectId },
+        'Deadline',
       ],
     }),
 
@@ -129,6 +136,7 @@ export const crmApi = createApi({
 })
 
 export const {
+  useGetDeadlinesQuery,
   useGetProjectsQuery,
   useCreateProjectMutation,
   useDeleteProjectMutation,

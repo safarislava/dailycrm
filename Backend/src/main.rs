@@ -49,6 +49,10 @@ fn configure_api(config: &mut web::ServiceConfig) {
     config.service(
         web::scope("/api")
             .service(
+                web::resource("/deadlines")
+                    .get(endpoint::deadlines::get::get),
+            )
+            .service(
                 web::scope("/projects")
                     .service(
                         web::resource("")

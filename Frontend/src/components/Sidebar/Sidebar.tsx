@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import { selectProject } from '../../store/uiSlice'
+import { selectProject, selectStage } from '../../store/uiSlice'
 import {
   useGetProjectsQuery,
   useCreateProjectMutation,
   useDeleteProjectMutation,
+  useGetDeadlinesQuery,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './Sidebar.module.scss'
@@ -32,6 +33,27 @@ const AVATAR_COLORS = [
 const avatarColor = (title: string) =>
   AVATAR_COLORS[title.charCodeAt(0) % AVATAR_COLORS.length]
 
+function deadlineDiffDays(iso: string) {
+  return Math.floor((new Date(iso).getTime() - Date.now()) / 86_400_000)
+}
+
+function formatDeadlineDate(iso: string): string {
+  const d = new Date(iso)
+  const diff = deadlineDiffDays(iso)
+  if (diff < 0) return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  if (diff === 0) return 'Сегодня'
+  if (diff === 1) return 'Завтра'
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+function deadlineUrgency(iso: string): 'overdue' | 'urgent' | 'soon' | 'normal' {
+  const diff = deadlineDiffDays(iso)
+  if (diff < 0) return 'overdue'
+  if (diff <= 1) return 'urgent'
+  if (diff <= 7) return 'soon'
+  return 'normal'
+}
+
 export default function Sidebar() {
   const dispatch = useDispatch<AppDispatch>()
   const selectedId = useSelector((s: RootState) => s.ui.selectedProjectId)
@@ -39,12 +61,40 @@ export default function Sidebar() {
   const [search, setSearch] = useState('')
   const [composing, setComposing] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [deadlinesOpen, setDeadlinesOpen] = useState(false)
+  const bellRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const { data: projects = [], isLoading } = useGetProjectsQuery()
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
   const [deleteProject] = useDeleteProjectMutation()
 
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
+
+  const { data: allDeadlines = [] } = useGetDeadlinesQuery()
+
+  const deadlineItems = useMemo(() => {
+    const cutoff = Date.now() + 30 * 86_400_000
+    return allDeadlines
+      .filter((d) => !d.completed && new Date(d.deadline).getTime() <= cutoff)
+  }, [allDeadlines])
+
+  const overdueCount = useMemo(
+    () => deadlineItems.filter((d) => deadlineDiffDays(d.deadline) < 0).length,
+    [deadlineItems],
+  )
+
+  useEffect(() => {
+    if (!deadlinesOpen) return
+    const handler = (e: MouseEvent) => {
+      if (
+        !bellRef.current?.contains(e.target as Node) &&
+        !dropdownRef.current?.contains(e.target as Node)
+      ) setDeadlinesOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [deadlinesOpen])
 
   const filtered = useMemo(
     () => projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase())),
@@ -88,17 +138,59 @@ export default function Sidebar() {
       )}
       <header className={styles.header}>
         <span className={styles.logo}>CRM</span>
-        <button
-          className={styles.composeBtn}
-          onClick={() => { setComposing((v) => !v); setNewTitle('') }}
-          title={composing ? 'Отмена' : 'Новый проект'}
-        >
-          {composing
-            ? <CloseIcon />
-            : <ComposeIcon />
-          }
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            ref={bellRef}
+            className={`${styles.bellBtn} ${deadlinesOpen ? styles.bellActive : ''}`}
+            onClick={() => setDeadlinesOpen((v) => !v)}
+            title="Ближайшие дедлайны"
+          >
+            <BellIcon />
+            {overdueCount > 0 && (
+              <span className={styles.badge}>{overdueCount > 9 ? '9+' : overdueCount}</span>
+            )}
+          </button>
+          <button
+            className={styles.composeBtn}
+            onClick={() => { setComposing((v) => !v); setNewTitle('') }}
+            title={composing ? 'Отмена' : 'Новый проект'}
+          >
+            {composing ? <CloseIcon /> : <ComposeIcon />}
+          </button>
+        </div>
       </header>
+
+      {deadlinesOpen && (
+        <div ref={dropdownRef} className={styles.deadlineDropdown}>
+          <div className={styles.deadlineDropdownHeader}>Ближайшие дедлайны</div>
+          {deadlineItems.length === 0 ? (
+            <div className={styles.deadlineEmpty}>Нет предстоящих дедлайнов</div>
+          ) : (
+            deadlineItems.map((item) => (
+              <button
+                key={`${item.project_id}-${item.position}`}
+                className={styles.deadlineItem}
+                onClick={() => {
+                  dispatch(selectProject(item.project_id))
+                  dispatch(selectStage(String(item.position)))
+                  setDeadlinesOpen(false)
+                }}
+              >
+                <span
+                  className={`${styles.deadlineDate} ${styles[`deadline_${deadlineUrgency(item.deadline)}`]}`}
+                >
+                  {formatDeadlineDate(item.deadline)}
+                </span>
+                <div className={styles.deadlineInfo}>
+                  <span className={styles.deadlineProject}>{item.project_title}</span>
+                  <span className={styles.deadlineStage}>{item.stage_title}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
 
       <div className={styles.searchWrap}>
         <SearchIcon />
@@ -198,6 +290,15 @@ function CloseIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function BellIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   )
 }

@@ -18,6 +18,16 @@ impl Stage {
 }
 
 #[derive(Serialize)]
+pub struct DeadlineItem {
+    pub project_id: Uuid,
+    pub project_title: String,
+    pub position: i32,
+    pub stage_title: String,
+    pub deadline: NaiveDateTime,
+    pub completed: bool,
+}
+
+#[derive(Serialize)]
 pub struct DetailedStage {
     stage: Stage,
     description: Option<String>,
