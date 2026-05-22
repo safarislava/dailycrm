@@ -12,20 +12,16 @@ impl ProjectService {
         Self { repo }
     }
 
-    pub async fn get_all_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
-        let rows = self.repo.find_all().await?;
-        let projects = rows
-            .into_iter()
-            .map(|(id, title)| Project::new(id, title))
-            .collect();
-        Ok(projects)
+    pub async fn projects(&self) -> Result<Vec<Project>, sqlx::Error> {
+        let rows = self.repo.projects().await?;
+        Ok(rows.into_iter().map(|(id, title)| Project::new(id, title)).collect())
     }
 
-    pub async fn create_project(&self, title: String) -> Result<(), sqlx::Error> {
-        self.repo.create(&title).await
+    pub async fn save(&self, title: String) -> Result<(), sqlx::Error> {
+        self.repo.save(&title).await
     }
 
-    pub async fn delete_project(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        self.repo.delete(id).await
+    pub async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error> {
+        self.repo.remove(id).await
     }
 }

@@ -2,7 +2,16 @@ use chrono::{DateTime, Local};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub type StageRow = (Uuid, Uuid, i64, String, String, DateTime<Local>, i64);
+#[derive(sqlx::FromRow)]
+pub struct StageRow {
+    pub project_id: Uuid,
+    pub id: Uuid,
+    pub position: i64,
+    pub title: String,
+    pub description: String,
+    pub deadline: DateTime<Local>,
+    pub cost: i64,
+}
 
 #[derive(Clone)]
 pub struct StageRepository {
@@ -14,7 +23,7 @@ impl StageRepository {
         Self { pool }
     }
 
-    pub async fn find_by_project_id(&self, project_id: Uuid) -> Result<Vec<StageRow>, sqlx::Error> {
+    pub async fn stages(&self, project_id: Uuid) -> Result<Vec<StageRow>, sqlx::Error> {
         sqlx::query_as::<_, StageRow>(
             "SELECT * FROM stages WHERE project_id = $1 ORDER BY position",
         )
@@ -23,7 +32,7 @@ impl StageRepository {
         .await
     }
 
-    pub async fn create(
+    pub async fn save(
         &self,
         project_id: Uuid,
         position: i64,
@@ -38,13 +47,13 @@ impl StageRepository {
         Ok(())
     }
 
-    pub async fn find_by_id(
+    pub async fn stage(
         &self,
         project_id: Uuid,
         stage_id: Uuid,
     ) -> Result<StageRow, sqlx::Error> {
         sqlx::query_as::<_, StageRow>(
-            "SELECT * FROM stages WHERE project_id = $1 AND stage_id = $2",
+            "SELECT * FROM stages WHERE project_id = $1 AND id = $2",
         )
         .bind(project_id)
         .bind(stage_id)
@@ -52,8 +61,8 @@ impl StageRepository {
         .await
     }
 
-    pub async fn delete(&self, project_id: Uuid, stage_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM stages WHERE project_id = $1 AND stage_id = $2")
+    pub async fn remove(&self, project_id: Uuid, stage_id: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM stages WHERE project_id = $1 AND id = $2")
             .bind(project_id)
             .bind(stage_id)
             .execute(&self.pool)

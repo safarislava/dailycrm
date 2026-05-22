@@ -12,7 +12,7 @@ pub async fn create(
 ) -> impl Responder {
     match state
         .project_service
-        .create_project(body.title.clone())
+        .save(body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Created().finish(),

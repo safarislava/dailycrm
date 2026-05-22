@@ -18,7 +18,7 @@ pub async fn create(
     let project_id = path.into_inner();
     match state
         .stage_service
-        .create_stage(project_id, body.position, body.title.clone())
+        .save(project_id, body.position, body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

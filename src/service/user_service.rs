@@ -10,11 +10,11 @@ impl UserService {
         Self { repo }
     }
 
-    pub async fn create_user(
+    pub async fn register(
         &self,
         username: String,
         password_hash: String,
     ) -> Result<(), sqlx::Error> {
-        self.repo.create(&username, &password_hash).await
+        self.repo.save(&username, &password_hash).await
     }
 }

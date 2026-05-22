@@ -11,13 +11,13 @@ impl ProjectRepository {
         Self { pool }
     }
 
-    pub async fn find_all(&self) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
+    pub async fn projects(&self) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
         sqlx::query_as::<_, (Uuid, String)>("SELECT id, title FROM projects")
             .fetch_all(&self.pool)
             .await
     }
 
-    pub async fn create(&self, title: &str) -> Result<(), sqlx::Error> {
+    pub async fn save(&self, title: &str) -> Result<(), sqlx::Error> {
         sqlx::query("INSERT INTO projects (title) VALUES ($1)")
             .bind(title)
             .execute(&self.pool)
@@ -25,7 +25,7 @@ impl ProjectRepository {
         Ok(())
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM projects WHERE id = $1")
             .bind(id)
             .execute(&self.pool)

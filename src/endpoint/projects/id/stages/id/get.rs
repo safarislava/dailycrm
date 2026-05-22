@@ -6,7 +6,7 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, Uuid)>) -> i
     let (project_id, stage_id) = path.into_inner();
     match state
         .stage_service
-        .get_stage_by_id(project_id, stage_id)
+        .detailed_stage(project_id, stage_id)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),
