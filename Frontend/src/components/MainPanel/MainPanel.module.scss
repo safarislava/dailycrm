@@ -1,0 +1,277 @@
+@use '../../styles/variables' as v;
+
+// ── Shared ────────────────────────────────────────────────
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: v.$bg-primary;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 8px;
+  height: v.$header-height;
+  min-height: v.$header-height;
+  background: v.$bg-secondary;
+  border-bottom: 1px solid v.$divider;
+}
+
+.backBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$accent;
+  transition: background v.$transition-fast;
+  flex-shrink: 0;
+
+  &:hover { background: v.$accent-light; }
+
+  &.mobileOnly {
+    display: none;
+
+    @media (max-width: 768px) { display: flex; }
+  }
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.headerTitle {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerSub {
+  font-size: 13px;
+  color: v.$text-secondary;
+}
+
+.dangerBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$text-secondary;
+  flex-shrink: 0;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$danger;
+    background: v.$danger-light;
+  }
+}
+
+.loading {
+  text-align: center;
+  color: v.$text-secondary;
+  font-size: 14px;
+  padding: 48px 16px;
+}
+
+// ── Empty state ───────────────────────────────────────────
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 10px;
+  padding: 32px;
+  text-align: center;
+  color: v.$text-secondary;
+}
+
+.emptyIcon {
+  opacity: 0.25;
+  margin-bottom: 8px;
+  color: v.$text-primary;
+}
+
+.emptyTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: v.$text-primary;
+  opacity: 0.5;
+}
+
+.emptyHint {
+  font-size: 14px;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+// ── Messages area ─────────────────────────────────────────
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.noStages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 48px;
+  color: v.$text-secondary;
+  text-align: center;
+  opacity: 0.5;
+
+  p   { font-size: 16px; font-weight: 500; }
+  span { font-size: 13px; }
+}
+
+.bubbleRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bubble {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 72%;
+  cursor: pointer;
+
+  &:hover {
+    .bubbleText { background: v.$bg-bubble-hover; }
+    .bubbleDelete { opacity: 1; }
+  }
+}
+
+.bubbleText {
+  background: v.$bg-bubble;
+  border-radius: v.$radius-bubble-out;
+  padding: 9px 14px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: v.$text-primary;
+  transition: background v.$transition-fast;
+  word-break: break-word;
+}
+
+.bubbleDelete {
+  opacity: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$text-secondary;
+  transition: opacity v.$transition-fast, color v.$transition-fast,
+    background v.$transition-fast;
+  order: -1;
+
+  &:hover {
+    color: v.$danger;
+    background: v.$danger-light;
+    opacity: 1 !important;
+  }
+}
+
+// ── Input row ─────────────────────────────────────────────
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: v.$bg-secondary;
+  border-top: 1px solid v.$divider;
+}
+
+.textInput {
+  flex: 1;
+  height: 44px;
+  padding: 0 18px;
+  background: v.$bg-input;
+  border-radius: 22px;
+  font-size: 15px;
+  min-width: 0;
+}
+
+.sendBtn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: v.$accent;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background v.$transition-fast;
+
+  &:hover:not(:disabled) { background: v.$accent-hover; }
+  &:disabled {
+    background: v.$bg-input;
+    color: v.$text-secondary;
+    cursor: default;
+  }
+}
+
+// ── Stage detail ──────────────────────────────────────────
+.detailScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+}
+
+.detailCard {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.detailName {
+  font-size: 22px;
+  font-weight: 700;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid v.$divider;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  padding: 14px 16px;
+  background: v.$bg-secondary;
+  border-radius: v.$radius-md;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: v.$text-secondary;
+  font-weight: 600;
+}
+
+.fieldValue {
+  font-size: 15px;
+}

@@ -1,0 +1,48 @@
+@use './styles/variables' as v;
+
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: v.$bg-primary;
+  position: relative;
+}
+
+.sidebarPane {
+  width: v.$sidebar-width;
+  min-width: v.$sidebar-width;
+  height: 100%;
+  border-right: 1px solid v.$divider;
+  z-index: 10;
+}
+
+.mainPane {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .sidebarPane,
+  .mainPane {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    transition: transform v.$transition-slide;
+  }
+
+  .mainPane {
+    transform: translateX(100%);
+  }
+
+  .projectOpen {
+    .sidebarPane {
+      transform: translateX(-100%);
+    }
+
+    .mainPane {
+      transform: translateX(0);
+    }
+  }
+}
