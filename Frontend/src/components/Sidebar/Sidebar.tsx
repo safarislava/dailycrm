@@ -60,7 +60,7 @@ export default function Sidebar() {
         <button
           className={styles.composeBtn}
           onClick={() => { setComposing((v) => !v); setNewTitle('') }}
-          title={composing ? 'Cancel' : 'New project'}
+          title={composing ? 'Отмена' : 'Новый проект'}
         >
           {composing
             ? <CloseIcon />
@@ -73,7 +73,7 @@ export default function Sidebar() {
         <SearchIcon />
         <input
           className={styles.searchInput}
-          placeholder="Search"
+          placeholder="Поиск"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -88,7 +88,7 @@ export default function Sidebar() {
         <div className={styles.createRow}>
           <input
             className={styles.createInput}
-            placeholder="Project name…"
+            placeholder="Название проекта…"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={handleCreateKey}
@@ -99,18 +99,18 @@ export default function Sidebar() {
             onClick={submitCreate}
             disabled={!newTitle.trim() || creating}
           >
-            Create
+            Создать
           </button>
         </div>
       )}
 
       <div className={styles.list}>
         {isLoading && (
-          <div className={styles.hint}>Loading…</div>
+          <div className={styles.hint}>Загрузка…</div>
         )}
         {!isLoading && filtered.length === 0 && (
           <div className={styles.hint}>
-            {search ? 'No results' : 'No projects yet'}
+            {search ? 'Ничего не найдено' : 'Нет проектов'}
           </div>
         )}
         {filtered.map((project) => (
@@ -129,7 +129,7 @@ export default function Sidebar() {
             <button
               className={styles.itemDelete}
               onClick={(e) => handleDelete(e, project.id)}
-              title="Delete"
+              title="Удалить"
             >
               <CloseIcon size={11} />
             </button>

@@ -71,8 +71,8 @@ export default function MainPanel() {
     return (
       <div className={styles.empty}>
         <div className={styles.emptyIcon}><FolderIcon /></div>
-        <p className={styles.emptyTitle}>Select a project</p>
-        <p className={styles.emptyHint}>Choose a project from the list to view its stages</p>
+        <p className={styles.emptyTitle}>Выберите проект</p>
+        <p className={styles.emptyHint}>Выберите проект из списка, чтобы просмотреть его этапы</p>
       </div>
     )
   }
@@ -86,42 +86,42 @@ export default function MainPanel() {
             <ArrowLeftIcon />
           </button>
           <div className={styles.headerInfo}>
-            <span className={styles.headerTitle}>Stage details</span>
+            <span className={styles.headerTitle}>Детали этапа</span>
           </div>
           <button
             className={styles.dangerBtn}
             onClick={() => handleDeleteStage(Number(stagePos))}
-            title="Delete stage"
+            title="Удалить этап"
           >
             <TrashIcon />
           </button>
         </header>
 
         <div className={styles.detailScroll}>
-          {detailLoading && <div className={styles.loading}>Loading…</div>}
+          {detailLoading && <div className={styles.loading}>Загрузка…</div>}
           {!detailLoading && detail && (
             <div className={styles.detailCard}>
               <h2 className={styles.detailName}>{detail.stage.title}</h2>
               <div className={styles.fields}>
-                <Field label="Position" value={String(detail.stage.position)} />
+                <Field label="Позиция" value={String(detail.stage.position)} />
                 <Field
-                  label="Deadline"
+                  label="Дедлайн"
                   value={detail.stage.deadline
                     ? new Date(detail.stage.deadline).toLocaleDateString('en-GB', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })
                     : '—'}
                 />
-                <Field label="Description" value={detail.description ?? '—'} />
+                <Field label="Описание" value={detail.description ?? '—'} />
                 <Field
-                  label="Cost"
-                  value={detail.cost != null ? `$${detail.cost.toLocaleString()}` : '—'}
+                  label="Стоимость"
+                  value={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
                 />
               </div>
             </div>
           )}
           {!detailLoading && !detail && (
-            <div className={styles.loading}>No data available</div>
+            <div className={styles.loading}>Нет данных</div>
           )}
         </div>
       </div>
@@ -141,21 +141,21 @@ export default function MainPanel() {
         <div className={styles.headerInfo}>
           <span className={styles.headerTitle}>{project?.title}</span>
           <span className={styles.headerSub}>
-            {stages.length} stage{stages.length !== 1 ? 's' : ''}
+            {stages.length} {stages.length === 1 ? 'этап' : stages.length < 5 ? 'этапа' : 'этапов'}
           </span>
         </div>
-        <button className={styles.dangerBtn} onClick={handleDeleteProject} title="Delete project">
+        <button className={styles.dangerBtn} onClick={handleDeleteProject} title="Удалить проект">
           <TrashIcon />
         </button>
       </header>
 
       <div className={styles.stageList}>
-        {stagesLoading && <div className={styles.loading}>Loading…</div>}
+        {stagesLoading && <div className={styles.loading}>Загрузка…</div>}
         {!stagesLoading && stages.length === 0 && (
           <div className={styles.noStages}>
             <ListIcon />
-            <p>No stages yet</p>
-            <span>Type below to add the first one</span>
+            <p>Нет этапов</p>
+            <span>Введите название ниже, чтобы добавить первый</span>
           </div>
         )}
         {stages.map((stage) => (
@@ -178,7 +178,7 @@ export default function MainPanel() {
             <button
               className={styles.stageDelete}
               onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position) }}
-              title="Delete stage"
+              title="Удалить этап"
             >
               <CloseIcon />
             </button>
@@ -191,7 +191,7 @@ export default function MainPanel() {
         <input
           className={styles.posInput}
           type="number"
-          placeholder="# opt"
+          placeholder="№"
           min={1}
           value={position}
           onChange={(e) => setPosition(e.target.value)}
@@ -199,7 +199,7 @@ export default function MainPanel() {
         />
         <input
           className={styles.textInput}
-          placeholder="New stage…"
+          placeholder="Новый этап…"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
