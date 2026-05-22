@@ -38,7 +38,7 @@ export const crmApi = createApi({
         method: 'POST',
         body: { title },
       }),
-      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
+      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project'],
     }),
     insertStage: builder.mutation<void, { projectId: string; position: number; title: string }>({
       query: ({ projectId, position, title }) => ({
@@ -46,14 +46,14 @@ export const crmApi = createApi({
         method: 'POST',
         body: { title },
       }),
-      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
+      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project'],
     }),
     deleteStage: builder.mutation<void, { projectId: string; position: number }>({
       query: ({ projectId, position }) => ({
         url: `/projects/${projectId}/stages/${position}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
+      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project'],
     }),
 
     getDetailedStage: builder.query<DetailedStage, { projectId: string; position: number }>({
@@ -72,6 +72,7 @@ export const crmApi = createApi({
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
         { type: 'Stage' as const, id: projectId },
+        'Project',
       ],
     }),
 
@@ -84,6 +85,7 @@ export const crmApi = createApi({
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
         { type: 'Stage' as const, id: projectId },
+        'Project',
       ],
     }),
 
@@ -95,6 +97,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        'Project',
       ],
     }),
 
@@ -106,6 +109,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        'Project',
       ],
     }),
 

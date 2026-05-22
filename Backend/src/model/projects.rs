@@ -1,4 +1,5 @@
 use crate::model::project::Project;
+use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -13,12 +14,14 @@ impl Projects {
     }
 
     pub async fn projects(&self) -> Result<Vec<Project>, sqlx::Error> {
-        let rows = sqlx::query_as::<_, (Uuid, String)>("SELECT id, title FROM projects")
-            .fetch_all(&self.pool)
-            .await?;
+        let rows = sqlx::query_as::<_, (Uuid, String, NaiveDateTime)>(
+            "SELECT id, title, updated_at FROM projects ORDER BY updated_at DESC",
+        )
+        .fetch_all(&self.pool)
+        .await?;
         Ok(rows
             .into_iter()
-            .map(|(id, title)| Project::new(id, title))
+            .map(|(id, title, updated_at)| Project::new(id, title, updated_at))
             .collect())
     }
 

@@ -10,6 +10,20 @@ import {
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './Sidebar.module.scss'
 
+function formatUpdatedAt(iso: string): string {
+  const date = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMin = Math.floor(diffMs / 60_000)
+  if (diffMin < 1) return 'только что'
+  if (diffMin < 60) return `${diffMin} мин. назад`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `${diffH} ч. назад`
+  const diffD = Math.floor(diffH / 24)
+  if (diffD < 7) return `${diffD} дн. назад`
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
 const AVATAR_COLORS = [
   '#e17076', '#7bc862', '#65aadd',
   '#a695e7', '#ee7aae', '#faa774', '#6ec9cb',
@@ -142,7 +156,10 @@ export default function Sidebar() {
             >
               {project.title[0]?.toUpperCase()}
             </div>
-            <span className={styles.itemTitle}>{project.title}</span>
+            <div className={styles.itemInfo}>
+              <span className={styles.itemTitle}>{project.title}</span>
+              <span className={styles.itemDate}>{formatUpdatedAt(project.updated_at)}</span>
+            </div>
             <button
               className={styles.itemDelete}
               onClick={(e) => handleDelete(e, project.id, project.title)}

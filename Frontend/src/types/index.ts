@@ -1,6 +1,7 @@
 export interface Project {
   id: string
   title: string
+  updated_at: string
 }
 
 export interface Stage {
