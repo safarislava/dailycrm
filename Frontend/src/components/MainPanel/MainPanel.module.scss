@@ -54,6 +54,42 @@
   text-overflow: ellipsis;
 }
 
+.inlineValue {
+  cursor: text;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: v.$radius-sm;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background v.$transition-fast;
+
+  &:hover { background: v.$accent-light; }
+}
+
+.pencilIcon {
+  flex-shrink: 0;
+  opacity: 0;
+  color: v.$text-secondary;
+  transition: opacity v.$transition-fast;
+
+  .inlineValue:hover & { opacity: 1; }
+}
+
+.inlineInput {
+  font-size: inherit;
+  font-weight: inherit;
+  color: v.$text-primary;
+  background: v.$bg-input;
+  border-radius: v.$radius-sm;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  outline: none;
+  border: 1px solid v.$accent;
+  width: 100%;
+  min-width: 0;
+}
+
 .headerSub {
   font-size: 13px;
   color: v.$text-secondary;
@@ -307,4 +343,27 @@
 
 .fieldValue {
   font-size: 15px;
+}
+
+.fieldEditable {
+  cursor: pointer;
+  transition: background v.$transition-fast;
+
+  &:hover { background: v.$bg-item-hover; }
+}
+
+.fieldInput {
+  font-size: 15px;
+  color: v.$text-primary;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid v.$accent;
+  padding: 2px 0;
+  width: 100%;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+
+  &[type='date'] { color-scheme: dark; }
+  &[type='number'] { -moz-appearance: textfield; }
 }

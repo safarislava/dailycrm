@@ -1,5 +1,5 @@
 use crate::model::stage::{DetailedStage, Stage};
-use chrono::{DateTime, Local};
+use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -9,7 +9,7 @@ struct StageRow {
     position: i32,
     title: String,
     description: Option<String>,
-    deadline: Option<DateTime<Local>>,
+    deadline: Option<NaiveDateTime>,
     cost: Option<i32>,
 }
 
@@ -90,6 +90,68 @@ impl Stages {
         .await?;
         let base = Stage::new(row.project_id, row.position, row.title, row.deadline);
         Ok(DetailedStage::new(base, row.description, row.cost))
+    }
+
+    pub async fn update_title(
+        &self,
+        project_id: Uuid,
+        position: i32,
+        title: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE stages SET title = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(title)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn update_deadline(
+        &self,
+        project_id: Uuid,
+        position: i32,
+        deadline: Option<NaiveDateTime>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE stages SET deadline = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(deadline)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn update_description(
+        &self,
+        project_id: Uuid,
+        position: i32,
+        description: Option<String>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            "UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2",
+        )
+        .bind(project_id)
+        .bind(position)
+        .bind(description)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_cost(
+        &self,
+        project_id: Uuid,
+        position: i32,
+        cost: Option<i32>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE stages SET cost = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(cost)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error> {

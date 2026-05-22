@@ -19,6 +19,14 @@ export const crmApi = createApi({
       query: (id) => ({ url: `/projects/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Project'],
     }),
+    renameProject: builder.mutation<void, { id: string; title: string }>({
+      query: ({ id, title }) => ({
+        url: `/projects/${id}/title`,
+        method: 'PATCH',
+        body: { title },
+      }),
+      invalidatesTags: ['Project'],
+    }),
 
     getStages: builder.query<Stage[], string>({
       query: (projectId) => `/projects/${projectId}/stages`,
@@ -50,6 +58,55 @@ export const crmApi = createApi({
 
     getDetailedStage: builder.query<DetailedStage, { projectId: string; position: number }>({
       query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}`,
+      providesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+      ],
+    }),
+
+    updateStageTitle: builder.mutation<void, { projectId: string; position: number; title: string }>({
+      query: ({ projectId, position, title }) => ({
+        url: `/projects/${projectId}/stages/${position}/title`,
+        method: 'PATCH',
+        body: { title },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+      ],
+    }),
+
+    updateStageDeadline: builder.mutation<void, { projectId: string; position: number; deadline: string | null }>({
+      query: ({ projectId, position, deadline }) => ({
+        url: `/projects/${projectId}/stages/${position}/deadline`,
+        method: 'PATCH',
+        body: { deadline },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+      ],
+    }),
+
+    updateStageDescription: builder.mutation<void, { projectId: string; position: number; description: string | null }>({
+      query: ({ projectId, position, description }) => ({
+        url: `/projects/${projectId}/stages/${position}/description`,
+        method: 'PATCH',
+        body: { description },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+      ],
+    }),
+
+    updateStageCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
+      query: ({ projectId, position, cost }) => ({
+        url: `/projects/${projectId}/stages/${position}/cost`,
+        method: 'PATCH',
+        body: { cost },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+      ],
     }),
 
   }),
@@ -64,4 +121,9 @@ export const {
   useInsertStageMutation,
   useDeleteStageMutation,
   useGetDetailedStageQuery,
+  useUpdateStageTitleMutation,
+  useUpdateStageDeadlineMutation,
+  useUpdateStageDescriptionMutation,
+  useUpdateStageCostMutation,
+  useRenameProjectMutation,
 } = crmApi

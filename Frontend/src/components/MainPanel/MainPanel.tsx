@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { selectProject, selectStage } from '../../store/uiSlice'
@@ -10,6 +10,11 @@ import {
   useDeleteStageMutation,
   useDeleteProjectMutation,
   useGetDetailedStageQuery,
+  useUpdateStageTitleMutation,
+  useUpdateStageDeadlineMutation,
+  useUpdateStageDescriptionMutation,
+  useUpdateStageCostMutation,
+  useRenameProjectMutation,
 } from '../../store/crmApi'
 import styles from './MainPanel.module.scss'
 
@@ -33,6 +38,12 @@ export default function MainPanel() {
   const [insertStage, { isLoading: inserting }] = useInsertStageMutation()
   const [deleteStage]   = useDeleteStageMutation()
   const [deleteProject] = useDeleteProjectMutation()
+
+  const [updateTitle]       = useUpdateStageTitleMutation()
+  const [updateDeadline]    = useUpdateStageDeadlineMutation()
+  const [updateDescription] = useUpdateStageDescriptionMutation()
+  const [updateCost]        = useUpdateStageCostMutation()
+  const [renameProject]     = useRenameProjectMutation()
 
   const [title, setTitle]       = useState('')
   const [position, setPosition] = useState('')
@@ -101,21 +112,58 @@ export default function MainPanel() {
           {detailLoading && <div className={styles.loading}>Загрузка…</div>}
           {!detailLoading && detail && (
             <div className={styles.detailCard}>
-              <h2 className={styles.detailName}>{detail.stage.title}</h2>
               <div className={styles.fields}>
                 <Field label="Позиция" value={String(detail.stage.position)} />
-                <Field
+                <EditableField
+                  label="Название"
+                  displayValue={detail.stage.title}
+                  rawValue={detail.stage.title}
+                  onSave={async (v) => {
+                    if (v.trim()) await updateTitle({ projectId: projectId!, position: Number(stagePos), title: v.trim() })
+                  }}
+                />
+                <EditableField
                   label="Дедлайн"
-                  value={detail.stage.deadline
+                  displayValue={detail.stage.deadline
                     ? new Date(detail.stage.deadline).toLocaleDateString('en-GB', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })
                     : '—'}
+                  rawValue={detail.stage.deadline?.slice(0, 10) ?? ''}
+                  type="date"
+                  onSave={async (v) => {
+                    await updateDeadline({
+                      projectId: projectId!,
+                      position: Number(stagePos),
+                      deadline: v ? `${v}T00:00:00` : null,
+                    })
+                  }}
                 />
-                <Field label="Описание" value={detail.description ?? '—'} />
-                <Field
+                <EditableField
+                  label="Описание"
+                  displayValue={detail.description ?? '—'}
+                  rawValue={detail.description ?? ''}
+                  multiline
+                  onSave={async (v) => {
+                    await updateDescription({
+                      projectId: projectId!,
+                      position: Number(stagePos),
+                      description: v.trim() || null,
+                    })
+                  }}
+                />
+                <EditableField
                   label="Стоимость"
-                  value={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
+                  displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
+                  rawValue={detail.cost?.toString() ?? ''}
+                  type="number"
+                  onSave={async (v) => {
+                    await updateCost({
+                      projectId: projectId!,
+                      position: Number(stagePos),
+                      cost: v ? parseInt(v, 10) : null,
+                    })
+                  }}
                 />
               </div>
             </div>
@@ -139,7 +187,13 @@ export default function MainPanel() {
           <ArrowLeftIcon />
         </button>
         <div className={styles.headerInfo}>
-          <span className={styles.headerTitle}>{project?.title}</span>
+          <InlineEdit
+            value={project?.title ?? ''}
+            onSave={async (v) => {
+              if (v.trim() && projectId) await renameProject({ id: projectId, title: v.trim() })
+            }}
+            className={styles.headerTitle}
+          />
           <span className={styles.headerSub}>
             {stages.length} {stages.length === 1 ? 'этап' : stages.length < 5 ? 'этапа' : 'этапов'}
           </span>
@@ -216,12 +270,143 @@ export default function MainPanel() {
   )
 }
 
-// ── Small sub-component ────────────────────────────────
+// ── InlineEdit — однострочный редактор для хедера ──────
+function InlineEdit({
+  value,
+  onSave,
+  className,
+}: {
+  value: string
+  onSave: (value: string) => Promise<void>
+  className?: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const cancelled = useRef(false)
+
+  const startEdit = () => {
+    setDraft(value)
+    setEditing(true)
+  }
+
+  const handleBlur = async () => {
+    if (cancelled.current) {
+      cancelled.current = false
+      return
+    }
+    setEditing(false)
+    await onSave(draft)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') (e.target as HTMLElement).blur()
+    if (e.key === 'Escape') {
+      cancelled.current = true
+      ;(e.target as HTMLElement).blur()
+    }
+  }
+
+  return editing ? (
+    <input
+      autoFocus
+      className={`${className ?? ''} ${styles.inlineInput}`}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    />
+  ) : (
+    <span className={`${className ?? ''} ${styles.inlineValue}`} onClick={startEdit} title="Переименовать">
+      {value}
+      <PencilIcon />
+    </span>
+  )
+}
+
+// ── Sub-components ─────────────────────────────────────
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.field}>
       <span className={styles.fieldLabel}>{label}</span>
       <span className={styles.fieldValue}>{value}</span>
+    </div>
+  )
+}
+
+function EditableField({
+  label,
+  displayValue,
+  rawValue,
+  onSave,
+  type = 'text',
+  multiline = false,
+}: {
+  label: string
+  displayValue: string
+  rawValue: string
+  onSave: (value: string) => Promise<void>
+  type?: 'text' | 'number' | 'date'
+  multiline?: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const cancelled = useRef(false)
+
+  const startEdit = () => {
+    setDraft(rawValue)
+    setEditing(true)
+  }
+
+  const handleBlur = async () => {
+    if (cancelled.current) {
+      cancelled.current = false
+      return
+    }
+    setEditing(false)
+    await onSave(draft)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !multiline) {
+      ;(e.target as HTMLElement).blur()
+    }
+    if (e.key === 'Escape') {
+      cancelled.current = true
+      ;(e.target as HTMLElement).blur()
+    }
+  }
+
+  return (
+    <div
+      className={`${styles.field} ${styles.fieldEditable}`}
+      onClick={!editing ? startEdit : undefined}
+    >
+      <span className={styles.fieldLabel}>{label}</span>
+      {editing ? (
+        multiline ? (
+          <textarea
+            autoFocus
+            className={styles.fieldInput}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            rows={3}
+          />
+        ) : (
+          <input
+            autoFocus
+            type={type}
+            className={styles.fieldInput}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+          />
+        )
+      ) : (
+        <span className={styles.fieldValue}>{displayValue}</span>
+      )}
     </div>
   )
 }
@@ -266,6 +451,16 @@ function FolderIcon() {
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z"
         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function PencilIcon() {
+  return (
+    <svg className={styles.pencilIcon} width="12" height="12" viewBox="0 0 24 24" fill="none">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L13 14l-4 1 1-4 8.5-8.5Z"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }

@@ -1,4 +1,7 @@
 /target
 .idea
 .DS_Store
-/Backend/.env
+.env
+/Frontend/dist/
+/Frontend/node_modules/
+/Backend/target/

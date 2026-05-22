@@ -1,0 +1,26 @@
+use crate::state::AppState;
+use actix_web::web::Json;
+use actix_web::{HttpResponse, Responder, web};
+use serde::Deserialize;
+use uuid::Uuid;
+
+#[derive(Deserialize)]
+pub struct UpdateTitleDto {
+    title: String,
+}
+
+pub async fn patch(
+    state: web::Data<AppState>,
+    path: web::Path<(Uuid, i32)>,
+    body: Json<UpdateTitleDto>,
+) -> impl Responder {
+    let (project_id, position) = path.into_inner();
+    match state
+        .stages
+        .update_title(project_id, position, body.title.clone())
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+    }
+}

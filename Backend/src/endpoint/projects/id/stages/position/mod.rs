@@ -1,3 +1,7 @@
+pub mod cost;
 pub mod create;
+pub mod deadline;
 pub mod delete;
+pub mod description;
 pub mod get;
+pub mod title;

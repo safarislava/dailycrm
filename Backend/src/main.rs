@@ -60,6 +60,10 @@ fn configure_api(config: &mut web::ServiceConfig) {
                             .delete(endpoint::projects::id::delete::delete),
                     )
                     .service(
+                        web::resource("/{project_id}/title")
+                            .patch(endpoint::projects::id::rename::patch),
+                    )
+                    .service(
                         web::resource("/{project_id}/stages")
                             .get(endpoint::projects::id::stages::get::get)
                             .post(endpoint::projects::id::stages::create::create),
@@ -69,6 +73,22 @@ fn configure_api(config: &mut web::ServiceConfig) {
                             .post(endpoint::projects::id::stages::position::create::create)
                             .get(endpoint::projects::id::stages::position::get::get)
                             .delete(endpoint::projects::id::stages::position::delete::delete),
+                    )
+                    .service(
+                        web::resource("/{project_id}/stages/{stage_id}/title")
+                            .patch(endpoint::projects::id::stages::position::title::patch),
+                    )
+                    .service(
+                        web::resource("/{project_id}/stages/{stage_id}/deadline")
+                            .patch(endpoint::projects::id::stages::position::deadline::patch),
+                    )
+                    .service(
+                        web::resource("/{project_id}/stages/{stage_id}/description")
+                            .patch(endpoint::projects::id::stages::position::description::patch),
+                    )
+                    .service(
+                        web::resource("/{project_id}/stages/{stage_id}/cost")
+                            .patch(endpoint::projects::id::stages::position::cost::patch),
                     ),
             )
             .service(
