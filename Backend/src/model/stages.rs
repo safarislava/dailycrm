@@ -6,8 +6,6 @@ use uuid::Uuid;
 #[derive(sqlx::FromRow)]
 struct StageRow {
     project_id: Uuid,
-    id: Uuid,
-    #[allow(dead_code)]
     position: i64,
     title: String,
     description: String,
@@ -34,7 +32,7 @@ impl Stages {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|row| Stage::new(row.project_id, row.id, row.title))
+            .map(|row| Stage::new(row.project_id, row.position, row.title))
             .collect())
     }
 
@@ -64,7 +62,7 @@ impl Stages {
                 .bind(stage_id)
                 .fetch_one(&self.pool)
                 .await?;
-        let base = Stage::new(row.project_id, row.id, row.title);
+        let base = Stage::new(row.project_id, row.position, row.title);
         Ok(DetailedStage::new(
             base,
             row.description,

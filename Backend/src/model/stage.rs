@@ -5,15 +5,15 @@ use uuid::Uuid;
 #[derive(Serialize)]
 pub struct Stage {
     project_id: Uuid,
-    id: Uuid,
+    position: i64,
     title: String,
 }
 
 impl Stage {
-    pub fn new(project_id: Uuid, id: Uuid, title: String) -> Self {
+    pub fn new(project_id: Uuid, position: i64, title: String) -> Self {
         Self {
             project_id,
-            id,
+            position,
             title,
         }
     }
