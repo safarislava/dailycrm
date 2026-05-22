@@ -9,8 +9,8 @@ pub struct CreateUserDto {
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
     match state
-        .user_service
-        .register(body.username.clone(), body.password_hash.clone())
+        .users
+        .register(&body.username, &body.password_hash)
         .await
     {
         Ok(_) => HttpResponse::Created().finish(),

@@ -17,8 +17,8 @@ pub async fn create(
 ) -> impl Responder {
     let project_id = path.into_inner();
     match state
-        .stage_service
-        .save(project_id, body.position, body.title.clone())
+        .stages
+        .register(project_id, body.position, body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

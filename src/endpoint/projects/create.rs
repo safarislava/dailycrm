@@ -11,8 +11,8 @@ pub async fn create(
     body: web::Json<CreateProjectDto>,
 ) -> impl Responder {
     match state
-        .project_service
-        .save(body.title.clone())
+        .projects
+        .register(&body.title)
         .await
     {
         Ok(_) => HttpResponse::Created().finish(),

@@ -1,6 +1,77 @@
-use crate::model::stage::DetailedStage;
-use std::sync::Arc;
+use crate::model::stage::{DetailedStage, Stage};
+use chrono::{DateTime, Local};
+use sqlx::PgPool;
+use uuid::Uuid;
 
+#[derive(sqlx::FromRow)]
+struct StageRow {
+    project_id: Uuid,
+    id: Uuid,
+    #[allow(dead_code)]
+    position: i64,
+    title: String,
+    description: String,
+    deadline: DateTime<Local>,
+    cost: i64,
+}
+
+#[derive(Clone)]
 pub struct Stages {
-    stages: Arc<[DetailedStage]>,
+    pool: PgPool,
+}
+
+impl Stages {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn stages(&self, project_id: Uuid) -> Result<Vec<Stage>, sqlx::Error> {
+        let rows = sqlx::query_as::<_, StageRow>(
+            "SELECT * FROM stages WHERE project_id = $1 ORDER BY position",
+        )
+        .bind(project_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|row| Stage::new(row.project_id, row.id, row.title)).collect())
+    }
+
+    pub async fn register(
+        &self,
+        project_id: Uuid,
+        position: i64,
+        title: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
+            .bind(project_id)
+            .bind(position)
+            .bind(title)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn detailed_stage(
+        &self,
+        project_id: Uuid,
+        stage_id: Uuid,
+    ) -> Result<DetailedStage, sqlx::Error> {
+        let row = sqlx::query_as::<_, StageRow>(
+            "SELECT * FROM stages WHERE project_id = $1 AND id = $2",
+        )
+        .bind(project_id)
+        .bind(stage_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let base = Stage::new(row.project_id, row.id, row.title);
+        Ok(DetailedStage::new(base, row.description, row.deadline, row.cost))
+    }
+
+    pub async fn remove(&self, project_id: Uuid, stage_id: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM stages WHERE project_id = $1 AND id = $2")
+            .bind(project_id)
+            .bind(stage_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 }

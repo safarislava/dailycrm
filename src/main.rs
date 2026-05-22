@@ -1,15 +1,10 @@
 mod endpoint;
 mod model;
-mod repository;
-mod service;
 mod state;
 
-use crate::repository::project_repository::ProjectRepository;
-use crate::repository::stage_repository::StageRepository;
-use crate::repository::user_repository::UserRepository;
-use crate::service::project_service::ProjectService;
-use crate::service::stage_service::StageService;
-use crate::service::user_service::UserService;
+use crate::model::projects::Projects;
+use crate::model::stages::Stages;
+use crate::model::users::Users;
 use crate::state::AppState;
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web};
@@ -33,18 +28,10 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to migrate the database");
 
-    let user_repo = UserRepository::new(pool.clone());
-    let project_repo = ProjectRepository::new(pool.clone());
-    let stage_repo = StageRepository::new(pool.clone());
-
-    let user_service = UserService::new(user_repo);
-    let project_service = ProjectService::new(project_repo);
-    let stage_service = StageService::new(stage_repo);
-
     let state = web::Data::new(AppState {
-        user_service,
-        project_service,
-        stage_service,
+        users: Users::new(pool.clone()),
+        projects: Projects::new(pool.clone()),
+        stages: Stages::new(pool.clone()),
     });
 
     HttpServer::new(move || {
