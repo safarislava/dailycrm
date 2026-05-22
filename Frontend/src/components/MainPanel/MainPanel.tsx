@@ -5,7 +5,8 @@ import { selectProject, selectStage } from '../../store/uiSlice'
 import {
   useGetProjectsQuery,
   useGetStagesQuery,
-  useCreateStageMutation,
+  useAppendStageMutation,
+  useInsertStageMutation,
   useDeleteStageMutation,
   useDeleteProjectMutation,
   useGetDetailedStageQuery,
@@ -28,23 +29,27 @@ export default function MainPanel() {
     { skip: !projectId || stagePos === null },
   )
 
-  const [createStage, { isLoading: creating }] = useCreateStageMutation()
+  const [appendStage, { isLoading: appending }] = useAppendStageMutation()
+  const [insertStage, { isLoading: inserting }] = useInsertStageMutation()
   const [deleteStage]   = useDeleteStageMutation()
   const [deleteProject] = useDeleteProjectMutation()
 
   const [title, setTitle]       = useState('')
   const [position, setPosition] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const creating = appending || inserting
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [stages.length])
-
-  const canSend = title.trim() !== '' && position.trim() !== '' && !creating
+  const canSend = title.trim() !== '' && !creating
 
   const handleSend = async () => {
     if (!canSend || !projectId) return
-    await createStage({ projectId, position: Number(position), title: title.trim() })
+    const t = title.trim()
+    const p = position.trim()
+    if (p === '') {
+      await appendStage({ projectId, title: t })
+    } else {
+      await insertStage({ projectId, position: Number(p), title: t })
+    }
     setTitle('')
     setPosition('')
   }
@@ -99,15 +104,15 @@ export default function MainPanel() {
               <h2 className={styles.detailName}>{detail.stage.title}</h2>
               <div className={styles.fields}>
                 <Field label="Position" value={String(detail.stage.position)} />
-                <Field label="Description" value={detail.description ?? '—'} />
                 <Field
                   label="Deadline"
-                  value={detail.deadline
-                    ? new Date(detail.deadline).toLocaleDateString('en-GB', {
+                  value={detail.stage.deadline
+                    ? new Date(detail.stage.deadline).toLocaleDateString('en-GB', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })
                     : '—'}
                 />
+                <Field label="Description" value={detail.description ?? '—'} />
                 <Field
                   label="Cost"
                   value={detail.cost != null ? `$${detail.cost.toLocaleString()}` : '—'}
@@ -144,31 +149,39 @@ export default function MainPanel() {
         </button>
       </header>
 
-      <div className={styles.messages}>
+      <div className={styles.stageList}>
         {stagesLoading && <div className={styles.loading}>Loading…</div>}
         {!stagesLoading && stages.length === 0 && (
           <div className={styles.noStages}>
-            <BubbleIcon />
+            <ListIcon />
             <p>No stages yet</p>
             <span>Type below to add the first one</span>
           </div>
         )}
         {stages.map((stage) => (
-          <div key={stage.position} className={styles.bubbleRow}>
-            <div
-              className={styles.bubble}
-              onClick={() => dispatch(selectStage(String(stage.position)))}
-            >
-              <span className={styles.bubblePos}>{stage.position}</span>
-              <span className={styles.bubbleText}>{stage.title}</span>
-              <button
-                className={styles.bubbleDelete}
-                onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position) }}
-                title="Delete stage"
-              >
-                <CloseIcon />
-              </button>
+          <div
+            key={stage.position}
+            className={styles.stageItem}
+            onClick={() => dispatch(selectStage(String(stage.position)))}
+          >
+            <span className={styles.stagePos}>{stage.position}</span>
+            <div className={styles.stageInfo}>
+              <span className={styles.stageTitle}>{stage.title}</span>
+              {stage.deadline && (
+                <span className={styles.stageDeadline}>
+                  {new Date(stage.deadline).toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                  })}
+                </span>
+              )}
             </div>
+            <button
+              className={styles.stageDelete}
+              onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position) }}
+              title="Delete stage"
+            >
+              <CloseIcon />
+            </button>
           </div>
         ))}
         <div ref={bottomRef} />
@@ -178,7 +191,7 @@ export default function MainPanel() {
         <input
           className={styles.posInput}
           type="number"
-          placeholder="#"
+          placeholder="# opt"
           min={1}
           value={position}
           onChange={(e) => setPosition(e.target.value)}
@@ -256,11 +269,15 @@ function FolderIcon() {
     </svg>
   )
 }
-function BubbleIcon() {
+function ListIcon() {
   return (
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"
-        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="3" cy="6" r="1.2" fill="currentColor"/>
+      <circle cx="3" cy="12" r="1.2" fill="currentColor"/>
+      <circle cx="3" cy="18" r="1.2" fill="currentColor"/>
     </svg>
   )
 }

@@ -66,8 +66,9 @@ fn configure_api(config: &mut web::ServiceConfig) {
                     )
                     .service(
                         web::resource("/{project_id}/stages/{stage_id}")
-                            .get(endpoint::projects::id::stages::id::get::get)
-                            .delete(endpoint::projects::id::stages::id::delete::delete),
+                            .post(endpoint::projects::id::stages::position::create::create)
+                            .get(endpoint::projects::id::stages::position::get::get)
+                            .delete(endpoint::projects::id::stages::position::delete::delete),
                     ),
             )
             .service(

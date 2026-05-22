@@ -32,8 +32,24 @@ impl Stages {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|row| Stage::new(row.project_id, row.position, row.title))
+            .map(|row| Stage::new(row.project_id, row.position, row.title, row.deadline))
             .collect())
+    }
+
+    pub async fn append(&self, project_id: Uuid, title: String) -> Result<(), sqlx::Error> {
+        let max: Option<i32> =
+            sqlx::query_scalar("SELECT MAX(position) FROM stages WHERE project_id = $1")
+                .bind(project_id)
+                .fetch_one(&self.pool)
+                .await?;
+        let position = max.unwrap_or(0) + 1;
+        sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
+            .bind(project_id)
+            .bind(position)
+            .bind(title)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn register(
@@ -42,12 +58,21 @@ impl Stages {
         position: i32,
         title: String,
     ) -> Result<(), sqlx::Error> {
+        let mut pool = self.pool.begin().await?;
+        sqlx::query(
+            "UPDATE stages SET position = position + 1 WHERE project_id = $1 AND position >= $2",
+        )
+        .bind(project_id)
+        .bind(position)
+        .execute(&mut *pool)
+        .await?;
         sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
             .bind(project_id)
             .bind(position)
             .bind(title)
-            .execute(&self.pool)
+            .execute(&mut *pool)
             .await?;
+        pool.commit().await?;
         Ok(())
     }
 
@@ -63,8 +88,8 @@ impl Stages {
         .bind(position)
         .fetch_one(&self.pool)
         .await?;
-        let base = Stage::new(row.project_id, row.position, row.title);
-        Ok(DetailedStage::new(base, row.description, row.deadline, row.cost))
+        let base = Stage::new(row.project_id, row.position, row.title, row.deadline);
+        Ok(DetailedStage::new(base, row.description, row.cost))
     }
 
     pub async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error> {

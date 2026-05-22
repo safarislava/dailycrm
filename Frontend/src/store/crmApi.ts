@@ -24,11 +24,19 @@ export const crmApi = createApi({
       query: (projectId) => `/projects/${projectId}/stages`,
       providesTags: (_r, _e, projectId) => [{ type: 'Stage', id: projectId }],
     }),
-    createStage: builder.mutation<void, { projectId: string; position: number; title: string }>({
-      query: ({ projectId, position, title }) => ({
+    appendStage: builder.mutation<void, { projectId: string; title: string }>({
+      query: ({ projectId, title }) => ({
         url: `/projects/${projectId}/stages`,
         method: 'POST',
-        body: { position, title },
+        body: { title },
+      }),
+      invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
+    }),
+    insertStage: builder.mutation<void, { projectId: string; position: number; title: string }>({
+      query: ({ projectId, position, title }) => ({
+        url: `/projects/${projectId}/stages/${position}`,
+        method: 'POST',
+        body: { title },
       }),
       invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
     }),
@@ -52,7 +60,8 @@ export const {
   useCreateProjectMutation,
   useDeleteProjectMutation,
   useGetStagesQuery,
-  useCreateStageMutation,
+  useAppendStageMutation,
+  useInsertStageMutation,
   useDeleteStageMutation,
   useGetDetailedStageQuery,
 } = crmApi

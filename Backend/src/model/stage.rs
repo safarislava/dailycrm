@@ -7,15 +7,12 @@ pub struct Stage {
     project_id: Uuid,
     position: i32,
     title: String,
+    deadline: Option<DateTime<Local>>,
 }
 
 impl Stage {
-    pub fn new(project_id: Uuid, position: i32, title: String) -> Self {
-        Self {
-            project_id,
-            position,
-            title,
-        }
+    pub fn new(project_id: Uuid, position: i32, title: String, deadline: Option<DateTime<Local>>) -> Self {
+        Self { project_id, position, title, deadline }
     }
 }
 
@@ -23,17 +20,11 @@ impl Stage {
 pub struct DetailedStage {
     stage: Stage,
     description: Option<String>,
-    deadline: Option<DateTime<Local>>,
     cost: Option<i32>,
 }
 
 impl DetailedStage {
-    pub fn new(
-        stage: Stage,
-        description: Option<String>,
-        deadline: Option<DateTime<Local>>,
-        cost: Option<i32>,
-    ) -> Self {
-        Self { stage, description, deadline, cost }
+    pub fn new(stage: Stage, description: Option<String>, cost: Option<i32>) -> Self {
+        Self { stage, description, cost }
     }
 }

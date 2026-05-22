@@ -7,11 +7,11 @@ export interface Stage {
   project_id: string
   position: number
   title: string
+  deadline: string | null
 }
 
 export interface DetailedStage {
   stage: Stage
-  description: string
-  deadline: string
-  cost: number
+  description: string | null
+  cost: number | null
 }

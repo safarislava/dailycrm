@@ -5,17 +5,21 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
-pub struct CreateStageDto {
+pub struct InsertStageDto {
     title: String,
 }
 
 pub async fn create(
     state: web::Data<AppState>,
-    path: web::Path<Uuid>,
-    body: Json<CreateStageDto>,
+    path: web::Path<(Uuid, i32)>,
+    body: Json<InsertStageDto>,
 ) -> impl Responder {
-    let project_id = path.into_inner();
-    match state.stages.append(project_id, body.title.clone()).await {
+    let (project_id, position) = path.into_inner();
+    match state
+        .stages
+        .register(project_id, position, body.title.clone())
+        .await
+    {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
