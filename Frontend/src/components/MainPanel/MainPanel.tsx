@@ -14,8 +14,8 @@ import styles from './MainPanel.module.scss'
 
 export default function MainPanel() {
   const dispatch = useDispatch<AppDispatch>()
-  const projectId  = useSelector((s: RootState) => s.ui.selectedProjectId)
-  const stageId    = useSelector((s: RootState) => s.ui.selectedStageId)
+  const projectId    = useSelector((s: RootState) => s.ui.selectedProjectId)
+  const stagePos     = useSelector((s: RootState) => s.ui.selectedStageId)
 
   const { data: projects = [] } = useGetProjectsQuery()
   const project = projects.find((p) => p.id === projectId)
@@ -24,32 +24,35 @@ export default function MainPanel() {
     projectId!, { skip: !projectId },
   )
   const { data: detail, isLoading: detailLoading } = useGetDetailedStageQuery(
-    { projectId: projectId!, stageId: stageId! },
-    { skip: !projectId || !stageId },
+    { projectId: projectId!, position: Number(stagePos) },
+    { skip: !projectId || stagePos === null },
   )
 
   const [createStage, { isLoading: creating }] = useCreateStageMutation()
   const [deleteStage]   = useDeleteStageMutation()
   const [deleteProject] = useDeleteProjectMutation()
 
-  const [input, setInput] = useState('')
+  const [title, setTitle]       = useState('')
+  const [position, setPosition] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [stages.length])
 
+  const canSend = title.trim() !== '' && position.trim() !== '' && !creating
+
   const handleSend = async () => {
-    const title = input.trim()
-    if (!title || !projectId) return
-    await createStage({ projectId, position: stages.length + 1, title })
-    setInput('')
+    if (!canSend || !projectId) return
+    await createStage({ projectId, position: Number(position), title: title.trim() })
+    setTitle('')
+    setPosition('')
   }
 
-  const handleDeleteStage = async (id: string) => {
+  const handleDeleteStage = async (pos: number) => {
     if (!projectId) return
-    await deleteStage({ projectId, stageId: id })
-    if (stageId === id) dispatch(selectStage(null))
+    await deleteStage({ projectId, position: pos })
+    if (stagePos !== null && Number(stagePos) === pos) dispatch(selectStage(null))
   }
 
   const handleDeleteProject = async () => {
@@ -62,9 +65,7 @@ export default function MainPanel() {
   if (!projectId) {
     return (
       <div className={styles.empty}>
-        <div className={styles.emptyIcon}>
-          <FolderIcon />
-        </div>
+        <div className={styles.emptyIcon}><FolderIcon /></div>
         <p className={styles.emptyTitle}>Select a project</p>
         <p className={styles.emptyHint}>Choose a project from the list to view its stages</p>
       </div>
@@ -72,7 +73,7 @@ export default function MainPanel() {
   }
 
   // ── Stage detail ───────────────────────────────────────
-  if (stageId) {
+  if (stagePos !== null) {
     return (
       <div className={styles.panel}>
         <header className={styles.header}>
@@ -84,7 +85,7 @@ export default function MainPanel() {
           </div>
           <button
             className={styles.dangerBtn}
-            onClick={() => handleDeleteStage(stageId)}
+            onClick={() => handleDeleteStage(Number(stagePos))}
             title="Delete stage"
           >
             <TrashIcon />
@@ -97,7 +98,8 @@ export default function MainPanel() {
             <div className={styles.detailCard}>
               <h2 className={styles.detailName}>{detail.stage.title}</h2>
               <div className={styles.fields}>
-                <Field label="Description" value={detail.description || '—'} />
+                <Field label="Position" value={String(detail.stage.position)} />
+                <Field label="Description" value={detail.description ?? '—'} />
                 <Field
                   label="Deadline"
                   value={detail.deadline
@@ -152,15 +154,16 @@ export default function MainPanel() {
           </div>
         )}
         {stages.map((stage) => (
-          <div key={stage.id} className={styles.bubbleRow}>
+          <div key={stage.position} className={styles.bubbleRow}>
             <div
               className={styles.bubble}
-              onClick={() => dispatch(selectStage(stage.id))}
+              onClick={() => dispatch(selectStage(String(stage.position)))}
             >
+              <span className={styles.bubblePos}>{stage.position}</span>
               <span className={styles.bubbleText}>{stage.title}</span>
               <button
                 className={styles.bubbleDelete}
-                onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.id) }}
+                onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position) }}
                 title="Delete stage"
               >
                 <CloseIcon />
@@ -173,16 +176,25 @@ export default function MainPanel() {
 
       <div className={styles.inputRow}>
         <input
+          className={styles.posInput}
+          type="number"
+          placeholder="#"
+          min={1}
+          value={position}
+          onChange={(e) => setPosition(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+        />
+        <input
           className={styles.textInput}
           placeholder="New stage…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
         />
         <button
           className={styles.sendBtn}
           onClick={handleSend}
-          disabled={!input.trim() || creating}
+          disabled={!canSend}
         >
           <SendIcon />
         </button>

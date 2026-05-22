@@ -5,7 +5,7 @@ export interface Project {
 
 export interface Stage {
   project_id: string
-  id: string
+  position: number
   title: string
 }
 

@@ -32,16 +32,16 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
     }),
-    deleteStage: builder.mutation<void, { projectId: string; stageId: string }>({
-      query: ({ projectId, stageId }) => ({
-        url: `/projects/${projectId}/stages/${stageId}`,
+    deleteStage: builder.mutation<void, { projectId: string; position: number }>({
+      query: ({ projectId, position }) => ({
+        url: `/projects/${projectId}/stages/${position}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }],
     }),
 
-    getDetailedStage: builder.query<DetailedStage, { projectId: string; stageId: string }>({
-      query: ({ projectId, stageId }) => `/projects/${projectId}/stages/${stageId}`,
+    getDetailedStage: builder.query<DetailedStage, { projectId: string; position: number }>({
+      query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}`,
     }),
 
   }),

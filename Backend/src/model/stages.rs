@@ -6,11 +6,11 @@ use uuid::Uuid;
 #[derive(sqlx::FromRow)]
 struct StageRow {
     project_id: Uuid,
-    position: i64,
+    position: i32,
     title: String,
-    description: String,
-    deadline: DateTime<Local>,
-    cost: i64,
+    description: Option<String>,
+    deadline: Option<DateTime<Local>>,
+    cost: Option<i32>,
 }
 
 #[derive(Clone)]
@@ -39,7 +39,7 @@ impl Stages {
     pub async fn register(
         &self,
         project_id: Uuid,
-        position: i64,
+        position: i32,
         title: String,
     ) -> Result<(), sqlx::Error> {
         sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
@@ -54,27 +54,23 @@ impl Stages {
     pub async fn detailed_stage(
         &self,
         project_id: Uuid,
-        stage_id: Uuid,
+        position: i32,
     ) -> Result<DetailedStage, sqlx::Error> {
-        let row =
-            sqlx::query_as::<_, StageRow>("SELECT * FROM stages WHERE project_id = $1 AND id = $2")
-                .bind(project_id)
-                .bind(stage_id)
-                .fetch_one(&self.pool)
-                .await?;
+        let row = sqlx::query_as::<_, StageRow>(
+            "SELECT * FROM stages WHERE project_id = $1 AND position = $2",
+        )
+        .bind(project_id)
+        .bind(position)
+        .fetch_one(&self.pool)
+        .await?;
         let base = Stage::new(row.project_id, row.position, row.title);
-        Ok(DetailedStage::new(
-            base,
-            row.description,
-            row.deadline,
-            row.cost,
-        ))
+        Ok(DetailedStage::new(base, row.description, row.deadline, row.cost))
     }
 
-    pub async fn remove(&self, project_id: Uuid, stage_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM stages WHERE project_id = $1 AND id = $2")
+    pub async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
             .bind(project_id)
-            .bind(stage_id)
+            .bind(position)
             .execute(&self.pool)
             .await?;
         Ok(())

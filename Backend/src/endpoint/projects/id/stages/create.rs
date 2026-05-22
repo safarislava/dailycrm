@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CreateStageDto {
-    position: i64,
+    position: i32,
     title: String,
 }
 

@@ -5,12 +5,12 @@ use uuid::Uuid;
 #[derive(Serialize)]
 pub struct Stage {
     project_id: Uuid,
-    position: i64,
+    position: i32,
     title: String,
 }
 
 impl Stage {
-    pub fn new(project_id: Uuid, position: i64, title: String) -> Self {
+    pub fn new(project_id: Uuid, position: i32, title: String) -> Self {
         Self {
             project_id,
             position,
@@ -22,18 +22,18 @@ impl Stage {
 #[derive(Serialize)]
 pub struct DetailedStage {
     stage: Stage,
-    description: String,
-    deadline: DateTime<Local>,
-    cost: i64,
+    description: Option<String>,
+    deadline: Option<DateTime<Local>>,
+    cost: Option<i32>,
 }
 
 impl DetailedStage {
-    pub fn new(stage: Stage, description: String, deadline: DateTime<Local>, cost: i64) -> Self {
-        Self {
-            stage,
-            description,
-            deadline,
-            cost,
-        }
+    pub fn new(
+        stage: Stage,
+        description: Option<String>,
+        deadline: Option<DateTime<Local>>,
+        cost: Option<i32>,
+    ) -> Self {
+        Self { stage, description, deadline, cost }
     }
 }

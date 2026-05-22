@@ -157,6 +157,21 @@
   }
 }
 
+.bubblePos {
+  font-size: 12px;
+  font-weight: 700;
+  color: v.$accent;
+  background: v.$bg-secondary;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  order: 1;
+}
+
 .bubbleText {
   background: v.$bg-bubble;
   border-radius: v.$radius-bubble-out;
@@ -166,6 +181,7 @@
   color: v.$text-primary;
   transition: background v.$transition-fast;
   word-break: break-word;
+  order: 2;
 }
 
 .bubbleDelete {
@@ -197,6 +213,21 @@
   padding: 10px 12px;
   background: v.$bg-secondary;
   border-top: 1px solid v.$divider;
+}
+
+.posInput {
+  width: 56px;
+  height: 44px;
+  padding: 0 10px;
+  background: v.$bg-input;
+  border-radius: 22px;
+  font-size: 15px;
+  text-align: center;
+  flex-shrink: 0;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { -webkit-appearance: none; }
+  -moz-appearance: textfield;
 }
 
 .textInput {
