@@ -1,4 +1,4 @@
-use crate::model::stage::Stage;
+use crate::model::stage::{DetailedStage, Stage};
 use crate::repository::stage_repository::StageRepository;
 use uuid::Uuid;
 
@@ -37,9 +37,9 @@ impl StageService {
         &self,
         project_id: Uuid,
         stage_id: Uuid,
-    ) -> Result<Stage, sqlx::Error> {
+    ) -> Result<DetailedStage, sqlx::Error> {
         let row = self.repo.find_by_id(project_id, stage_id).await?;
-        let stage = Stage::new_from_row(row);
+        let stage = DetailedStage::new_from_row(row);
         Ok(stage)
     }
 
