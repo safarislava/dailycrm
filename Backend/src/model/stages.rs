@@ -32,7 +32,10 @@ impl Stages {
         .bind(project_id)
         .fetch_all(&self.pool)
         .await?;
-        Ok(rows.into_iter().map(|row| Stage::new(row.project_id, row.id, row.title)).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| Stage::new(row.project_id, row.id, row.title))
+            .collect())
     }
 
     pub async fn register(
@@ -55,15 +58,19 @@ impl Stages {
         project_id: Uuid,
         stage_id: Uuid,
     ) -> Result<DetailedStage, sqlx::Error> {
-        let row = sqlx::query_as::<_, StageRow>(
-            "SELECT * FROM stages WHERE project_id = $1 AND id = $2",
-        )
-        .bind(project_id)
-        .bind(stage_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let row =
+            sqlx::query_as::<_, StageRow>("SELECT * FROM stages WHERE project_id = $1 AND id = $2")
+                .bind(project_id)
+                .bind(stage_id)
+                .fetch_one(&self.pool)
+                .await?;
         let base = Stage::new(row.project_id, row.id, row.title);
-        Ok(DetailedStage::new(base, row.description, row.deadline, row.cost))
+        Ok(DetailedStage::new(
+            base,
+            row.description,
+            row.deadline,
+            row.cost,
+        ))
     }
 
     pub async fn remove(&self, project_id: Uuid, stage_id: Uuid) -> Result<(), sqlx::Error> {

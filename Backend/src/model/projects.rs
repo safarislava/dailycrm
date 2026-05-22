@@ -16,7 +16,10 @@ impl Projects {
         let rows = sqlx::query_as::<_, (Uuid, String)>("SELECT id, title FROM projects")
             .fetch_all(&self.pool)
             .await?;
-        Ok(rows.into_iter().map(|(id, title)| Project::new(id, title)).collect())
+        Ok(rows
+            .into_iter()
+            .map(|(id, title)| Project::new(id, title))
+            .collect())
     }
 
     pub async fn register(&self, title: &str) -> Result<(), sqlx::Error> {

@@ -11,7 +11,11 @@ pub struct Stage {
 
 impl Stage {
     pub fn new(project_id: Uuid, id: Uuid, title: String) -> Self {
-        Self { project_id, id, title }
+        Self {
+            project_id,
+            id,
+            title,
+        }
     }
 }
 
@@ -24,12 +28,12 @@ pub struct DetailedStage {
 }
 
 impl DetailedStage {
-    pub fn new(
-        stage: Stage,
-        description: String,
-        deadline: DateTime<Local>,
-        cost: i64,
-    ) -> Self {
-        Self { stage, description, deadline, cost }
+    pub fn new(stage: Stage, description: String, deadline: DateTime<Local>, cost: i64) -> Self {
+        Self {
+            stage,
+            description,
+            deadline,
+            cost,
+        }
     }
 }
