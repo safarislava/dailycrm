@@ -185,6 +185,36 @@
   &:hover {
     background: v.$bg-item-hover;
     .stageDelete { opacity: 1; }
+    .stageCheck { opacity: 1; }
+  }
+}
+
+.stageCompleted {
+  .stageTitle {
+    text-decoration: line-through;
+    opacity: 0.45;
+  }
+  .stageDeadline { opacity: 0.4; }
+  .stageCheck { opacity: 1; color: #7bc862; }
+}
+
+.stageCheck {
+  opacity: 0.35;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$text-secondary;
+  transition: opacity v.$transition-fast, color v.$transition-fast,
+    background v.$transition-fast;
+
+  &:hover {
+    opacity: 1 !important;
+    color: #7bc862;
+    background: rgba(123, 200, 98, 0.12);
   }
 }
 
@@ -366,4 +396,24 @@
 
   &[type='date'] { color-scheme: dark; }
   &[type='number'] { -moz-appearance: textfield; }
+}
+
+.completedBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(123, 200, 98, 0.15);
+  color: #7bc862;
+}
+
+.pendingBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: v.$bg-input;
+  color: v.$text-secondary;
 }

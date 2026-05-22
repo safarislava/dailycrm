@@ -113,6 +113,18 @@ export const crmApi = createApi({
       ],
     }),
 
+    updateStageCompleted: builder.mutation<void, { projectId: string; position: number; completed: boolean }>({
+      query: ({ projectId, position, completed }) => ({
+        url: `/projects/${projectId}/stages/${position}/completed`,
+        method: 'PATCH',
+        body: { completed },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+      ],
+    }),
+
   }),
 })
 
@@ -129,5 +141,6 @@ export const {
   useUpdateStageDeadlineMutation,
   useUpdateStageDescriptionMutation,
   useUpdateStageCostMutation,
+  useUpdateStageCompletedMutation,
   useRenameProjectMutation,
 } = crmApi

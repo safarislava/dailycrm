@@ -8,11 +8,12 @@ pub struct Stage {
     position: i32,
     title: String,
     deadline: Option<NaiveDateTime>,
+    completed: bool,
 }
 
 impl Stage {
-    pub fn new(project_id: Uuid, position: i32, title: String, deadline: Option<NaiveDateTime>) -> Self {
-        Self { project_id, position, title, deadline }
+    pub fn new(project_id: Uuid, position: i32, title: String, deadline: Option<NaiveDateTime>, completed: bool) -> Self {
+        Self { project_id, position, title, deadline, completed }
     }
 }
 

@@ -14,6 +14,7 @@ import {
   useUpdateStageDeadlineMutation,
   useUpdateStageDescriptionMutation,
   useUpdateStageCostMutation,
+  useUpdateStageCompletedMutation,
   useRenameProjectMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
@@ -44,6 +45,7 @@ export default function MainPanel() {
   const [updateDeadline]    = useUpdateStageDeadlineMutation()
   const [updateDescription] = useUpdateStageDescriptionMutation()
   const [updateCost]        = useUpdateStageCostMutation()
+  const [updateCompleted]   = useUpdateStageCompletedMutation()
   const [renameProject]     = useRenameProjectMutation()
 
   const [title, setTitle]       = useState('')
@@ -143,6 +145,20 @@ export default function MainPanel() {
             <div className={styles.detailCard}>
               <div className={styles.fields}>
                 <Field label="Позиция" value={String(detail.stage.position)} />
+                <div className={`${styles.field} ${styles.fieldEditable}`}
+                  onClick={() => updateCompleted({
+                    projectId: projectId!,
+                    position: Number(stagePos),
+                    completed: !detail.stage.completed,
+                  })}
+                >
+                  <span className={styles.fieldLabel}>Выполнен</span>
+                  <span className={styles.fieldValue}>
+                    <span className={detail.stage.completed ? styles.completedBadge : styles.pendingBadge}>
+                      {detail.stage.completed ? 'Да' : 'Нет'}
+                    </span>
+                  </span>
+                </div>
                 <EditableField
                   label="Название"
                   displayValue={detail.stage.title}
@@ -252,10 +268,19 @@ export default function MainPanel() {
         {stages.map((stage) => (
           <div
             key={stage.position}
-            className={styles.stageItem}
+            className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''}`}
             onClick={() => dispatch(selectStage(String(stage.position)))}
           >
-            <span className={styles.stagePos}>{stage.position}</span>
+            <button
+              className={styles.stageCheck}
+              onClick={(e) => {
+                e.stopPropagation()
+                updateCompleted({ projectId: projectId!, position: stage.position, completed: !stage.completed })
+              }}
+              title={stage.completed ? 'Отметить незавершённым' : 'Отметить завершённым'}
+            >
+              {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
+            </button>
             <div className={styles.stageInfo}>
               <span className={styles.stageTitle}>{stage.title}</span>
               {stage.deadline && (
@@ -510,6 +535,21 @@ function ListIcon() {
       <circle cx="3" cy="6" r="1.2" fill="currentColor"/>
       <circle cx="3" cy="12" r="1.2" fill="currentColor"/>
       <circle cx="3" cy="18" r="1.2" fill="currentColor"/>
+    </svg>
+  )
+}
+function CircleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  )
+}
+function CheckCircleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+      <path d="m8 12 3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }

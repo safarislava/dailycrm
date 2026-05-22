@@ -9,6 +9,7 @@ export interface Stage {
   position: number
   title: string
   deadline: string | null
+  completed: boolean
 }
 
 export interface DetailedStage {

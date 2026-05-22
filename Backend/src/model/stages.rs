@@ -11,6 +11,7 @@ struct StageRow {
     description: Option<String>,
     deadline: Option<NaiveDateTime>,
     cost: Option<i32>,
+    completed: bool,
 }
 
 #[derive(Clone)]
@@ -32,7 +33,7 @@ impl Stages {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|row| Stage::new(row.project_id, row.position, row.title, row.deadline))
+            .map(|row| Stage::new(row.project_id, row.position, row.title, row.deadline, row.completed))
             .collect())
     }
 
@@ -88,7 +89,7 @@ impl Stages {
         .bind(position)
         .fetch_one(&self.pool)
         .await?;
-        let base = Stage::new(row.project_id, row.position, row.title, row.deadline);
+        let base = Stage::new(row.project_id, row.position, row.title, row.deadline, row.completed);
         Ok(DetailedStage::new(base, row.description, row.cost))
     }
 
@@ -149,6 +150,21 @@ impl Stages {
             .bind(project_id)
             .bind(position)
             .bind(cost)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn update_completed(
+        &self,
+        project_id: Uuid,
+        position: i32,
+        completed: bool,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE stages SET completed = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(completed)
             .execute(&self.pool)
             .await?;
         Ok(())

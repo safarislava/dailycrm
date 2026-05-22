@@ -89,6 +89,10 @@ fn configure_api(config: &mut web::ServiceConfig) {
                     .service(
                         web::resource("/{project_id}/stages/{stage_id}/cost")
                             .patch(endpoint::projects::id::stages::position::cost::patch),
+                    )
+                    .service(
+                        web::resource("/{project_id}/stages/{stage_id}/completed")
+                            .patch(endpoint::projects::id::stages::position::completed::patch),
                     ),
             )
             .service(
