@@ -46,12 +46,14 @@ impl Stages {
     }
 
     pub async fn append(&self, project_id: Uuid, title: String) -> Result<(), sqlx::Error> {
-        let max: Option<i32> =
-            sqlx::query_scalar("SELECT MAX(position) FROM stages WHERE project_id = $1")
+        #[derive(sqlx::FromRow)]
+        struct Row { max: Option<i32> }
+        let row: Row =
+            sqlx::query_as("SELECT MAX(position) AS max FROM stages WHERE project_id = $1")
                 .bind(project_id)
                 .fetch_one(&self.pool)
                 .await?;
-        let position = max.unwrap_or(0) + 1;
+        let position = row.max.unwrap_or(0) + 1;
         sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
             .bind(project_id)
             .bind(position)

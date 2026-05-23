@@ -11,6 +11,7 @@ impl Users {
         Self { pool }
     }
 
+    #[allow(dead_code)]
     pub async fn register(&self, username: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row { id: Uuid }
