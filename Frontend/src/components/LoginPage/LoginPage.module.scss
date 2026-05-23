@@ -1,103 +1,107 @@
+@use '../../styles/variables' as v;
+
 .page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #1a1a2e;
+  background: v.$bg-primary;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: 320px;
-  padding: 36px 32px;
-  background: #16213e;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  gap: 10px;
+  width: 360px;
+  padding: 40px 32px 32px;
+  background: v.$bg-secondary;
+  border-radius: v.$radius-md;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
 .title {
-  margin: 0 0 4px;
-  font-size: 28px;
+  margin: 0 0 16px;
+  font-size: 26px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: v.$text-primary;
   text-align: center;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .tabs {
   display: flex;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #2d3748;
-  margin-bottom: 4px;
+  background: v.$bg-primary;
+  border-radius: v.$radius-sm;
+  padding: 3px;
+  margin-bottom: 6px;
 }
 
 .tab {
   flex: 1;
-  padding: 8px;
+  padding: 7px;
   background: transparent;
   border: none;
-  color: #718096;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background v.$transition-fast, color v.$transition-fast;
 
   &:hover {
-    color: #e2e8f0;
+    color: v.$text-primary;
   }
 }
 
 .tabActive {
-  background: #2d3748;
-  color: #e2e8f0;
+  background: v.$bg-secondary;
+  color: v.$text-primary;
+  font-weight: 500;
 }
 
 .input {
-  padding: 10px 14px;
-  background: #0f3460;
-  border: 1px solid #2d3748;
-  border-radius: 8px;
-  color: #e2e8f0;
+  padding: 11px 14px;
+  background: v.$bg-input;
+  border: 1px solid transparent;
+  border-radius: v.$radius-sm;
+  color: v.$text-primary;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color v.$transition-fast;
 
   &::placeholder {
-    color: #4a5568;
+    color: v.$text-secondary;
   }
 
   &:focus {
-    border-color: #4299e1;
+    border-color: v.$accent;
   }
 }
 
 .error {
-  margin: 0;
+  margin: 2px 0 0;
   font-size: 13px;
-  color: #fc8181;
+  color: #e53935;
   text-align: center;
 }
 
 .submit {
-  margin-top: 4px;
-  padding: 11px;
-  background: #4299e1;
+  margin-top: 6px;
+  padding: 12px;
+  background: v.$accent;
   border: none;
-  border-radius: 8px;
+  border-radius: v.$radius-sm;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background v.$transition-fast;
 
   &:hover:not(:disabled) {
-    background: #3182ce;
+    background: v.$accent-hover;
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }
