@@ -18,11 +18,7 @@ export interface DetailedStage {
   cost: number | null
 }
 
-export interface DeadlineItem {
-  project_id: string
+export interface StageWithProjectTitle {
+  stage: Stage
   project_title: string
-  position: number
-  stage_title: string
-  deadline: string
-  completed: boolean
 }

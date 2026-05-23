@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { Project, Stage, DetailedStage, DeadlineItem } from '../types'
+import type { Project, Stage, DetailedStage, StageWithProjectTitle } from '../types'
 
 export const crmApi = createApi({
   reducerPath: 'crmApi',
@@ -7,7 +7,7 @@ export const crmApi = createApi({
   tagTypes: ['Project', 'Stage', 'Deadline'],
   endpoints: (builder) => ({
 
-    getDeadlines: builder.query<DeadlineItem[], void>({
+    getDeadlines: builder.query<StageWithProjectTitle[], void>({
       query: () => '/deadlines',
       providesTags: ['Deadline'],
     }),

@@ -76,11 +76,11 @@ export default function Sidebar() {
   const deadlineItems = useMemo(() => {
     const cutoff = Date.now() + 30 * 86_400_000
     return allDeadlines
-      .filter((d) => !d.completed && new Date(d.deadline).getTime() <= cutoff)
+      .filter((d) => !d.stage.completed && new Date(d.stage.deadline!).getTime() <= cutoff)
   }, [allDeadlines])
 
   const overdueCount = useMemo(
-    () => deadlineItems.filter((d) => deadlineDiffDays(d.deadline) < 0).length,
+    () => deadlineItems.filter((d) => deadlineDiffDays(d.stage.deadline!) < 0).length,
     [deadlineItems],
   )
 
@@ -168,22 +168,22 @@ export default function Sidebar() {
           ) : (
             deadlineItems.map((item) => (
               <button
-                key={`${item.project_id}-${item.position}`}
+                key={`${item.stage.project_id}-${item.stage.position}`}
                 className={styles.deadlineItem}
                 onClick={() => {
-                  dispatch(selectProject(item.project_id))
-                  dispatch(selectStage(String(item.position)))
+                  dispatch(selectProject(item.stage.project_id))
+                  dispatch(selectStage(String(item.stage.position)))
                   setDeadlinesOpen(false)
                 }}
               >
                 <span
-                  className={`${styles.deadlineDate} ${styles[`deadline_${deadlineUrgency(item.deadline)}`]}`}
+                  className={`${styles.deadlineDate} ${styles[`deadline_${deadlineUrgency(item.stage.deadline!)}`]}`}
                 >
-                  {formatDeadlineDate(item.deadline)}
+                  {formatDeadlineDate(item.stage.deadline!)}
                 </span>
                 <div className={styles.deadlineInfo}>
                   <span className={styles.deadlineProject}>{item.project_title}</span>
-                  <span className={styles.deadlineStage}>{item.stage_title}</span>
+                  <span className={styles.deadlineStage}>{item.stage.title}</span>
                 </div>
               </button>
             ))
