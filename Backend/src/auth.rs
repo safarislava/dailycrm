@@ -24,7 +24,7 @@ fn jwt_secret() -> String {
 }
 
 pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 15 * 60) as usize; // 15 minutes
+    let exp = (Utc::now().timestamp() + 15 * 60) as usize;
     encode(
         &Header::default(),
         &Claims { sub: user_id, exp },
@@ -33,7 +33,7 @@ pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors
 }
 
 pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize; // 7 days
+    let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize;
     encode(
         &Header::default(),
         &Claims { sub: user_id, exp },

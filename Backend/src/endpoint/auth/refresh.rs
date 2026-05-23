@@ -2,8 +2,8 @@ use crate::auth::{create_access_token, verify_token};
 use crate::endpoint::auth::AuthResponse;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 
-pub async fn post(req: HttpRequest) -> impl Responder {
-    let cookie = match req.cookie("refresh_token") {
+pub async fn post(request: HttpRequest) -> impl Responder {
+    let cookie = match request.cookie("refresh_token") {
         Some(c) => c,
         None => return HttpResponse::Unauthorized().body("No refresh token"),
     };
