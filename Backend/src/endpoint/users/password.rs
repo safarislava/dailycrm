@@ -26,14 +26,13 @@ pub async fn patch(
     };
 
     let current = body.current_password.clone();
-    let valid = match actix_web::rt::task::spawn_blocking(move || {
-        bcrypt::verify(current, &stored_hash)
-    })
-    .await
-    {
-        Ok(Ok(v)) => v,
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
+    let valid =
+        match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(current, &stored_hash))
+            .await
+        {
+            Ok(Ok(v)) => v,
+            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+        };
 
     if !valid {
         return HttpResponse::Unauthorized().body("Wrong current password");

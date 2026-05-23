@@ -19,26 +19,23 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
     };
 
     let password = body.password.clone();
-    let valid = match actix_web::rt::task::spawn_blocking(move || {
-        bcrypt::verify(password, &stored_hash)
-    })
-    .await
-    {
-        Ok(Ok(v)) => v,
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
+    let valid =
+        match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(password, &stored_hash))
+            .await
+        {
+            Ok(Ok(v)) => v,
+            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+        };
 
     if !valid {
         return HttpResponse::Unauthorized().body("Invalid credentials");
     }
 
-    let (access_token, refresh_token) = match (
-        create_access_token(user_id),
-        create_refresh_token(user_id),
-    ) {
-        (Ok(at), Ok(rt)) => (at, rt),
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
+    let (access_token, refresh_token) =
+        match (create_access_token(user_id), create_refresh_token(user_id)) {
+            (Ok(at), Ok(rt)) => (at, rt),
+            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+        };
 
     let cookie = Cookie::build("refresh_token", refresh_token)
         .http_only(true)

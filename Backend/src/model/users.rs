@@ -14,7 +14,9 @@ impl Users {
     #[allow(dead_code)]
     pub async fn register(&self, username: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row { id: Uuid }
+        struct Row {
+            id: Uuid,
+        }
         let row: Row = sqlx::query_as(
             "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id",
         )
@@ -34,18 +36,19 @@ impl Users {
             id: Uuid,
             password_hash: String,
         }
-        let row = sqlx::query_as::<_, Row>(
-            "SELECT id, password_hash FROM users WHERE username = $1",
-        )
-        .bind(username)
-        .fetch_optional(&self.pool)
-        .await?;
+        let row =
+            sqlx::query_as::<_, Row>("SELECT id, password_hash FROM users WHERE username = $1")
+                .bind(username)
+                .fetch_optional(&self.pool)
+                .await?;
         Ok(row.map(|r| (r.id, r.password_hash)))
     }
 
     pub async fn username_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row { username: String }
+        struct Row {
+            username: String,
+        }
         let row = sqlx::query_as::<_, Row>("SELECT username FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
@@ -55,7 +58,9 @@ impl Users {
 
     pub async fn password_hash_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row { password_hash: String }
+        struct Row {
+            password_hash: String,
+        }
         let row = sqlx::query_as::<_, Row>("SELECT password_hash FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)

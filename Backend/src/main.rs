@@ -2,13 +2,17 @@ mod auth;
 mod endpoint;
 mod model;
 mod state;
+mod storage;
 
 use crate::auth::JwtMiddleware;
+use crate::model::attachments::Attachments;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::stages::Stages;
 use crate::model::users::Users;
 use crate::state::AppState;
+use crate::storage::Storage;
+
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web};
 use sqlx::postgres::PgPoolOptions;
@@ -31,11 +35,15 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to migrate the database");
 
+    let storage = Storage::new();
+    storage.ensure_bucket().await;
+
     let state = web::Data::new(AppState {
         users: Users::new(pool.clone()),
         projects: Projects::new(pool.clone()),
         stages: Stages::new(pool.clone()),
         invites: Invites::new(pool.clone()),
+        attachments: Attachments::new(pool.clone(), storage),
     });
 
     HttpServer::new(move || {
@@ -113,6 +121,15 @@ fn configure_api(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/completed")
                                     .patch(endpoint::projects::id::stages::position::completed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/attachments")
+                                    .get(endpoint::projects::id::stages::position::attachments::list::get)
+                                    .post(endpoint::projects::id::stages::position::attachments::upload::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}")
+                                    .delete(endpoint::projects::id::stages::position::attachments::delete::delete),
                             ),
                     ),
             ),

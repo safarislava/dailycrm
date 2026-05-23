@@ -42,7 +42,8 @@ pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::error
 }
 
 pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<uuid::Uuid> {
-    request.headers()
+    request
+        .headers()
         .get("Authorization")
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))

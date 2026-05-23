@@ -5,7 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
-import type { Project, Stage, DetailedStage, StageWithProjectTitle } from '../types'
+import type { Project, Stage, DetailedStage, StageWithProjectTitle, Attachment } from '../types'
 import { setAccessToken, setInitialized, logout } from './authSlice'
 
 const baseQuery = fetchBaseQuery({
@@ -44,7 +44,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const crmApi = createApi({
   reducerPath: 'crmApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Project', 'Stage', 'Deadline', 'Me'],
+  tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment'],
   endpoints: (builder) => ({
 
     register: builder.mutation<void, { username: string; password: string; invite_token: string }>({
@@ -199,6 +199,32 @@ export const crmApi = createApi({
       ],
     }),
 
+    listAttachments: builder.query<Attachment[], { projectId: string; position: number }>({
+      query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}/attachments`,
+      providesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Attachment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+    uploadAttachment: builder.mutation<{ id: string }, { projectId: string; position: number; file: File }>({
+      query: ({ projectId, position, file }) => {
+        const body = new FormData()
+        body.append('file', file)
+        return { url: `/projects/${projectId}/stages/${position}/attachments`, method: 'POST', body }
+      },
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Attachment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+    deleteAttachment: builder.mutation<void, { projectId: string; position: number; attachmentId: string }>({
+      query: ({ projectId, position, attachmentId }) => ({
+        url: `/projects/${projectId}/stages/${position}/attachments/${attachmentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Attachment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+
     updateStageCompleted: builder.mutation<void, { projectId: string; position: number; completed: boolean }>({
       query: ({ projectId, position, completed }) => ({
         url: `/projects/${projectId}/stages/${position}/completed`,
@@ -217,6 +243,9 @@ export const crmApi = createApi({
 })
 
 export const {
+  useListAttachmentsQuery,
+  useUploadAttachmentMutation,
+  useDeleteAttachmentMutation,
   useRegisterMutation,
   useCreateInviteMutation,
   useLoginMutation,

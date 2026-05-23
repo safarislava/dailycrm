@@ -19,13 +19,14 @@ impl Invites {
 
     pub async fn create(&self, created_by: Uuid) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row { token: Uuid }
-        let row: Row = sqlx::query_as(
-            "INSERT INTO invites (created_by) VALUES ($1) RETURNING token",
-        )
-        .bind(created_by)
-        .fetch_one(&self.pool)
-        .await?;
+        struct Row {
+            token: Uuid,
+        }
+        let row: Row =
+            sqlx::query_as("INSERT INTO invites (created_by) VALUES ($1) RETURNING token")
+                .bind(created_by)
+                .fetch_one(&self.pool)
+                .await?;
         Ok(row.token)
     }
 

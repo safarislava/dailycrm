@@ -47,7 +47,9 @@ impl Stages {
 
     pub async fn append(&self, project_id: Uuid, title: String) -> Result<(), sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row { max: Option<i32> }
+        struct Row {
+            max: Option<i32>,
+        }
         let row: Row =
             sqlx::query_as("SELECT MAX(position) AS max FROM stages WHERE project_id = $1")
                 .bind(project_id)

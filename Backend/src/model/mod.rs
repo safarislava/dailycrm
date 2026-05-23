@@ -1,3 +1,5 @@
+pub mod attachment;
+pub mod attachments;
 pub mod invites;
 pub mod project;
 pub mod projects;

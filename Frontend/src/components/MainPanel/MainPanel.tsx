@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { selectProject, selectStage } from '../../store/uiSlice'
@@ -16,6 +16,9 @@ import {
   useUpdateStageCostMutation,
   useUpdateStageCompletedMutation,
   useRenameProjectMutation,
+  useListAttachmentsQuery,
+  useUploadAttachmentMutation,
+  useDeleteAttachmentMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
@@ -47,6 +50,24 @@ export default function MainPanel() {
   const [updateCost]        = useUpdateStageCostMutation()
   const [updateCompleted]   = useUpdateStageCompletedMutation()
   const [renameProject]     = useRenameProjectMutation()
+
+  const { data: attachments = [] } = useListAttachmentsQuery(
+    { projectId: projectId!, position: Number(stagePos) },
+    { skip: !projectId || stagePos === null },
+  )
+  const [uploadAttachment, { isLoading: uploading }] = useUploadAttachmentMutation()
+  const [deleteAttachment] = useDeleteAttachmentMutation()
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file || !projectId || stagePos === null) return
+      await uploadAttachment({ projectId, position: Number(stagePos), file })
+      e.target.value = ''
+    },
+    [projectId, stagePos, uploadAttachment],
+  )
 
   const [title, setTitle]       = useState('')
   const [position, setPosition] = useState('')
@@ -210,6 +231,60 @@ export default function MainPanel() {
                     })
                   }}
                 />
+              </div>
+
+              <div className={styles.attachmentsSection}>
+                <div className={styles.attachmentsHeader}>
+                  <span className={styles.attachmentsSectionLabel}>Файлы</span>
+                  <button
+                    className={styles.attachUploadBtn}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    title="Прикрепить файл"
+                  >
+                    {uploading ? <SpinnerIcon /> : <PaperclipIcon />}
+                    {uploading ? 'Загрузка…' : 'Прикрепить'}
+                  </button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className={styles.fileInputHidden}
+                  onChange={handleFileChange}
+                />
+                {attachments.length === 0 && !uploading && (
+                  <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>
+                )}
+                {attachments.map((a) => (
+                  <div key={a.id} className={styles.attachItem}>
+                    <FileIcon mime={a.mime_type} />
+                    <div className={styles.attachInfo}>
+                      <a
+                        className={styles.attachName}
+                        href={a.download_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download={a.filename}
+                      >
+                        {a.filename}
+                      </a>
+                      <span className={styles.attachMeta}>{formatBytes(a.size_bytes)}</span>
+                    </div>
+                    <button
+                      className={styles.attachDeleteBtn}
+                      title="Удалить файл"
+                      onClick={() =>
+                        deleteAttachment({
+                          projectId: projectId!,
+                          position: Number(stagePos),
+                          attachmentId: a.id,
+                        })
+                      }
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -473,6 +548,13 @@ function EditableField({
   )
 }
 
+// ── Helpers ────────────────────────────────────────────
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1_048_576).toFixed(1)} MB`
+}
+
 // ── Icons ──────────────────────────────────────────────
 function ArrowLeftIcon() {
   return (
@@ -550,6 +632,33 @@ function CheckCircleIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
       <path d="m8 12 3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function PaperclipIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function FileIcon({ mime }: { mime: string }) {
+  const isImage = mime.startsWith('image/')
+  const isPdf = mime === 'application/pdf'
+  const color = isImage ? '#65aadd' : isPdf ? '#e53935' : '#708499'
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color }}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function SpinnerIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.8s linear infinite' }}>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeDasharray="40 20" strokeLinecap="round"/>
     </svg>
   )
 }

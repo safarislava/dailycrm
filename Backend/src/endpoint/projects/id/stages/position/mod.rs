@@ -1,3 +1,4 @@
+pub mod attachments;
 pub mod completed;
 pub mod cost;
 pub mod create;
