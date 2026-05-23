@@ -180,7 +180,7 @@ export default function MainPanel() {
                     await updateDeadline({
                       projectId: projectId!,
                       position: Number(stagePos),
-                      deadline: v ? `${v}T00:00:00` : null,
+                      deadline: v ? `${v}T00:00:00Z` : null,
                     })
                   }}
                 />

@@ -209,6 +209,7 @@ export const crmApi = createApi({
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
         { type: 'Stage' as const, id: projectId },
         'Deadline',
+        'Project',
       ],
     }),
 
