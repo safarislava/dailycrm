@@ -89,6 +89,70 @@
   pointer-events: none;
 }
 
+// ── Invite popup ────────────────────────────────────────
+.invitePopup {
+  position: absolute;
+  top: v.$header-height;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: v.$bg-secondary;
+  border-bottom: 1px solid v.$divider;
+  padding: 12px 16px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.inviteLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: v.$text-secondary;
+  margin-bottom: 8px;
+}
+
+.inviteRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: v.$bg-input;
+  border-radius: v.$radius-sm;
+  padding: 8px 10px;
+}
+
+.inviteToken {
+  flex: 1;
+  font-size: 12px;
+  font-family: monospace;
+  color: v.$text-primary;
+  word-break: break-all;
+  user-select: all;
+}
+
+.inviteCopy {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
+.inviteHint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: v.$text-secondary;
+  line-height: 1.4;
+}
+
 // ── Deadlines dropdown ───────────────────────────────────
 .deadlineDropdown {
   position: absolute;

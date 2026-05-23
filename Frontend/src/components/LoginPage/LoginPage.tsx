@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteToken, setInviteToken] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const [login, { isLoading: loggingIn }] = useLoginMutation()
@@ -22,15 +23,21 @@ export default function LoginPage() {
     setError(null)
 
     if (mode === 'register') {
-      const result = await register({ username: username.trim(), password })
+      const result = await register({
+        username: username.trim(),
+        password,
+        invite_token: inviteToken.trim(),
+      })
       if ('error' in result) {
         const status = (result.error as { status?: number })?.status
         if (status === 409) setError('Пользователь уже существует')
+        else if (status === 403) setError('Недействительный или просроченный инвайт')
         else setError('Что-то пошло не так')
         return
       }
       setMode('login')
       setPassword('')
+      setInviteToken('')
       return
     }
 
@@ -81,6 +88,16 @@ export default function LoginPage() {
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           required
         />
+        {mode === 'register' && (
+          <input
+            className={styles.input}
+            placeholder="Инвайт-токен"
+            value={inviteToken}
+            onChange={(e) => setInviteToken(e.target.value)}
+            autoComplete="off"
+            required
+          />
+        )}
         {error && <p className={styles.error}>{error}</p>}
         <button className={styles.submit} type="submit" disabled={loading}>
           {loading ? '…' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}

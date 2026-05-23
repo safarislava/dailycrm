@@ -12,14 +12,16 @@ impl Users {
     }
 
     pub async fn register(&self, username: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
-        let id: Uuid = sqlx::query_scalar(
+        #[derive(sqlx::FromRow)]
+        struct Row { id: Uuid }
+        let row: Row = sqlx::query_as(
             "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id",
         )
         .bind(username)
         .bind(password_hash)
         .fetch_one(&self.pool)
         .await?;
-        Ok(id)
+        Ok(row.id)
     }
 
     pub async fn find_by_username(

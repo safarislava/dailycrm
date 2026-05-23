@@ -1,10 +1,13 @@
+use crate::model::invites::RegisterWithInviteResult;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct CreateUserDto {
     username: String,
     password: String,
+    invite_token: Uuid,
 }
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
@@ -18,9 +21,18 @@ pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) 
         _ => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    match state.users.register(&body.username, &password_hash).await {
-        Ok(_) => HttpResponse::Created().finish(),
-        Err(sqlx::Error::Database(_)) => HttpResponse::Conflict().body("User already exists"),
+    match state
+        .invites
+        .consume_and_register(body.invite_token, &body.username, &password_hash)
+        .await
+    {
+        Ok(RegisterWithInviteResult::Ok) => HttpResponse::Created().finish(),
+        Ok(RegisterWithInviteResult::InvalidInvite) => {
+            HttpResponse::Forbidden().body("Invalid or expired invite")
+        }
+        Ok(RegisterWithInviteResult::UserExists) => {
+            HttpResponse::Conflict().body("User already exists")
+        }
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
 }

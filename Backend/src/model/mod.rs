@@ -1,3 +1,4 @@
+pub mod invites;
 pub mod project;
 pub mod projects;
 pub mod stage;

@@ -47,8 +47,11 @@ export const crmApi = createApi({
   tagTypes: ['Project', 'Stage', 'Deadline'],
   endpoints: (builder) => ({
 
-    register: builder.mutation<void, { username: string; password: string }>({
+    register: builder.mutation<void, { username: string; password: string; invite_token: string }>({
       query: (body) => ({ url: '/users', method: 'POST', body }),
+    }),
+    createInvite: builder.mutation<{ token: string }, void>({
+      query: () => ({ url: '/invites', method: 'POST' }),
     }),
     login: builder.mutation<{ access_token: string }, { username: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -202,6 +205,7 @@ export const crmApi = createApi({
 
 export const {
   useRegisterMutation,
+  useCreateInviteMutation,
   useLoginMutation,
   useRefreshMutation,
   useLogoutApiMutation,

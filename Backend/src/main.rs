@@ -4,6 +4,7 @@ mod model;
 mod state;
 
 use crate::auth::JwtMiddleware;
+use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::stages::Stages;
 use crate::model::users::Users;
@@ -34,6 +35,7 @@ async fn main() -> std::io::Result<()> {
         users: Users::new(pool.clone()),
         projects: Projects::new(pool.clone()),
         stages: Stages::new(pool.clone()),
+        invites: Invites::new(pool.clone()),
     });
 
     HttpServer::new(move || {
@@ -54,6 +56,11 @@ fn configure_api(config: &mut web::ServiceConfig) {
             .service(web::resource("/auth/refresh").post(endpoint::auth::refresh::post))
             .service(web::resource("/auth/logout").post(endpoint::auth::logout::post))
             .service(web::resource("/users").post(endpoint::users::create::create))
+            .service(
+                web::scope("")
+                    .wrap(JwtMiddleware)
+                    .service(web::resource("/invites").post(endpoint::invites::create::post)),
+            )
             .service(
                 web::scope("")
                     .wrap(JwtMiddleware)
