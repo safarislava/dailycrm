@@ -1,4 +1,4 @@
-use crate::model::stage::{DeadlineItem, DetailedStage, Stage};
+use crate::model::stage::{DetailedStage, Stage, StageWithProjectTitle};
 use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -33,7 +33,15 @@ impl Stages {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|row| Stage::new(row.project_id, row.position, row.title, row.deadline, row.completed))
+            .map(|row| {
+                Stage::new(
+                    row.project_id,
+                    row.position,
+                    row.title,
+                    row.deadline,
+                    row.completed,
+                )
+            })
             .collect())
     }
 
@@ -89,7 +97,13 @@ impl Stages {
         .bind(position)
         .fetch_one(&self.pool)
         .await?;
-        let base = Stage::new(row.project_id, row.position, row.title, row.deadline, row.completed);
+        let base = Stage::new(
+            row.project_id,
+            row.position,
+            row.title,
+            row.deadline,
+            row.completed,
+        );
         Ok(DetailedStage::new(base, row.description, row.cost))
     }
 
@@ -129,14 +143,12 @@ impl Stages {
         position: i32,
         description: Option<String>,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2",
-        )
-        .bind(project_id)
-        .bind(position)
-        .bind(description)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(description)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 
@@ -170,7 +182,7 @@ impl Stages {
         Ok(())
     }
 
-    pub async fn deadlines(&self) -> Result<Vec<DeadlineItem>, sqlx::Error> {
+    pub async fn deadlines(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
@@ -192,13 +204,17 @@ impl Stages {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|r| DeadlineItem {
-                project_id: r.project_id,
-                project_title: r.project_title,
-                position: r.position,
-                stage_title: r.stage_title,
-                deadline: r.deadline,
-                completed: r.completed,
+            .map(|r| {
+                StageWithProjectTitle::new(
+                    Stage::new(
+                        r.project_id,
+                        r.position,
+                        r.stage_title,
+                        Some(r.deadline),
+                        r.completed,
+                    ),
+                    r.project_title,
+                )
             })
             .collect())
     }

@@ -12,19 +12,36 @@ pub struct Stage {
 }
 
 impl Stage {
-    pub fn new(project_id: Uuid, position: i32, title: String, deadline: Option<NaiveDateTime>, completed: bool) -> Self {
-        Self { project_id, position, title, deadline, completed }
+    pub fn new(
+        project_id: Uuid,
+        position: i32,
+        title: String,
+        deadline: Option<NaiveDateTime>,
+        completed: bool,
+    ) -> Self {
+        Self {
+            project_id,
+            position,
+            title,
+            deadline,
+            completed,
+        }
     }
 }
 
 #[derive(Serialize)]
-pub struct DeadlineItem {
-    pub project_id: Uuid,
-    pub project_title: String,
-    pub position: i32,
-    pub stage_title: String,
-    pub deadline: NaiveDateTime,
-    pub completed: bool,
+pub struct StageWithProjectTitle {
+    stage: Stage,
+    project_title: String,
+}
+
+impl StageWithProjectTitle {
+    pub fn new(stage: Stage, project_title: String) -> Self {
+        Self {
+            stage,
+            project_title,
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -36,6 +53,10 @@ pub struct DetailedStage {
 
 impl DetailedStage {
     pub fn new(stage: Stage, description: Option<String>, cost: Option<i32>) -> Self {
-        Self { stage, description, cost }
+        Self {
+            stage,
+            description,
+            cost,
+        }
     }
 }
