@@ -35,7 +35,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/crm
       JWT_SECRET: ${JWT_SECRET}
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_PUBLIC_URL: http://${SERVER_HOST}:9000
+      MINIO_PUBLIC_URL: http://${DOMAIN}:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
 
@@ -45,9 +45,25 @@ services:
     restart: always
     depends_on:
       - backend
+
+  caddy:
+    image: caddy:alpine
+    container_name: crm_caddy
+    restart: always
+    depends_on:
+      - frontend
     ports:
       - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   pgdata:
   minio_data:
+  caddy_data:
+  caddy_config:
