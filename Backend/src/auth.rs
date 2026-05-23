@@ -41,6 +41,15 @@ pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::error
     )
 }
 
+pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<uuid::Uuid> {
+    request.headers()
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .and_then(|token| verify_token(token).ok())
+        .map(|claims| claims.sub)
+}
+
 pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     let data = decode::<Claims>(
         token,

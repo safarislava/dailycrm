@@ -42,4 +42,46 @@ impl Users {
         .await?;
         Ok(row.map(|r| (r.id, r.password_hash)))
     }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row { username: String }
+        let row = sqlx::query_as::<_, Row>("SELECT username FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(row.map(|r| r.username))
+    }
+
+    pub async fn find_hash_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row { password_hash: String }
+        let row = sqlx::query_as::<_, Row>("SELECT password_hash FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(row.map(|r| r.password_hash))
+    }
+
+    pub async fn update_username(&self, id: Uuid, username: &str) -> Result<bool, sqlx::Error> {
+        let rows = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
+            .bind(id)
+            .bind(username)
+            .execute(&self.pool)
+            .await;
+        match rows {
+            Ok(_) => Ok(true),
+            Err(sqlx::Error::Database(_)) => Ok(false),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn update_password(&self, id: Uuid, new_hash: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE users SET password_hash = $2 WHERE id = $1")
+            .bind(id)
+            .bind(new_hash)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 }

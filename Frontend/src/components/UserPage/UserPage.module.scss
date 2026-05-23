@@ -1,0 +1,125 @@
+@use '../../styles/variables' as v;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: v.$bg-primary;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: v.$header-height;
+  min-height: v.$header-height;
+  border-bottom: 1px solid v.$divider;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: v.$text-secondary;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: v.$text-primary;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  max-width: 480px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: v.$text-secondary;
+}
+
+.current {
+  font-size: 14px;
+  color: v.$text-secondary;
+
+  strong {
+    color: v.$text-primary;
+    font-weight: 500;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input {
+  height: 40px;
+  padding: 0 14px;
+  background: v.$bg-input;
+  border: 1px solid transparent;
+  border-radius: v.$radius-sm;
+  color: v.$text-primary;
+  font-size: 14px;
+  outline: none;
+  transition: border-color v.$transition-fast;
+
+  &::placeholder { color: v.$text-secondary; }
+  &:focus { border-color: v.$accent; }
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #fc8181;
+}
+
+.success {
+  margin: 0;
+  font-size: 13px;
+  color: #68d391;
+}
+
+.btn {
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 20px;
+  background: v.$accent;
+  color: #fff;
+  border-radius: v.$radius-sm;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background v.$transition-fast;
+
+  &:hover:not(:disabled) { background: v.$accent-hover; }
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.divider {
+  height: 1px;
+  background: v.$divider;
+  margin: 24px 0;
+}

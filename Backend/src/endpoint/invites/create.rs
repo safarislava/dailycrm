@@ -1,16 +1,9 @@
-use crate::auth::verify_token;
+use crate::auth::user_id_from_request;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
-    let user_id = match request
-        .headers()
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .and_then(|token| verify_token(token).ok())
-        .map(|claims| claims.sub)
-    {
+    let user_id = match user_id_from_request(&request) {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };

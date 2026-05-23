@@ -44,7 +44,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const crmApi = createApi({
   reducerPath: 'crmApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Project', 'Stage', 'Deadline'],
+  tagTypes: ['Project', 'Stage', 'Deadline', 'Me'],
   endpoints: (builder) => ({
 
     register: builder.mutation<void, { username: string; password: string; invite_token: string }>({
@@ -52,6 +52,18 @@ export const crmApi = createApi({
     }),
     createInvite: builder.mutation<{ token: string }, void>({
       query: () => ({ url: '/invites', method: 'POST' }),
+    }),
+
+    getMe: builder.query<{ username: string }, void>({
+      query: () => '/users/me',
+      providesTags: ['Me'],
+    }),
+    updateUsername: builder.mutation<void, { username: string }>({
+      query: (body) => ({ url: '/users/me/username', method: 'PATCH', body }),
+      invalidatesTags: ['Me'],
+    }),
+    updatePassword: builder.mutation<void, { current_password: string; new_password: string }>({
+      query: (body) => ({ url: '/users/me/password', method: 'PATCH', body }),
     }),
     login: builder.mutation<{ access_token: string }, { username: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -207,6 +219,9 @@ export const {
   useRegisterMutation,
   useCreateInviteMutation,
   useLoginMutation,
+  useGetMeQuery,
+  useUpdateUsernameMutation,
+  useUpdatePasswordMutation,
   useRefreshMutation,
   useLogoutApiMutation,
   useGetDeadlinesQuery,

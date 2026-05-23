@@ -57,6 +57,13 @@ fn configure_api(config: &mut web::ServiceConfig) {
             .service(web::resource("/auth/logout").post(endpoint::auth::logout::post))
             .service(web::resource("/users").post(endpoint::users::create::create))
             .service(
+                web::scope("/users/me")
+                    .wrap(JwtMiddleware)
+                    .service(web::resource("").get(endpoint::users::me::get))
+                    .service(web::resource("/username").patch(endpoint::users::username::patch))
+                    .service(web::resource("/password").patch(endpoint::users::password::patch)),
+            )
+            .service(
                 web::scope("")
                     .wrap(JwtMiddleware)
                     .service(web::resource("/invites").post(endpoint::invites::create::post))

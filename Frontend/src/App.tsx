@@ -4,6 +4,7 @@ import type { AppDispatch, RootState } from './store'
 import Sidebar from './components/Sidebar/Sidebar'
 import MainPanel from './components/MainPanel/MainPanel'
 import LoginPage from './components/LoginPage/LoginPage'
+import UserPage from './components/UserPage/UserPage'
 import { useRefreshMutation } from './store/crmApi'
 import styles from './App.module.scss'
 
@@ -11,6 +12,7 @@ export default function App() {
   const dispatch = useDispatch<AppDispatch>()
   const { accessToken, initialized } = useSelector((s: RootState) => s.auth)
   const selectedProjectId = useSelector((s: RootState) => s.ui.selectedProjectId)
+  const userPageOpen = useSelector((s: RootState) => s.ui.userPageOpen)
   const [refresh] = useRefreshMutation()
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function App() {
         <Sidebar />
       </div>
       <div className={styles.mainPane}>
-        <MainPanel />
+        {userPageOpen ? <UserPage /> : <MainPanel />}
       </div>
     </div>
   )
