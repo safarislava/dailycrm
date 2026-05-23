@@ -43,7 +43,7 @@ impl Users {
         Ok(row.map(|r| (r.id, r.password_hash)))
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+    pub async fn username_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row { username: String }
         let row = sqlx::query_as::<_, Row>("SELECT username FROM users WHERE id = $1")
@@ -53,7 +53,7 @@ impl Users {
         Ok(row.map(|r| r.username))
     }
 
-    pub async fn find_hash_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+    pub async fn password_hash_by_id(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row { password_hash: String }
         let row = sqlx::query_as::<_, Row>("SELECT password_hash FROM users WHERE id = $1")

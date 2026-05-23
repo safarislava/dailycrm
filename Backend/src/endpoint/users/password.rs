@@ -19,7 +19,7 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    let stored_hash = match state.users.find_hash_by_id(user_id).await {
+    let stored_hash = match state.users.password_hash_by_id(user_id).await {
         Ok(Some(h)) => h,
         Ok(None) => return HttpResponse::NotFound().finish(),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),

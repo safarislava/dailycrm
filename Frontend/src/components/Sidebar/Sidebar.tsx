@@ -180,13 +180,6 @@ export default function Sidebar() {
           </button>
           <button
             className={styles.composeBtn}
-            onClick={() => { setComposing((v) => !v); setNewTitle('') }}
-            title={composing ? 'Отмена' : 'Новый проект'}
-          >
-            {composing ? <CloseIcon /> : <ComposeIcon />}
-          </button>
-          <button
-            className={styles.composeBtn}
             onClick={() => dispatch(setUserPageOpen(true))}
             title="Профиль"
           >
@@ -266,26 +259,6 @@ export default function Sidebar() {
         )}
       </div>
 
-      {composing && (
-        <div className={styles.createRow}>
-          <input
-            className={styles.createInput}
-            placeholder="Название проекта…"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={handleCreateKey}
-            autoFocus
-          />
-          <button
-            className={styles.createBtn}
-            onClick={submitCreate}
-            disabled={!newTitle.trim() || creating}
-          >
-            Создать
-          </button>
-        </div>
-      )}
-
       <div className={styles.list}>
         {isLoading && (
           <div className={styles.hint}>Загрузка…</div>
@@ -320,6 +293,42 @@ export default function Sidebar() {
             </button>
           </div>
         ))}
+      </div>
+
+      <div className={styles.footer}>
+        {composing ? (
+          <div className={styles.createRow}>
+            <input
+              className={styles.createInput}
+              placeholder="Название проекта…"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={handleCreateKey}
+              autoFocus
+            />
+            <button
+              className={styles.createBtn}
+              onClick={submitCreate}
+              disabled={!newTitle.trim() || creating}
+            >
+              Создать
+            </button>
+            <button
+              className={styles.createCancelBtn}
+              onClick={() => { setComposing(false); setNewTitle('') }}
+            >
+              <CloseIcon size={14} />
+            </button>
+          </div>
+        ) : (
+          <button
+            className={styles.newProjectBtn}
+            onClick={() => setComposing(true)}
+          >
+            <ComposeIcon />
+            Новый проект
+          </button>
+        )}
       </div>
     </aside>
   )

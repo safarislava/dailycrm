@@ -266,13 +266,34 @@
   &:hover { color: v.$text-primary; }
 }
 
-// ── Create row ──────────────────────────────────────────
+// ── Footer ───────────────────────────────────────────────
+.footer {
+  border-top: 1px solid v.$divider;
+  padding: 8px 10px;
+}
+
+.newProjectBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
+  font-size: 14px;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
 .createRow {
   display: flex;
-  gap: 8px;
-  padding: 8px 10px 10px;
-  border-bottom: 1px solid v.$divider;
-  background: v.$bg-item-hover;
+  gap: 6px;
+  align-items: center;
 }
 
 .createInput {
@@ -287,7 +308,7 @@
 
 .createBtn {
   height: 36px;
-  padding: 0 16px;
+  padding: 0 14px;
   background: v.$accent;
   color: #fff;
   border-radius: v.$radius-sm;
@@ -298,6 +319,23 @@
 
   &:hover:not(:disabled) { background: v.$accent-hover; }
   &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.createCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$text-primary;
+    background: v.$bg-item-hover;
+  }
 }
 
 // ── List ─────────────────────────────────────────────────
