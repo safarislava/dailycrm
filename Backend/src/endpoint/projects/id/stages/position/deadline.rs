@@ -1,13 +1,13 @@
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct UpdateDeadlineDto {
-    deadline: Option<NaiveDateTime>,
+    deadline: Option<DateTime<Utc>>,
 }
 
 pub async fn patch(

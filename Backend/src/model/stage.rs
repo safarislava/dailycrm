@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -7,7 +7,7 @@ pub struct Stage {
     project_id: Uuid,
     position: i32,
     title: String,
-    deadline: Option<NaiveDateTime>,
+    deadline: Option<DateTime<Utc>>,
     completed: bool,
 }
 
@@ -16,7 +16,7 @@ impl Stage {
         project_id: Uuid,
         position: i32,
         title: String,
-        deadline: Option<NaiveDateTime>,
+        deadline: Option<DateTime<Utc>>,
         completed: bool,
     ) -> Self {
         Self {

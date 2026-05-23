@@ -1,5 +1,5 @@
 use crate::model::stage::{DetailedStage, Stage, StageWithProjectTitle};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -9,7 +9,7 @@ struct StageRow {
     position: i32,
     title: String,
     description: Option<String>,
-    deadline: Option<NaiveDateTime>,
+    deadline: Option<DateTime<Utc>>,
     cost: Option<i32>,
     completed: bool,
 }
@@ -128,7 +128,7 @@ impl Stages {
         &self,
         project_id: Uuid,
         position: i32,
-        deadline: Option<NaiveDateTime>,
+        deadline: Option<DateTime<Utc>>,
     ) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET deadline = $3 WHERE project_id = $1 AND position = $2")
             .bind(project_id)
@@ -191,7 +191,7 @@ impl Stages {
             project_title: String,
             position: i32,
             stage_title: String,
-            deadline: NaiveDateTime,
+            deadline: DateTime<Utc>,
             completed: bool,
         }
         let rows = sqlx::query_as::<_, Row>(

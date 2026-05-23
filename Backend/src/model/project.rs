@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -6,11 +6,11 @@ use uuid::Uuid;
 pub struct Project {
     id: Uuid,
     title: String,
-    updated_at: NaiveDateTime,
+    updated_at: DateTime<Utc>,
 }
 
 impl Project {
-    pub fn new(id: Uuid, title: String, updated_at: NaiveDateTime) -> Self {
+    pub fn new(id: Uuid, title: String, updated_at: DateTime<Utc>) -> Self {
         Project {
             id,
             title,
