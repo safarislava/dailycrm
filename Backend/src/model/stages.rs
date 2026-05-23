@@ -69,21 +69,21 @@ impl Stages {
         position: i32,
         title: String,
     ) -> Result<(), sqlx::Error> {
-        let mut pool = self.pool.begin().await?;
+        let mut transaction = self.pool.begin().await?;
         sqlx::query(
             "UPDATE stages SET position = position + 1 WHERE project_id = $1 AND position >= $2",
         )
         .bind(project_id)
         .bind(position)
-        .execute(&mut *pool)
+        .execute(&mut *transaction)
         .await?;
         sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
             .bind(project_id)
             .bind(position)
             .bind(title)
-            .execute(&mut *pool)
+            .execute(&mut *transaction)
             .await?;
-        pool.commit().await?;
+        transaction.commit().await?;
         Ok(())
     }
 
