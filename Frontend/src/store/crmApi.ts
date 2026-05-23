@@ -76,7 +76,7 @@ export const crmApi = createApi({
     }),
 
     getDeadlines: builder.query<StageWithProjectTitle[], void>({
-      query: () => '/deadlines',
+      query: () => '/projects/deadlines',
       providesTags: ['Deadline'],
     }),
 
