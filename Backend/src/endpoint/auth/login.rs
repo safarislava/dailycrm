@@ -1,0 +1,53 @@
+use crate::auth::{create_access_token, create_refresh_token};
+use crate::endpoint::auth::AuthResponse;
+use crate::state::AppState;
+use actix_web::cookie::{Cookie, SameSite};
+use actix_web::{HttpResponse, Responder, web};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub struct LoginDto {
+    username: String,
+    password: String,
+}
+
+pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
+    let (user_id, stored_hash) = match state.users.find_by_username(&body.username).await {
+        Ok(Some(u)) => u,
+        Ok(None) => return HttpResponse::Unauthorized().body("Invalid credentials"),
+        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
+    };
+
+    let password = body.password.clone();
+    let valid = match actix_web::rt::task::spawn_blocking(move || {
+        bcrypt::verify(password, &stored_hash)
+    })
+    .await
+    {
+        Ok(Ok(v)) => v,
+        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+    };
+
+    if !valid {
+        return HttpResponse::Unauthorized().body("Invalid credentials");
+    }
+
+    let (access_token, refresh_token) = match (
+        create_access_token(user_id),
+        create_refresh_token(user_id),
+    ) {
+        (Ok(at), Ok(rt)) => (at, rt),
+        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+    };
+
+    let cookie = Cookie::build("refresh_token", refresh_token)
+        .http_only(true)
+        .same_site(SameSite::Strict)
+        .path("/api/auth")
+        .max_age(actix_web::cookie::time::Duration::days(7))
+        .finish();
+
+    HttpResponse::Ok()
+        .cookie(cookie)
+        .json(AuthResponse { access_token })
+}

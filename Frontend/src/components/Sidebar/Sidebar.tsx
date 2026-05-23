@@ -7,6 +7,7 @@ import {
   useCreateProjectMutation,
   useDeleteProjectMutation,
   useGetDeadlinesQuery,
+  useLogoutApiMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './Sidebar.module.scss'
@@ -68,6 +69,7 @@ export default function Sidebar() {
   const { data: projects = [], isLoading } = useGetProjectsQuery()
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
   const [deleteProject] = useDeleteProjectMutation()
+  const [logoutApi] = useLogoutApiMutation()
 
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
@@ -156,6 +158,13 @@ export default function Sidebar() {
             title={composing ? 'Отмена' : 'Новый проект'}
           >
             {composing ? <CloseIcon /> : <ComposeIcon />}
+          </button>
+          <button
+            className={styles.composeBtn}
+            onClick={() => logoutApi()}
+            title="Выйти"
+          >
+            <LogoutIcon />
           </button>
         </div>
       </header>
@@ -290,6 +299,16 @@ function CloseIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function LogoutIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   )
 }

@@ -1,11 +1,76 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import {
+  createApi,
+  fetchBaseQuery,
+  type BaseQueryFn,
+  type FetchArgs,
+  type FetchBaseQueryError,
+} from '@reduxjs/toolkit/query/react'
 import type { Project, Stage, DetailedStage, StageWithProjectTitle } from '../types'
+import { setAccessToken, setInitialized, logout } from './authSlice'
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: '/api',
+  credentials: 'include',
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as { auth: { accessToken: string | null } }).auth.accessToken
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    return headers
+  },
+})
+
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions,
+) => {
+  let result = await baseQuery(args, api, extraOptions)
+  if (result.error?.status === 401) {
+    const refreshResult = await baseQuery(
+      { url: '/auth/refresh', method: 'POST' },
+      api,
+      extraOptions,
+    )
+    if (refreshResult.data) {
+      const { access_token } = refreshResult.data as { access_token: string }
+      api.dispatch(setAccessToken(access_token))
+      result = await baseQuery(args, api, extraOptions)
+    } else {
+      api.dispatch(logout())
+    }
+  }
+  return result
+}
 
 export const crmApi = createApi({
   reducerPath: 'crmApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Project', 'Stage', 'Deadline'],
   endpoints: (builder) => ({
+
+    register: builder.mutation<void, { username: string; password: string }>({
+      query: (body) => ({ url: '/users', method: 'POST', body }),
+    }),
+    login: builder.mutation<{ access_token: string }, { username: string; password: string }>({
+      query: (body) => ({ url: '/auth/login', method: 'POST', body }),
+    }),
+    refresh: builder.mutation<{ access_token: string }, void>({
+      query: () => ({ url: '/auth/refresh', method: 'POST' }),
+      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(setAccessToken(data.access_token))
+        } catch {
+          dispatch(setInitialized())
+        }
+      },
+    }),
+    logoutApi: builder.mutation<void, void>({
+      query: () => ({ url: '/auth/logout', method: 'POST' }),
+      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+        await queryFulfilled.catch(() => {})
+        dispatch(logout())
+      },
+    }),
 
     getDeadlines: builder.query<StageWithProjectTitle[], void>({
       query: () => '/deadlines',
@@ -136,6 +201,10 @@ export const crmApi = createApi({
 })
 
 export const {
+  useRegisterMutation,
+  useLoginMutation,
+  useRefreshMutation,
+  useLogoutApiMutation,
   useGetDeadlinesQuery,
   useGetProjectsQuery,
   useCreateProjectMutation,

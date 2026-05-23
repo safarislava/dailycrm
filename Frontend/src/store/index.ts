@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { crmApi } from './crmApi'
 import uiReducer from './uiSlice'
+import authReducer from './authSlice'
 
 export const store = configureStore({
   reducer: {
     [crmApi.reducerPath]: crmApi.reducer,
     ui: uiReducer,
+    auth: authReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(crmApi.middleware),

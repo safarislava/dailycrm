@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #1a1a2e;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+  padding: 36px 32px;
+  background: #16213e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #e2e8f0;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.tabs {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2d3748;
+  margin-bottom: 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: #718096;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    color: #e2e8f0;
+  }
+}
+
+.tabActive {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+.input {
+  padding: 10px 14px;
+  background: #0f3460;
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: #4a5568;
+  }
+
+  &:focus {
+    border-color: #4299e1;
+  }
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #fc8181;
+  text-align: center;
+}
+
+.submit {
+  margin-top: 4px;
+  padding: 11px;
+  background: #4299e1;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #3182ce;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

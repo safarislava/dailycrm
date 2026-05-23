@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Users {
@@ -10,12 +11,32 @@ impl Users {
         Self { pool }
     }
 
-    pub async fn register(&self, username: &str, password_hash: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
-            .bind(username)
-            .bind(password_hash)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
+    pub async fn register(&self, username: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
+        let id: Uuid = sqlx::query_scalar(
+            "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id",
+        )
+        .bind(username)
+        .bind(password_hash)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(id)
+    }
+
+    pub async fn find_by_username(
+        &self,
+        username: &str,
+    ) -> Result<Option<(Uuid, String)>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            id: Uuid,
+            password_hash: String,
+        }
+        let row = sqlx::query_as::<_, Row>(
+            "SELECT id, password_hash FROM users WHERE username = $1",
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(row.map(|r| (r.id, r.password_hash)))
     }
 }
