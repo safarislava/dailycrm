@@ -41,7 +41,7 @@ pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::error
     )
 }
 
-pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<uuid::Uuid> {
+pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<Uuid> {
     request
         .headers()
         .get("Authorization")
@@ -69,8 +69,8 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type InitError = ();
     type Transform = JwtMiddlewareService<S>;
+    type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {

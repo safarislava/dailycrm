@@ -9,7 +9,7 @@ import { useRefreshMutation } from './store/crmApi'
 import styles from './App.module.scss'
 
 export default function App() {
-  const dispatch = useDispatch<AppDispatch>()
+  useDispatch<AppDispatch>();
   const { accessToken, initialized } = useSelector((s: RootState) => s.auth)
   const selectedProjectId = useSelector((s: RootState) => s.ui.selectedProjectId)
   const userPageOpen = useSelector((s: RootState) => s.ui.userPageOpen)
