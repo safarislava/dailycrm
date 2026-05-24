@@ -1,9 +1,7 @@
 use aws_sdk_s3::Client;
 use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
-use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
 use std::env;
-use std::time::Duration;
 
 const BUCKET: &str = "crm-attachments";
 
@@ -12,13 +10,11 @@ type BoxError = Box<dyn std::error::Error + Send + Sync>;
 #[derive(Clone)]
 pub struct Storage {
     client: Client,
-    presign_client: Client,
 }
 
 impl Storage {
     pub fn new() -> Self {
         let endpoint = env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set");
-        let public_url = env::var("MINIO_PUBLIC_URL").unwrap_or_else(|_| endpoint.clone());
         let access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
         let secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
 
@@ -27,22 +23,13 @@ impl Storage {
             Builder::new()
                 .behavior_version(BehaviorVersion::latest())
                 .endpoint_url(&endpoint)
-                .credentials_provider(creds.clone())
-                .region(Region::new("us-east-1"))
-                .force_path_style(true)
-                .build(),
-        );
-        let presign_client = Client::from_conf(
-            Builder::new()
-                .behavior_version(BehaviorVersion::latest())
-                .endpoint_url(&public_url)
                 .credentials_provider(creds)
                 .region(Region::new("us-east-1"))
                 .force_path_style(true)
                 .build(),
         );
 
-        Self { client, presign_client }
+        Self { client }
     }
 
     pub async fn ensure_bucket(&self) {
@@ -79,15 +66,14 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn presigned_url(&self, key: &str) -> Result<String, BoxError> {
-        let config = PresigningConfig::expires_in(Duration::from_secs(3600))?;
-        let request = self
-            .presign_client
+    pub async fn get_bytes(&self, key: &str) -> Result<Vec<u8>, BoxError> {
+        let output = self.client
             .get_object()
             .bucket(BUCKET)
             .key(key)
-            .presigned(config)
+            .send()
             .await?;
-        Ok(request.uri().to_string())
+        let bytes = output.body.collect().await?.into_bytes();
+        Ok(bytes.to_vec())
     }
 }

@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { selectProject, selectStage } from '../../store/uiSlice'
+import { store } from '../../store'
 import {
   useGetProjectsQuery,
   useGetStagesQuery,
@@ -264,15 +265,12 @@ export default function MainPanel() {
                   <div key={a.id} className={styles.attachItem}>
                     <FileIcon mime={a.mime_type} />
                     <div className={styles.attachInfo}>
-                      <a
+                      <button
                         className={styles.attachName}
-                        href={a.download_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        download={a.filename}
+                        onClick={() => downloadFile(a.download_url, a.filename)}
                       >
                         {a.filename}
-                      </a>
+                      </button>
                       <span className={styles.attachMeta}>{formatBytes(a.size_bytes)}</span>
                     </div>
                     <button
@@ -554,6 +552,23 @@ function EditableField({
 }
 
 // ── Helpers ────────────────────────────────────────────
+async function downloadFile(url: string, filename: string) {
+  const token = store.getState().auth.accessToken
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) return
+  const blob = await res.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(blobUrl)
+}
+
 function readFile(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

@@ -128,6 +128,10 @@ fn configure_api(config: &mut web::ServiceConfig) {
                                     .post(endpoint::projects::id::stages::position::attachments::upload::post),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}/download")
+                                    .get(endpoint::projects::id::stages::position::attachments::download::get),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}")
                                     .delete(endpoint::projects::id::stages::position::attachments::delete::delete),
                             ),

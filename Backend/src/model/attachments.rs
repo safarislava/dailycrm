@@ -43,19 +43,39 @@ impl Attachments {
         .fetch_all(&self.pool)
         .await?;
 
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            let url = self.storage.presigned_url(&row.object_key).await.unwrap_or_default();
-            result.push(Attachment::new(
-                row.id,
-                row.filename,
-                row.mime_type,
-                row.size_bytes,
-                row.created_at,
-                url,
-            ));
-        }
-        Ok(result)
+        Ok(rows
+            .into_iter()
+            .map(|row| {
+                let url = format!(
+                    "/api/projects/{}/stages/{}/attachments/{}/download",
+                    project_id, stage_position, row.id
+                );
+                Attachment::new(row.id, row.filename, row.mime_type, row.size_bytes, row.created_at, url)
+            })
+            .collect())
+    }
+
+    pub async fn download(
+        &self,
+        project_id: Uuid,
+        stage_position: i32,
+        attachment_id: Uuid,
+    ) -> Result<(Vec<u8>, String, String), BoxError> {
+        let row: (String, String, String) = sqlx::query_as(
+            "SELECT object_key, mime_type, filename
+             FROM attachments
+             WHERE id = $1 AND project_id = $2 AND stage_position = $3",
+        )
+        .bind(attachment_id)
+        .bind(project_id)
+        .bind(stage_position)
+        .fetch_one(&self.pool)
+        .await?;
+
+        let (object_key, mime_type, filename) = row;
+        let data = self.storage.get_bytes(&object_key).await?;
+        let disposition = format!("attachment; filename=\"{}\"", filename.replace('"', "\\\""));
+        Ok((data, mime_type, disposition))
     }
 
     pub async fn upload(
