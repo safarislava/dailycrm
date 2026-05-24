@@ -64,7 +64,7 @@ export default function MainPanel() {
       const file = e.target.files?.[0]
       if (!file || !projectId || stagePos === null) return
       await uploadAttachment({ projectId, position: Number(stagePos), file })
-      e.target.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
     },
     [projectId, stagePos, uploadAttachment],
   )
@@ -236,22 +236,21 @@ export default function MainPanel() {
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Файлы</span>
-                  <button
-                    className={styles.attachUploadBtn}
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
+                  <label
+                    className={`${styles.attachUploadBtn} ${uploading ? styles.attachUploadDisabled : ''}`}
                     title="Прикрепить файл"
                   >
                     {uploading ? <SpinnerIcon /> : <PaperclipIcon />}
                     {uploading ? 'Загрузка…' : 'Прикрепить'}
-                  </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className={styles.fileInputHidden}
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                    />
+                  </label>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className={styles.fileInputHidden}
-                  onChange={handleFileChange}
-                />
                 {attachments.length === 0 && !uploading && (
                   <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>
                 )}

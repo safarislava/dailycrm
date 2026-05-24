@@ -472,10 +472,16 @@
   color: v.$accent;
   padding: 4px 10px;
   border-radius: v.$radius-sm;
+  cursor: pointer;
   transition: background v.$transition-fast;
 
-  &:hover:not(:disabled) { background: v.$accent-light; }
-  &:disabled { opacity: 0.5; cursor: default; }
+  &:hover { background: v.$accent-light; }
+}
+
+.attachUploadDisabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
 
 .fileInputHidden {
