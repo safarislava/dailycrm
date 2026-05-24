@@ -1,6 +1,6 @@
 {$DOMAIN} {
     reverse_proxy /crm-attachments/* minio:9000 {
-        header_up Host {http.request.host}
+        header_up Host {$DOMAIN}
     }
     reverse_proxy frontend:80
 }
