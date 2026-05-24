@@ -63,8 +63,7 @@ export default function MainPanel() {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const original = e.target.files?.[0]
       if (!original || !projectId || stagePos === null) return
-      // Force full load before upload (fixes iOS iCloud lazy-load)
-      const buffer = await original.arrayBuffer()
+      const buffer = await readFile(original)
       const file = new File(
         [buffer],
         original.name || 'file',
@@ -555,6 +554,15 @@ function EditableField({
 }
 
 // ── Helpers ────────────────────────────────────────────
+function readFile(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`
