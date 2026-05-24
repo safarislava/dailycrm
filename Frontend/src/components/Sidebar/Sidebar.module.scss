@@ -358,7 +358,10 @@
   gap: 12px;
   padding: 8px 16px;
   cursor: pointer;
+  touch-action: manipulation;
   transition: background v.$transition-fast;
+
+  @media (hover: none) { padding: 10px 16px; }
 
   &:hover {
     background: v.$bg-item-hover;
@@ -423,5 +426,11 @@
     color: v.$danger;
     background: v.$danger-light;
     opacity: 1 !important;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+    width: 36px;
+    height: 36px;
   }
 }
