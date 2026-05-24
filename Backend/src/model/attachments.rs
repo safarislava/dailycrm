@@ -74,7 +74,21 @@ impl Attachments {
 
         let (object_key, mime_type, filename) = row;
         let data = self.storage.get_bytes(&object_key).await?;
-        let disposition = format!("attachment; filename=\"{}\"", filename.replace('"', "\\\""));
+        let encoded: String = filename
+            .bytes()
+            .flat_map(|b| {
+                if b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_' | b'~') {
+                    vec![b as char]
+                } else {
+                    format!("%{:02X}", b).chars().collect::<Vec<_>>()
+                }
+            })
+            .collect();
+        let ascii_fallback = filename.replace('"', "\\\"");
+        let disposition = format!(
+            "attachment; filename=\"{}\"; filename*=UTF-8''{}",
+            ascii_fallback, encoded
+        );
         Ok((data, mime_type, disposition))
     }
 

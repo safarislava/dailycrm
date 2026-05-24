@@ -566,7 +566,7 @@ async function downloadFile(url: string, filename: string) {
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  URL.revokeObjectURL(blobUrl)
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
 }
 
 function readFile(file: File): Promise<ArrayBuffer> {
