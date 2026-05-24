@@ -61,8 +61,15 @@ export default function MainPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file || !projectId || stagePos === null) return
+      const original = e.target.files?.[0]
+      if (!original || !projectId || stagePos === null) return
+      // Force full load before upload (fixes iOS iCloud lazy-load)
+      const buffer = await original.arrayBuffer()
+      const file = new File(
+        [buffer],
+        original.name || 'file',
+        { type: original.type || 'application/octet-stream' },
+      )
       await uploadAttachment({ projectId, position: Number(stagePos), file })
       if (fileInputRef.current) fileInputRef.current.value = ''
     },
