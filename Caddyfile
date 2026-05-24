@@ -1,3 +1,4 @@
 {$DOMAIN} {
+    reverse_proxy /crm-attachments/* minio:9000
     reverse_proxy frontend:80
 }

@@ -35,7 +35,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/crm
       JWT_SECRET: ${JWT_SECRET}
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_PUBLIC_URL: http://${DOMAIN}:9000
+      MINIO_PUBLIC_URL: https://${DOMAIN}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
 
