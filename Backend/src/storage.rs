@@ -12,8 +12,7 @@ type BoxError = Box<dyn std::error::Error + Send + Sync>;
 #[derive(Clone)]
 pub struct Storage {
     client: Client,
-    endpoint: String,
-    public_url: String,
+    presign_client: Client,
 }
 
 impl Storage {
@@ -24,15 +23,26 @@ impl Storage {
         let secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
 
         let creds = Credentials::new(&access_key, &secret_key, None, None, "minio");
-        let config = Builder::new()
-            .behavior_version(BehaviorVersion::latest())
-            .endpoint_url(&endpoint)
-            .credentials_provider(creds)
-            .region(Region::new("us-east-1"))
-            .force_path_style(true)
-            .build();
+        let client = Client::from_conf(
+            Builder::new()
+                .behavior_version(BehaviorVersion::latest())
+                .endpoint_url(&endpoint)
+                .credentials_provider(creds.clone())
+                .region(Region::new("us-east-1"))
+                .force_path_style(true)
+                .build(),
+        );
+        let presign_client = Client::from_conf(
+            Builder::new()
+                .behavior_version(BehaviorVersion::latest())
+                .endpoint_url(&public_url)
+                .credentials_provider(creds)
+                .region(Region::new("us-east-1"))
+                .force_path_style(true)
+                .build(),
+        );
 
-        Self { client: Client::from_conf(config), endpoint, public_url }
+        Self { client, presign_client }
     }
 
     pub async fn ensure_bucket(&self) {
@@ -72,14 +82,12 @@ impl Storage {
     pub async fn presigned_url(&self, key: &str) -> Result<String, BoxError> {
         let config = PresigningConfig::expires_in(Duration::from_secs(3600))?;
         let request = self
-            .client
+            .presign_client
             .get_object()
             .bucket(BUCKET)
             .key(key)
             .presigned(config)
             .await?;
-        // Replace internal Docker endpoint with the publicly accessible URL
-        let url = request.uri().to_string().replacen(&self.endpoint, &self.public_url, 1);
-        Ok(url)
+        Ok(request.uri().to_string())
     }
 }
