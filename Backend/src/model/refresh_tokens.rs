@@ -29,14 +29,16 @@ impl RefreshTokens {
         Ok(())
     }
 
-    pub async fn is_valid(&self, jti: Uuid) -> Result<bool, sqlx::Error> {
-        let row: Option<(bool,)> = sqlx::query_as(
-            "SELECT revoked_at IS NULL FROM refresh_tokens WHERE jti = $1 AND expires_at > NOW()",
+    pub async fn validate_and_revoke(&self, jti: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
+        let row: Option<(Uuid,)> = sqlx::query_as(
+            "UPDATE refresh_tokens SET revoked_at = NOW() \
+             WHERE jti = $1 AND revoked_at IS NULL AND expires_at > NOW() \
+             RETURNING user_id",
         )
         .bind(jti)
         .fetch_optional(&self.pool)
         .await?;
-        Ok(row.map(|(not_revoked,)| not_revoked).unwrap_or(false))
+        Ok(row.map(|(user_id,)| user_id))
     }
 
     pub async fn revoke(&self, jti: Uuid) -> Result<(), sqlx::Error> {

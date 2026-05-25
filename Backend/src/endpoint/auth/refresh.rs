@@ -21,25 +21,21 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         return HttpResponse::Unauthorized().body("Invalid refresh token");
     }
 
-    match state.refresh_tokens.is_valid(claims.jti).await {
-        Ok(true) => {}
-        Ok(false) => return HttpResponse::Unauthorized().body("Token revoked or expired"),
+    let user_id = match state.refresh_tokens.validate_and_revoke(claims.jti).await {
+        Ok(Some(id)) => id,
+        Ok(None) => return HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    }
-
-    if state.refresh_tokens.revoke(claims.jti).await.is_err() {
-        return HttpResponse::InternalServerError().body("Something went wrong");
-    }
+    };
 
     let new_jti = Uuid::new_v4();
     let expires_at = Utc::now() + Duration::days(7);
 
-    if state.refresh_tokens.store(new_jti, claims.sub, expires_at).await.is_err() {
+    if state.refresh_tokens.store(new_jti, user_id, expires_at).await.is_err() {
         return HttpResponse::InternalServerError().body("Something went wrong");
     }
 
     let (access_token, refresh_token) =
-        match (create_access_token(claims.sub), create_refresh_token(claims.sub, new_jti)) {
+        match (create_access_token(user_id), create_refresh_token(user_id, new_jti)) {
             (Ok(at), Ok(rt)) => (at, rt),
             _ => return HttpResponse::InternalServerError().body("Something went wrong"),
         };
