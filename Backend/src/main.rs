@@ -8,13 +8,18 @@ use crate::auth::JwtMiddleware;
 use crate::model::attachments::Attachments;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
+use crate::model::refresh_tokens::RefreshTokens;
 use crate::model::stages::Stages;
 use crate::model::users::Users;
 use crate::state::AppState;
 use crate::storage::Storage;
 
 use actix_cors::Cors;
-use actix_web::{App, HttpServer, web};
+use actix_governor::governor::clock::QuantaInstant;
+use actix_governor::governor::middleware::NoOpMiddleware;
+use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
+use actix_web::middleware::DefaultHeaders;
+use actix_web::{App, HttpServer, http, web};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
@@ -24,8 +29,11 @@ async fn main() -> std::io::Result<()> {
     let database_url =
         env::var("DATABASE_URL").expect("Environment variable DATABASE_URL does not exist");
 
+    let allowed_origin =
+        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
+
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(20)
         .connect(&database_url)
         .await
         .expect("Failed to connect to database");
@@ -44,12 +52,29 @@ async fn main() -> std::io::Result<()> {
         stages: Stages::new(pool.clone()),
         invites: Invites::new(pool.clone()),
         attachments: Attachments::new(pool.clone(), storage),
+        refresh_tokens: RefreshTokens::new(pool.clone()),
     });
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin(&allowed_origin)
+            .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+            .allowed_headers(vec![
+                http::header::AUTHORIZATION,
+                http::header::CONTENT_TYPE,
+            ])
+            .supports_credentials()
+            .max_age(3600);
+
+        let security_headers = DefaultHeaders::new()
+            .add(("X-Content-Type-Options", "nosniff"))
+            .add(("X-Frame-Options", "DENY"))
+            .add(("Referrer-Policy", "strict-origin-when-cross-origin"));
+
         App::new()
             .app_data(state.clone())
-            .wrap(Cors::permissive())
+            .wrap(cors)
+            .wrap(security_headers)
             .configure(configure_api)
     })
     .bind(("0.0.0.0", 8080))?
@@ -57,10 +82,23 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
+fn login_governor() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware<QuantaInstant>> {
+    GovernorConfigBuilder::default()
+        .seconds_per_request(1)
+        .burst_size(5)
+        .finish()
+        .unwrap()
+}
+
 fn configure_api(config: &mut web::ServiceConfig) {
+    let governor = login_governor();
     config.service(
         web::scope("/api")
-            .service(web::resource("/auth/login").post(endpoint::auth::login::post))
+            .service(
+                web::resource("/auth/login")
+                    .wrap(Governor::new(&governor))
+                    .post(endpoint::auth::login::post),
+            )
             .service(web::resource("/auth/refresh").post(endpoint::auth::refresh::post))
             .service(web::resource("/auth/logout").post(endpoint::auth::logout::post))
             .service(web::resource("/users").post(endpoint::users::create::create))

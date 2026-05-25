@@ -1,4 +1,5 @@
 use crate::auth::user_id_from_request;
+use crate::model::user::{HashPassword, Password, ValidPassword};
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -17,6 +18,11 @@ pub async fn patch(
     let user_id = match user_id_from_request(&req) {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
+    };
+
+    let valid_new_password = match ValidPassword::try_new(Password(body.new_password.clone())) {
+        Ok(p) => p,
+        Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
     let stored_hash = match state.users.password_hash_by_id(user_id).await {
@@ -38,14 +44,9 @@ pub async fn patch(
         return HttpResponse::Unauthorized().body("Wrong current password");
     }
 
-    let new_password = body.new_password.clone();
-    let new_hash = match actix_web::rt::task::spawn_blocking(move || {
-        bcrypt::hash(new_password, bcrypt::DEFAULT_COST)
-    })
-    .await
-    {
-        Ok(Ok(h)) => h,
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+    let new_hash = match HashPassword::new(valid_new_password).hash().await {
+        Some(h) => h,
+        None => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
     match state.users.update_password(user_id, &new_hash).await {

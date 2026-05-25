@@ -1,3 +1,4 @@
+use crate::model::user::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -12,7 +13,7 @@ impl Users {
     }
 
     #[allow(dead_code)]
-    pub async fn register(&self, username: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
+    pub async fn register(&self, username: &ValidUsername, password_hash: &str) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             id: Uuid,
@@ -20,7 +21,7 @@ impl Users {
         let row: Row = sqlx::query_as(
             "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id",
         )
-        .bind(username)
+        .bind(username.as_str())
         .bind(password_hash)
         .fetch_one(&self.pool)
         .await?;
@@ -68,10 +69,10 @@ impl Users {
         Ok(row.map(|r| r.password_hash))
     }
 
-    pub async fn update_username(&self, id: Uuid, username: &str) -> Result<bool, sqlx::Error> {
+    pub async fn update_username(&self, id: Uuid, username: &ValidUsername) -> Result<bool, sqlx::Error> {
         let rows = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
             .bind(id)
-            .bind(username)
+            .bind(username.as_str())
             .execute(&self.pool)
             .await;
         match rows {

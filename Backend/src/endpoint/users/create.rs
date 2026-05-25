@@ -1,4 +1,5 @@
 use crate::model::invites::RegisterWithInviteResult;
+use crate::model::user::{HashPassword, Password, Username, ValidPassword, ValidUsername};
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;
@@ -11,19 +12,24 @@ pub struct CreateUserDto {
 }
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
-    let password = body.password.clone();
-    let password_hash = match actix_web::rt::task::spawn_blocking(move || {
-        bcrypt::hash(password, bcrypt::DEFAULT_COST)
-    })
-    .await
-    {
-        Ok(Ok(hash)) => hash,
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
+    let valid_username = match ValidUsername::try_new(Username(body.username.clone())) {
+        Ok(u) => u,
+        Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
+    };
+
+    let valid_password = match ValidPassword::try_new(Password(body.password.clone())) {
+        Ok(p) => p,
+        Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
+    };
+
+    let password_hash = match HashPassword::new(valid_password).hash().await {
+        Some(h) => h,
+        None => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
     match state
         .invites
-        .consume_and_register(body.invite_token, &body.username, &password_hash)
+        .consume_and_register(body.invite_token, &valid_username, &password_hash)
         .await
     {
         Ok(RegisterWithInviteResult::Ok) => HttpResponse::Created().finish(),

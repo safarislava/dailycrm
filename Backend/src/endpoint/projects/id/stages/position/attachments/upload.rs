@@ -49,11 +49,6 @@ pub async fn post(
             .map(|s| s.to_string())
             .unwrap_or_else(|| "file".to_string());
 
-        let mime_type = field
-            .content_type()
-            .map(|m| m.to_string())
-            .unwrap_or_else(|| "application/octet-stream".to_string());
-
         let data = match collect_bytes(&mut field, MAX_FILE_SIZE).await {
             Ok(bytes) => bytes,
             Err(CollectError::TooLarge) => return HttpResponse::PayloadTooLarge().finish(),
@@ -61,6 +56,10 @@ pub async fn post(
                 return HttpResponse::InternalServerError().body("Upload error");
             }
         };
+
+        let mime_type = infer::get(&data)
+            .map(|kind| kind.mime_type().to_string())
+            .unwrap_or_else(|| "application/octet-stream".to_string());
 
         return match state
             .attachments

@@ -10,45 +10,43 @@ use std::{
     future::{Future, Ready, ready},
     pin::Pin,
     rc::Rc,
+    sync::OnceLock,
 };
 use uuid::Uuid;
+
+static JWT_SECRET: OnceLock<String> = OnceLock::new();
+
+fn jwt_secret() -> &'static str {
+    JWT_SECRET.get_or_init(|| env::var("JWT_SECRET").expect("JWT_SECRET must be set"))
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: Uuid,
+    pub jti: Uuid,
+    pub typ: String,
     pub exp: usize,
-}
-
-fn jwt_secret() -> String {
-    env::var("JWT_SECRET").expect("JWT_SECRET must be set")
 }
 
 pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
     let exp = (Utc::now().timestamp() + 15 * 60) as usize;
     encode(
         &Header::default(),
-        &Claims { sub: user_id, exp },
+        &Claims { sub: user_id, jti: Uuid::new_v4(), typ: "access".into(), exp },
         &EncodingKey::from_secret(jwt_secret().as_bytes()),
     )
 }
 
-pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn create_refresh_token(
+    user_id: Uuid,
+    jti: Uuid,
+) -> Result<String, jsonwebtoken::errors::Error> {
     let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize;
     encode(
         &Header::default(),
-        &Claims { sub: user_id, exp },
+        &Claims { sub: user_id, jti, typ: "refresh".into(), exp },
         &EncodingKey::from_secret(jwt_secret().as_bytes()),
     )
-}
-
-pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<Uuid> {
-    request
-        .headers()
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .and_then(|token| verify_token(token).ok())
-        .map(|claims| claims.sub)
 }
 
 pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
@@ -58,6 +56,17 @@ pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> 
         &Validation::default(),
     )?;
     Ok(data.claims)
+}
+
+pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<Uuid> {
+    request
+        .headers()
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .and_then(|token| verify_token(token).ok())
+        .filter(|claims| claims.typ == "access")
+        .map(|claims| claims.sub)
 }
 
 pub struct JwtMiddleware;
@@ -103,7 +112,8 @@ where
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .map(|token| verify_token(token).is_ok())
+            .and_then(|token| verify_token(token).ok())
+            .map(|claims| claims.typ == "access")
             .unwrap_or(false);
 
         Box::pin(async move {

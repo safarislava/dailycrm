@@ -12,7 +12,6 @@ struct AttachmentRow {
     filename: String,
     mime_type: String,
     size_bytes: i64,
-    object_key: String,
     created_at: DateTime<Utc>,
 }
 
@@ -33,7 +32,7 @@ impl Attachments {
         stage_position: i32,
     ) -> Result<Vec<Attachment>, sqlx::Error> {
         let rows = sqlx::query_as::<_, AttachmentRow>(
-            "SELECT id, filename, mime_type, size_bytes, object_key, created_at
+            "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
              WHERE project_id = $1 AND stage_position = $2
              ORDER BY created_at",
@@ -68,8 +67,8 @@ impl Attachments {
         stage_position: i32,
         attachment_id: Uuid,
     ) -> Result<(Vec<u8>, String, String), BoxError> {
-        let row: (String, String, String) = sqlx::query_as(
-            "SELECT object_key, mime_type, filename
+        let row: (String, String) = sqlx::query_as(
+            "SELECT mime_type, filename
              FROM attachments
              WHERE id = $1 AND project_id = $2 AND stage_position = $3",
         )
@@ -79,8 +78,8 @@ impl Attachments {
         .fetch_one(&self.pool)
         .await?;
 
-        let (object_key, mime_type, filename) = row;
-        let data = self.storage.get_bytes(&object_key).await?;
+        let (mime_type, filename) = row;
+        let data = self.storage.get_bytes(&attachment_id.to_string()).await?;
         let encoded: String = filename
             .bytes()
             .flat_map(|b| {
@@ -109,18 +108,14 @@ impl Attachments {
     ) -> Result<Uuid, BoxError> {
         let size_bytes = data.len() as i64;
         let attachment_id = Uuid::new_v4();
-        let object_key = format!(
-            "{}/{}/{}/{}",
-            project_id, stage_position, attachment_id, filename
-        );
 
         self.storage
-            .upload(&object_key, data, &mime_type, &filename)
+            .upload(&attachment_id.to_string(), data, &mime_type, &filename)
             .await?;
 
         let row: (Uuid,) = sqlx::query_as(
-            "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes, object_key)
-             VALUES ($1, $2, $3, $4, $5, $6)
+            "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes)
+             VALUES ($1, $2, $3, $4, $5)
              RETURNING id",
         )
         .bind(project_id)
@@ -128,7 +123,6 @@ impl Attachments {
         .bind(filename)
         .bind(mime_type)
         .bind(size_bytes)
-        .bind(object_key)
         .fetch_one(&self.pool)
         .await?;
 
@@ -136,14 +130,7 @@ impl Attachments {
     }
 
     pub async fn delete(&self, attachment_id: Uuid, project_id: Uuid) -> Result<(), BoxError> {
-        let row: (String,) =
-            sqlx::query_as("SELECT object_key FROM attachments WHERE id = $1 AND project_id = $2")
-                .bind(attachment_id)
-                .bind(project_id)
-                .fetch_one(&self.pool)
-                .await?;
-
-        let _ = self.storage.delete(&row.0).await;
+        let _ = self.storage.delete(&attachment_id.to_string()).await;
 
         sqlx::query("DELETE FROM attachments WHERE id = $1 AND project_id = $2")
             .bind(attachment_id)

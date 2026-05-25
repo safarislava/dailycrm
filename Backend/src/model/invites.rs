@@ -1,3 +1,4 @@
+use crate::model::user::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -33,7 +34,7 @@ impl Invites {
     pub async fn consume_and_register(
         &self,
         token: Uuid,
-        username: &str,
+        username: &ValidUsername,
         password_hash: &str,
     ) -> Result<RegisterWithInviteResult, sqlx::Error> {
         let mut transaction = self.pool.begin().await?;
@@ -53,7 +54,7 @@ impl Invites {
         }
 
         let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
-            .bind(username)
+            .bind(username.as_str())
             .bind(password_hash)
             .execute(&mut *transaction)
             .await;

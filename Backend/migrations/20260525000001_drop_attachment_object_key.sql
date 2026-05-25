@@ -1,0 +1,1 @@
+ALTER TABLE attachments DROP COLUMN object_key;
