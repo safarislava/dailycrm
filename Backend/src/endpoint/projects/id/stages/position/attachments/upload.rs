@@ -1,7 +1,6 @@
-use crate::auth::user_id_from_request;
 use crate::state::AppState;
 use actix_multipart::Multipart;
-use actix_web::{HttpRequest, HttpResponse, Responder, web};
+use actix_web::{HttpResponse, Responder, web};
 use futures_util::StreamExt;
 use uuid::Uuid;
 
@@ -33,13 +32,9 @@ async fn collect_bytes(
 
 pub async fn post(
     state: web::Data<AppState>,
-    request: HttpRequest,
     path: web::Path<(Uuid, i32)>,
     mut payload: Multipart,
 ) -> impl Responder {
-    if user_id_from_request(&request).is_none() {
-        return HttpResponse::Unauthorized().finish();
-    }
     let (project_id, stage_position) = path.into_inner();
 
     while let Some(item) = payload.next().await {
@@ -62,7 +57,9 @@ pub async fn post(
         let data = match collect_bytes(&mut field, MAX_FILE_SIZE).await {
             Ok(bytes) => bytes,
             Err(CollectError::TooLarge) => return HttpResponse::PayloadTooLarge().finish(),
-            Err(CollectError::Read) => return HttpResponse::InternalServerError().body("Upload error"),
+            Err(CollectError::Read) => {
+                return HttpResponse::InternalServerError().body("Upload error");
+            }
         };
 
         return match state

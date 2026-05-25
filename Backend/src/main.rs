@@ -77,7 +77,7 @@ fn configure_api(config: &mut web::ServiceConfig) {
                     .service(web::resource("/invites").post(endpoint::invites::create::post))
                     .service(
                         web::scope("/projects")
-                            .service(web::resource("/deadlines").get(endpoint::deadlines::get::get))
+                            .service(web::resource("/deadlines").get(endpoint::projects::deadlines::get::get))
                             .service(
                                 web::resource("")
                                     .get(endpoint::projects::get::get)

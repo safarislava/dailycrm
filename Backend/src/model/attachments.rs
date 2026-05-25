@@ -50,7 +50,14 @@ impl Attachments {
                     "/api/projects/{}/stages/{}/attachments/{}/download",
                     project_id, stage_position, row.id
                 );
-                Attachment::new(row.id, row.filename, row.mime_type, row.size_bytes, row.created_at, url)
+                Attachment::new(
+                    row.id,
+                    row.filename,
+                    row.mime_type,
+                    row.size_bytes,
+                    row.created_at,
+                    url,
+                )
             })
             .collect())
     }
@@ -102,9 +109,14 @@ impl Attachments {
     ) -> Result<Uuid, BoxError> {
         let size_bytes = data.len() as i64;
         let attachment_id = Uuid::new_v4();
-        let object_key = format!("{}/{}/{}/{}", project_id, stage_position, attachment_id, filename);
+        let object_key = format!(
+            "{}/{}/{}/{}",
+            project_id, stage_position, attachment_id, filename
+        );
 
-        self.storage.upload(&object_key, data, &mime_type, &filename).await?;
+        self.storage
+            .upload(&object_key, data, &mime_type, &filename)
+            .await?;
 
         let row: (Uuid,) = sqlx::query_as(
             "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes, object_key)
@@ -124,13 +136,12 @@ impl Attachments {
     }
 
     pub async fn delete(&self, attachment_id: Uuid, project_id: Uuid) -> Result<(), BoxError> {
-        let row: (String,) = sqlx::query_as(
-            "SELECT object_key FROM attachments WHERE id = $1 AND project_id = $2",
-        )
-        .bind(attachment_id)
-        .bind(project_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let row: (String,) =
+            sqlx::query_as("SELECT object_key FROM attachments WHERE id = $1 AND project_id = $2")
+                .bind(attachment_id)
+                .bind(project_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         let _ = self.storage.delete(&row.0).await;
 

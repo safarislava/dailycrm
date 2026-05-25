@@ -67,7 +67,8 @@ impl Storage {
     }
 
     pub async fn get_bytes(&self, key: &str) -> Result<Vec<u8>, BoxError> {
-        let output = self.client
+        let output = self
+            .client
             .get_object()
             .bucket(BUCKET)
             .key(key)
