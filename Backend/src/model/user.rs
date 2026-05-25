@@ -29,6 +29,7 @@ impl PasswordHash {
     }
 }
 
+#[allow(dead_code)]
 pub struct ValidPasswordHash(PasswordHash);
 
 pub enum VerifyError {

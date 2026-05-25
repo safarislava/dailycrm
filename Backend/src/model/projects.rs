@@ -21,7 +21,7 @@ impl Projects {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|(id, title, updated_at)| Project::new(id, title, updated_at))
+            .map(|(id, title, updated_at)| Project::new(id, title, updated_at, self.pool.clone()))
             .collect())
     }
 
@@ -33,20 +33,13 @@ impl Projects {
         Ok(())
     }
 
-    pub async fn rename(&self, id: Uuid, title: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE projects SET title = $2 WHERE id = $1")
-            .bind(id)
-            .bind(title)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM projects WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
+    pub async fn project_by_id(&self, id: Uuid) -> Result<Project, sqlx::Error> {
+        let (id, title, updated_at) = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
+            "SELECT id, title, updated_at FROM projects WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(Project::new(id, title, updated_at, self.pool.clone()))
     }
 }

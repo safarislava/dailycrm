@@ -18,7 +18,11 @@ pub async fn patch(
     if body.title.trim().is_empty() {
         return HttpResponse::BadRequest().body("Title cannot be empty");
     }
-    match state.projects.rename(id, body.title.trim()).await {
+    let project = match state.projects.project_by_id(id).await {
+        Ok(p) => p,
+        Err(_) => return HttpResponse::NotFound().body("Project not found"),
+    };
+    match project.rename(body.title.trim()).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
