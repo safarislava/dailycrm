@@ -1,5 +1,6 @@
 use crate::auth::{create_access_token, create_refresh_token};
 use crate::endpoint::auth::AuthResponse;
+use crate::model::user::{ValidPasswordHash, VerifyError};
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpResponse, Responder, web};
@@ -20,18 +21,11 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    let password = body.password.clone();
-    let valid =
-        match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(password, &stored_hash))
-            .await
-        {
-            Ok(Ok(v)) => v,
-            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-        };
-
-    if !valid {
-        return HttpResponse::Unauthorized().body("Invalid credentials");
-    }
+    match ValidPasswordHash::try_new(stored_hash, &body.password).await {
+        Ok(_) => {}
+        Err(VerifyError::WrongPassword) => return HttpResponse::Unauthorized().body("Invalid credentials"),
+        Err(VerifyError::Internal) => return HttpResponse::InternalServerError().body("Something went wrong"),
+    };
 
     let jti = Uuid::new_v4();
     let expires_at = Utc::now() + Duration::days(7);

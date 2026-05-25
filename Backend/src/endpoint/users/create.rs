@@ -1,5 +1,5 @@
 use crate::model::invites::RegisterWithInviteResult;
-use crate::model::user::{HashPassword, Password, Username, ValidPassword, ValidUsername};
+use crate::model::user::{PasswordHash, Password, Username, ValidPassword, ValidUsername};
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;
@@ -22,9 +22,9 @@ pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) 
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    let password_hash = match HashPassword::new(valid_password).hash().await {
-        Some(h) => h,
-        None => return HttpResponse::InternalServerError().body("Something went wrong"),
+    let password_hash = match PasswordHash::new_from_password(valid_password).await {
+        Ok(h) => h,
+        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
     match state

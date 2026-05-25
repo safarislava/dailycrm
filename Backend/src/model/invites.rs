@@ -1,4 +1,4 @@
-use crate::model::user::ValidUsername;
+use crate::model::user::{PasswordHash, ValidUsername};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -35,7 +35,7 @@ impl Invites {
         &self,
         token: Uuid,
         username: &ValidUsername,
-        password_hash: &str,
+        password_hash: &PasswordHash,
     ) -> Result<RegisterWithInviteResult, sqlx::Error> {
         let mut transaction = self.pool.begin().await?;
 
@@ -55,7 +55,7 @@ impl Invites {
 
         let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
             .bind(username.as_str())
-            .bind(password_hash)
+            .bind(password_hash.as_str())
             .execute(&mut *transaction)
             .await;
 
