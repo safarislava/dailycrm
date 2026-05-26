@@ -17,7 +17,8 @@ pub async fn patch(
     let (project_id, position) = path.into_inner();
     match state
         .stages
-        .update_cost(project_id, position, body.cost)
+        .stage_link(project_id, position)
+        .update_cost(body.cost)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

@@ -18,7 +18,8 @@ pub async fn patch(
     let (project_id, position) = path.into_inner();
     match state
         .stages
-        .update_deadline(project_id, position, body.deadline)
+        .stage_link(project_id, position)
+        .update_deadline(body.deadline)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

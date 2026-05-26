@@ -7,6 +7,7 @@ pub mod project_link;
 pub mod projects;
 pub mod refresh_tokens;
 pub mod stage;
+pub mod stage_link;
 pub mod stages;
 pub mod user;
 pub mod users;

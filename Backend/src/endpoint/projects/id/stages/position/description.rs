@@ -17,7 +17,8 @@ pub async fn patch(
     let (project_id, position) = path.into_inner();
     match state
         .stages
-        .update_description(project_id, position, body.description.clone())
+        .stage_link(project_id, position)
+        .update_description(body.description.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

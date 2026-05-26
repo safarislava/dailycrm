@@ -17,7 +17,8 @@ pub async fn patch(
     let (project_id, position) = path.into_inner();
     match state
         .stages
-        .update_completed(project_id, position, body.completed)
+        .stage_link(project_id, position)
+        .update_completed(body.completed)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),
