@@ -7,7 +7,13 @@ pub async fn delete(
     path: web::Path<(Uuid, i32, Uuid)>,
 ) -> impl Responder {
     let (project_id, _stage_position, attachment_id) = path.into_inner();
-    match state.attachments.delete(attachment_id, project_id).await {
+
+    match state
+        .attachments
+        .attachment_link(project_id, attachment_id)
+        .delete()
+        .await
+    {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::NotFound().finish(),
     }

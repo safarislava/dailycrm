@@ -1,4 +1,5 @@
 use crate::model::attachment::Attachment;
+use crate::model::attachment_link::AttachmentLink;
 use crate::storage::Storage;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -26,6 +27,22 @@ impl Attachments {
         Self { pool, storage }
     }
 
+    fn attachment_from_row(&self, row: AttachmentRow, project_id: Uuid, stage_position: i32) -> Attachment {
+        let url = format!(
+            "/api/projects/{}/stages/{}/attachments/{}/download",
+            project_id, stage_position, row.id
+        );
+        Attachment::new(
+            row.id,
+            row.filename,
+            row.mime_type,
+            row.size_bytes,
+            row.created_at,
+            url,
+            self.storage.clone(),
+        )
+    }
+
     pub async fn list(
         &self,
         project_id: Uuid,
@@ -44,31 +61,18 @@ impl Attachments {
 
         Ok(rows
             .into_iter()
-            .map(|row| {
-                let url = format!(
-                    "/api/projects/{}/stages/{}/attachments/{}/download",
-                    project_id, stage_position, row.id
-                );
-                Attachment::new(
-                    row.id,
-                    row.filename,
-                    row.mime_type,
-                    row.size_bytes,
-                    row.created_at,
-                    url,
-                )
-            })
+            .map(|row| self.attachment_from_row(row, project_id, stage_position))
             .collect())
     }
 
-    pub async fn download(
+    pub async fn attachment_by_id(
         &self,
         project_id: Uuid,
         stage_position: i32,
         attachment_id: Uuid,
-    ) -> Result<(Vec<u8>, String, String), BoxError> {
-        let row: (String, String) = sqlx::query_as(
-            "SELECT mime_type, filename
+    ) -> Result<Attachment, sqlx::Error> {
+        let row = sqlx::query_as::<_, AttachmentRow>(
+            "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
              WHERE id = $1 AND project_id = $2 AND stage_position = $3",
         )
@@ -78,24 +82,11 @@ impl Attachments {
         .fetch_one(&self.pool)
         .await?;
 
-        let (mime_type, filename) = row;
-        let data = self.storage.get_bytes(&attachment_id.to_string()).await?;
-        let encoded: String = filename
-            .bytes()
-            .flat_map(|b| {
-                if b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_' | b'~') {
-                    vec![b as char]
-                } else {
-                    format!("%{:02X}", b).chars().collect::<Vec<_>>()
-                }
-            })
-            .collect();
-        let ascii_fallback = filename.replace('"', "\\\"");
-        let disposition = format!(
-            "attachment; filename=\"{}\"; filename*=UTF-8''{}",
-            ascii_fallback, encoded
-        );
-        Ok((data, mime_type, disposition))
+        Ok(self.attachment_from_row(row, project_id, stage_position))
+    }
+
+    pub fn attachment_link(&self, project_id: Uuid, attachment_id: Uuid) -> AttachmentLink {
+        AttachmentLink::new(attachment_id, project_id, self.pool.clone(), self.storage.clone())
     }
 
     pub async fn upload(
@@ -127,17 +118,5 @@ impl Attachments {
         .await?;
 
         Ok(row.0)
-    }
-
-    pub async fn delete(&self, attachment_id: Uuid, project_id: Uuid) -> Result<(), BoxError> {
-        let _ = self.storage.delete(&attachment_id.to_string()).await;
-
-        sqlx::query("DELETE FROM attachments WHERE id = $1 AND project_id = $2")
-            .bind(attachment_id)
-            .bind(project_id)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(())
     }
 }
