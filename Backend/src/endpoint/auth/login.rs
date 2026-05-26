@@ -12,7 +12,11 @@ pub struct LoginDto {
 }
 
 pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
-    let user = match state.users.user_by_username(&body.username, &state.pool).await {
+    let user = match state
+        .users
+        .user_by_username(&body.username, &state.pool)
+        .await
+    {
         Ok(Some(u)) => u,
         Ok(None) => return HttpResponse::Unauthorized().body("Invalid credentials"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
@@ -41,7 +45,7 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         .max_age(actix_web::cookie::time::Duration::days(7))
         .finish();
 
-    HttpResponse::Ok()
-        .cookie(cookie)
-        .json(AuthResponse { access_token: access_token.token_string().to_owned() })
+    HttpResponse::Ok().cookie(cookie).json(AuthResponse {
+        access_token: access_token.as_string().to_owned(),
+    })
 }

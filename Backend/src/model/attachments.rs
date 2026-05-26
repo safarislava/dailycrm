@@ -23,7 +23,10 @@ pub struct Attachments {
 
 impl Attachments {
     pub fn new(project_id: Uuid, stage_position: i32) -> Self {
-        Self { project_id, stage_position }
+        Self {
+            project_id,
+            stage_position,
+        }
     }
 
     pub fn attachment_link(&self, attachment_id: Uuid) -> AttachmentLink {
@@ -35,7 +38,14 @@ impl Attachments {
             "/api/projects/{}/stages/{}/attachments/{}/download",
             self.project_id, self.stage_position, row.id
         );
-        Attachment::new(row.id, row.filename, row.mime_type, row.size_bytes, row.created_at, url)
+        Attachment::new(
+            row.id,
+            row.filename,
+            row.mime_type,
+            row.size_bytes,
+            row.created_at,
+            url,
+        )
     }
 
     pub async fn list(&self, pool: &PgPool) -> Result<Vec<Attachment>, sqlx::Error> {
@@ -50,10 +60,17 @@ impl Attachments {
         .fetch_all(pool)
         .await?;
 
-        Ok(rows.into_iter().map(|row| self.attachment_from_row(row)).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| self.attachment_from_row(row))
+            .collect())
     }
 
-    pub async fn attachment_by_id(&self, attachment_id: Uuid, pool: &PgPool) -> Result<Attachment, sqlx::Error> {
+    pub async fn attachment_by_id(
+        &self,
+        attachment_id: Uuid,
+        pool: &PgPool,
+    ) -> Result<Attachment, sqlx::Error> {
         let row = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
@@ -79,7 +96,9 @@ impl Attachments {
         let size_bytes = data.len() as i64;
         let attachment_id = Uuid::new_v4();
 
-        storage.upload(&attachment_id.to_string(), data, &mime_type, &filename).await?;
+        storage
+            .upload(&attachment_id.to_string(), data, &mime_type, &filename)
+            .await?;
 
         let row: (Uuid,) = sqlx::query_as(
             "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes)

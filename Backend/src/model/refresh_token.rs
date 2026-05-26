@@ -15,7 +15,12 @@ impl RefreshToken {
         let jti = Uuid::new_v4();
         let expires_at = Utc::now() + Duration::days(7);
         let token_string = create_refresh_token(user_id, jti)?;
-        Ok(Self { jti, user_id, expires_at, token_string })
+        Ok(Self {
+            jti,
+            user_id,
+            expires_at,
+            token_string,
+        })
     }
 
     pub async fn store(self, pool: &PgPool) -> Result<String, sqlx::Error> {

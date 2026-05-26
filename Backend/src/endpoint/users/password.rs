@@ -28,7 +28,10 @@ pub async fn patch(
 
     let link = state.users.user_link(user_id);
 
-    match link.password_verification(&body.current_password, &state.pool).await {
+    match link
+        .password_verification(&body.current_password, &state.pool)
+        .await
+    {
         Ok(_) => {}
         Err(VerifyError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Wrong current password");
