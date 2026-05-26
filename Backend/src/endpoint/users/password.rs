@@ -1,4 +1,4 @@
-use crate::auth::user_id_from_request;
+use crate::auth::UserIdGettable;
 use crate::model::password::{Password, ValidPassword};
 use crate::model::password_hash::{HashError, PasswordHash, VerifyError};
 use crate::state::AppState;
@@ -13,10 +13,10 @@ pub struct UpdatePasswordDto {
 
 pub async fn patch(
     state: web::Data<AppState>,
-    req: HttpRequest,
+    request: HttpRequest,
     body: web::Json<UpdatePasswordDto>,
 ) -> impl Responder {
-    let user_id = match user_id_from_request(&req) {
+    let user_id = match request.user_id() {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };

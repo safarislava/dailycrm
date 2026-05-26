@@ -1,11 +1,11 @@
-use crate::auth::verify_token;
+use crate::auth::Claims;
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     if let Some(cookie) = request.cookie("refresh_token") {
-        if let Ok(claims) = verify_token(cookie.value()) {
+        if let Ok(claims) = Claims::new(cookie.value()) {
             let _ = state.refresh_tokens.revoke(claims.jti, &state.pool).await;
         }
     }

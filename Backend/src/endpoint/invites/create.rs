@@ -1,9 +1,9 @@
-use crate::auth::user_id_from_request;
+use crate::auth::UserIdGettable;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
-    let user_id = match user_id_from_request(&request) {
+    let user_id = match request.user_id() {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };

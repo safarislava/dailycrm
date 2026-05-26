@@ -2,8 +2,8 @@ use actix_web::{
     Error,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
-use chrono::Utc;
-use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use actix_web::HttpRequest;
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 static JWT_SECRET: OnceLock<String> = OnceLock::new();
 
-fn jwt_secret() -> &'static str {
+pub fn jwt_secret() -> &'static str {
     JWT_SECRET.get_or_init(|| env::var("JWT_SECRET").expect("JWT_SECRET must be set"))
 }
 
@@ -28,55 +28,31 @@ pub struct Claims {
     pub exp: usize,
 }
 
-pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 15 * 60) as usize;
-    encode(
-        &Header::default(),
-        &Claims {
-            sub: user_id,
-            jti: Uuid::new_v4(),
-            typ: "access".into(),
-            exp,
-        },
-        &EncodingKey::from_secret(jwt_secret().as_bytes()),
-    )
+impl Claims {
+    pub fn new(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+        let data = decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(jwt_secret().as_bytes()),
+            &Validation::default(),
+        )?;
+        Ok(data.claims)
+    }
 }
 
-pub fn create_refresh_token(
-    user_id: Uuid,
-    jti: Uuid,
-) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize;
-    encode(
-        &Header::default(),
-        &Claims {
-            sub: user_id,
-            jti,
-            typ: "refresh".into(),
-            exp,
-        },
-        &EncodingKey::from_secret(jwt_secret().as_bytes()),
-    )
+pub trait UserIdGettable {
+    fn user_id(&self) -> Option<Uuid>;
 }
 
-pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(jwt_secret().as_bytes()),
-        &Validation::default(),
-    )?;
-    Ok(data.claims)
-}
-
-pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<Uuid> {
-    request
-        .headers()
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .and_then(|token| verify_token(token).ok())
-        .filter(|claims| claims.typ == "access")
-        .map(|claims| claims.sub)
+impl UserIdGettable for HttpRequest {
+    fn user_id(&self) -> Option<Uuid> {
+        self.headers()
+            .get("Authorization")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.strip_prefix("Bearer "))
+            .and_then(|token| Claims::new(token).ok())
+            .filter(|claims| claims.typ == "access")
+            .map(|claims| claims.sub)
+    }
 }
 
 pub struct JwtMiddleware;
@@ -122,7 +98,7 @@ where
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .and_then(|token| verify_token(token).ok())
+            .and_then(|token| Claims::new(token).ok())
             .map(|claims| claims.typ == "access")
             .unwrap_or(false);
 

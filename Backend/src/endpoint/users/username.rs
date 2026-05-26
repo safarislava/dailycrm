@@ -1,4 +1,4 @@
-use crate::auth::user_id_from_request;
+use crate::auth::UserIdGettable;
 use crate::model::username::{Username, ValidUsername};
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
@@ -11,10 +11,10 @@ pub struct UpdateUsernameDto {
 
 pub async fn patch(
     state: web::Data<AppState>,
-    req: HttpRequest,
+    request: HttpRequest,
     body: web::Json<UpdateUsernameDto>,
 ) -> impl Responder {
-    let user_id = match user_id_from_request(&req) {
+    let user_id = match request.user_id() {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };

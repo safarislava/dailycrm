@@ -1,4 +1,6 @@
-use crate::auth::create_access_token;
+use crate::auth::{Claims, jwt_secret};
+use chrono::Utc;
+use jsonwebtoken::{EncodingKey, Header, encode};
 use uuid::Uuid;
 
 pub struct AccessToken {
@@ -7,9 +9,18 @@ pub struct AccessToken {
 
 impl AccessToken {
     pub fn new(user_id: Uuid) -> Result<Self, jsonwebtoken::errors::Error> {
-        Ok(Self {
-            token_string: create_access_token(user_id)?,
-        })
+        let exp = (Utc::now().timestamp() + 15 * 60) as usize;
+        let token_string = encode(
+            &Header::default(),
+            &Claims {
+                sub: user_id,
+                jti: Uuid::new_v4(),
+                typ: "access".into(),
+                exp,
+            },
+            &EncodingKey::from_secret(jwt_secret().as_bytes()),
+        )?;
+        Ok(Self { token_string })
     }
 
     pub fn as_string(&self) -> &str {

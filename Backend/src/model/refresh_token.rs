@@ -1,5 +1,6 @@
-use crate::auth::create_refresh_token;
+use crate::auth::{Claims, jwt_secret};
 use chrono::{DateTime, Duration, Utc};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -14,7 +15,16 @@ impl RefreshToken {
     pub fn new(user_id: Uuid) -> Result<Self, jsonwebtoken::errors::Error> {
         let jti = Uuid::new_v4();
         let expires_at = Utc::now() + Duration::days(7);
-        let token_string = create_refresh_token(user_id, jti)?;
+        let token_string = encode(
+            &Header::default(),
+            &Claims {
+                sub: user_id,
+                jti,
+                typ: "refresh".into(),
+                exp: expires_at.timestamp() as usize,
+            },
+            &EncodingKey::from_secret(jwt_secret().as_bytes()),
+        )?;
         Ok(Self {
             jti,
             user_id,

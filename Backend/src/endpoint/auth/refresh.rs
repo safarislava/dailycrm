@@ -1,4 +1,4 @@
-use crate::auth::verify_token;
+use crate::auth::Claims;
 use crate::endpoint::auth::AuthResponse;
 use crate::model::access_token::AccessToken;
 use crate::model::refresh_token::RefreshToken;
@@ -12,7 +12,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         None => return HttpResponse::Unauthorized().body("No refresh token"),
     };
 
-    let claims = match verify_token(cookie.value()) {
+    let claims = match Claims::new(cookie.value()) {
         Ok(c) => c,
         Err(_) => return HttpResponse::Unauthorized().body("Invalid refresh token"),
     };
