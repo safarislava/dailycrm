@@ -36,6 +36,12 @@ pub async fn post(
     mut payload: Multipart,
 ) -> impl Responder {
     let (project_id, stage_position) = path.into_inner();
+    let attachments = state
+        .projects
+        .project_link(project_id)
+        .stages()
+        .stage_link(stage_position)
+        .attachments();
 
     while let Some(item) = payload.next().await {
         let mut field = match item {
@@ -61,11 +67,7 @@ pub async fn post(
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
-        return match state
-            .attachments
-            .upload(project_id, stage_position, filename, mime_type, data)
-            .await
-        {
+        return match attachments.upload(filename, mime_type, data).await {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
             Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
         };

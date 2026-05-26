@@ -1,19 +1,21 @@
 use crate::model::stages::Stages;
+use crate::storage::Storage;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 pub struct ProjectLink {
     id: Uuid,
     pool: PgPool,
+    storage: Storage,
 }
 
 impl ProjectLink {
-    pub fn new(id: Uuid, pool: PgPool) -> Self {
-        Self { id, pool }
+    pub fn new(id: Uuid, pool: PgPool, storage: Storage) -> Self {
+        Self { id, pool, storage }
     }
 
     pub fn stages(&self) -> Stages {
-        Stages::new(self.id, self.pool.clone())
+        Stages::new(self.id, self.pool.clone(), self.storage.clone())
     }
 
     pub async fn rename(&self, title: &str) -> Result<(), sqlx::Error> {

@@ -1,3 +1,5 @@
+use crate::model::attachments::Attachments;
+use crate::storage::Storage;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -6,11 +8,16 @@ pub struct StageLink {
     project_id: Uuid,
     position: i32,
     pool: PgPool,
+    storage: Storage,
 }
 
 impl StageLink {
-    pub fn new(project_id: Uuid, position: i32, pool: PgPool) -> Self {
-        Self { project_id, position, pool }
+    pub fn new(project_id: Uuid, position: i32, pool: PgPool, storage: Storage) -> Self {
+        Self { project_id, position, pool, storage }
+    }
+
+    pub fn attachments(&self) -> Attachments {
+        Attachments::new(self.project_id, self.position, self.pool.clone(), self.storage.clone())
     }
 
     pub async fn remove(self) -> Result<(), sqlx::Error> {

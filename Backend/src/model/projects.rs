@@ -1,6 +1,7 @@
 use crate::model::project::Project;
 use crate::model::project_link::ProjectLink;
 use crate::model::stage::{Stage, StageWithProjectTitle};
+use crate::storage::Storage;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -8,11 +9,16 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct Projects {
     pool: PgPool,
+    storage: Storage,
 }
 
 impl Projects {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, storage: Storage) -> Self {
+        Self { pool, storage }
+    }
+
+    pub fn project_link(&self, id: Uuid) -> ProjectLink {
+        ProjectLink::new(id, self.pool.clone(), self.storage.clone())
     }
 
     pub async fn list(&self) -> Result<Vec<Project>, sqlx::Error> {
@@ -33,10 +39,6 @@ impl Projects {
             .execute(&self.pool)
             .await?;
         Ok(())
-    }
-
-    pub fn project_link(&self, id: Uuid) -> ProjectLink {
-        ProjectLink::new(id, self.pool.clone())
     }
 
     pub async fn deadlines(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {

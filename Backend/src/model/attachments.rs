@@ -16,21 +16,26 @@ struct AttachmentRow {
     created_at: DateTime<Utc>,
 }
 
-#[derive(Clone)]
 pub struct Attachments {
+    project_id: Uuid,
+    stage_position: i32,
     pool: PgPool,
     storage: Storage,
 }
 
 impl Attachments {
-    pub fn new(pool: PgPool, storage: Storage) -> Self {
-        Self { pool, storage }
+    pub fn new(project_id: Uuid, stage_position: i32, pool: PgPool, storage: Storage) -> Self {
+        Self { project_id, stage_position, pool, storage }
     }
 
-    fn attachment_from_row(&self, row: AttachmentRow, project_id: Uuid, stage_position: i32) -> Attachment {
+    pub fn attachment_link(&self, attachment_id: Uuid) -> AttachmentLink {
+        AttachmentLink::new(attachment_id, self.project_id, self.pool.clone(), self.storage.clone())
+    }
+
+    fn attachment_from_row(&self, row: AttachmentRow) -> Attachment {
         let url = format!(
             "/api/projects/{}/stages/{}/attachments/{}/download",
-            project_id, stage_position, row.id
+            self.project_id, self.stage_position, row.id
         );
         Attachment::new(
             row.id,
@@ -43,56 +48,38 @@ impl Attachments {
         )
     }
 
-    pub async fn list(
-        &self,
-        project_id: Uuid,
-        stage_position: i32,
-    ) -> Result<Vec<Attachment>, sqlx::Error> {
+    pub async fn list(&self) -> Result<Vec<Attachment>, sqlx::Error> {
         let rows = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
              WHERE project_id = $1 AND stage_position = $2
              ORDER BY created_at",
         )
-        .bind(project_id)
-        .bind(stage_position)
+        .bind(self.project_id)
+        .bind(self.stage_position)
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| self.attachment_from_row(row, project_id, stage_position))
-            .collect())
+        Ok(rows.into_iter().map(|row| self.attachment_from_row(row)).collect())
     }
 
-    pub async fn attachment_by_id(
-        &self,
-        project_id: Uuid,
-        stage_position: i32,
-        attachment_id: Uuid,
-    ) -> Result<Attachment, sqlx::Error> {
+    pub async fn attachment_by_id(&self, attachment_id: Uuid) -> Result<Attachment, sqlx::Error> {
         let row = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
              WHERE id = $1 AND project_id = $2 AND stage_position = $3",
         )
         .bind(attachment_id)
-        .bind(project_id)
-        .bind(stage_position)
+        .bind(self.project_id)
+        .bind(self.stage_position)
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(self.attachment_from_row(row, project_id, stage_position))
-    }
-
-    pub fn attachment_link(&self, project_id: Uuid, attachment_id: Uuid) -> AttachmentLink {
-        AttachmentLink::new(attachment_id, project_id, self.pool.clone(), self.storage.clone())
+        Ok(self.attachment_from_row(row))
     }
 
     pub async fn upload(
         &self,
-        project_id: Uuid,
-        stage_position: i32,
         filename: String,
         mime_type: String,
         data: Vec<u8>,
@@ -109,8 +96,8 @@ impl Attachments {
              VALUES ($1, $2, $3, $4, $5)
              RETURNING id",
         )
-        .bind(project_id)
-        .bind(stage_position)
+        .bind(self.project_id)
+        .bind(self.stage_position)
         .bind(filename)
         .bind(mime_type)
         .bind(size_bytes)

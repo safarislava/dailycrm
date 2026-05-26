@@ -6,8 +6,12 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32, Uuid)>)
     let (project_id, stage_position, attachment_id) = path.into_inner();
 
     let attachment = match state
-        .attachments
-        .attachment_by_id(project_id, stage_position, attachment_id)
+        .projects
+        .project_link(project_id)
+        .stages()
+        .stage_link(stage_position)
+        .attachments()
+        .attachment_by_id(attachment_id)
         .await
     {
         Ok(a) => a,

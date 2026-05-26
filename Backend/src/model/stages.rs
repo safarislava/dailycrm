@@ -1,5 +1,6 @@
 use crate::model::stage::{DetailedStage, Stage};
 use crate::model::stage_link::StageLink;
+use crate::storage::Storage;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -18,15 +19,16 @@ struct StageRow {
 pub struct Stages {
     project_id: Uuid,
     pool: PgPool,
+    storage: Storage,
 }
 
 impl Stages {
-    pub fn new(project_id: Uuid, pool: PgPool) -> Self {
-        Self { project_id, pool }
+    pub fn new(project_id: Uuid, pool: PgPool, storage: Storage) -> Self {
+        Self { project_id, pool, storage }
     }
 
     pub fn stage_link(&self, position: i32) -> StageLink {
-        StageLink::new(self.project_id, position, self.pool.clone())
+        StageLink::new(self.project_id, position, self.pool.clone(), self.storage.clone())
     }
 
     pub async fn list(&self) -> Result<Vec<Stage>, sqlx::Error> {

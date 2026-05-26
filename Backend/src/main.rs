@@ -5,7 +5,6 @@ mod state;
 mod storage;
 
 use crate::auth::JwtMiddleware;
-use crate::model::attachments::Attachments;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::refresh_tokens::RefreshTokens;
@@ -47,9 +46,8 @@ async fn main() -> std::io::Result<()> {
 
     let state = web::Data::new(AppState {
         users: Users::new(pool.clone()),
-        projects: Projects::new(pool.clone()),
+        projects: Projects::new(pool.clone(), storage),
         invites: Invites::new(pool.clone()),
-        attachments: Attachments::new(pool.clone(), storage),
         refresh_tokens: RefreshTokens::new(pool.clone()),
     });
 
