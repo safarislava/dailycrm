@@ -28,11 +28,12 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         }
     };
 
-    if state.refresh_tokens.store(&refresh_token).await.is_err() {
-        return HttpResponse::InternalServerError().body("Something went wrong");
-    }
+    let refresh_token_string = match refresh_token.store(&state.pool).await {
+        Ok(s) => s,
+        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
+    };
 
-    let cookie = Cookie::build("refresh_token", refresh_token.token_string)
+    let cookie = Cookie::build("refresh_token", refresh_token_string)
         .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
@@ -42,5 +43,5 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
 
     HttpResponse::Ok()
         .cookie(cookie)
-        .json(AuthResponse { access_token: access_token.token_string })
+        .json(AuthResponse { access_token: access_token.token_string().to_owned() })
 }

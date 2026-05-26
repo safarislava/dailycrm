@@ -1,4 +1,3 @@
-use crate::model::refresh_token::RefreshToken;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -10,16 +9,6 @@ pub struct RefreshTokens {
 impl RefreshTokens {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
-    }
-
-    pub async fn store(&self, token: &RefreshToken) -> Result<(), sqlx::Error> {
-        sqlx::query("INSERT INTO refresh_tokens (jti, user_id, expires_at) VALUES ($1, $2, $3)")
-            .bind(token.jti)
-            .bind(token.user_id)
-            .bind(token.expires_at)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
     }
 
     pub async fn user_id_with_jti_revocation(&self, jti: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
