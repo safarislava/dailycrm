@@ -1,4 +1,5 @@
 use crate::model::project::Project;
+use crate::model::project_link::ProjectLink;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -13,7 +14,7 @@ impl Projects {
         Self { pool }
     }
 
-    pub async fn projects(&self) -> Result<Vec<Project>, sqlx::Error> {
+    pub async fn list(&self) -> Result<Vec<Project>, sqlx::Error> {
         let rows = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
             "SELECT id, title, updated_at FROM projects ORDER BY updated_at DESC",
         )
@@ -31,6 +32,10 @@ impl Projects {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    pub fn project_link(&self, id: Uuid) -> ProjectLink {
+        ProjectLink::new(id, self.pool.clone())
     }
 
     pub async fn project_by_id(&self, id: Uuid) -> Result<Project, sqlx::Error> {

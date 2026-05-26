@@ -3,6 +3,7 @@ pub mod attachment_link;
 pub mod attachments;
 pub mod invites;
 pub mod project;
+pub mod project_link;
 pub mod projects;
 pub mod refresh_tokens;
 pub mod stage;

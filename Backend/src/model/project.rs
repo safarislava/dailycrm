@@ -30,12 +30,4 @@ impl Project {
             .await?;
         Ok(())
     }
-
-    pub async fn remove(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM projects WHERE id = $1")
-            .bind(self.id)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
 }
