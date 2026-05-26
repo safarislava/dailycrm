@@ -3,10 +3,7 @@ use crate::model::username::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-#[derive(Clone)]
-pub struct Invites {
-    pool: PgPool,
-}
+pub struct Invites;
 
 pub enum RegisterWithInviteResult {
     Ok,
@@ -15,20 +12,13 @@ pub enum RegisterWithInviteResult {
 }
 
 impl Invites {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
-    }
-
-    pub async fn create(&self, created_by: Uuid) -> Result<Uuid, sqlx::Error> {
+    pub async fn create(&self, created_by: Uuid, pool: &PgPool) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct Row {
-            token: Uuid,
-        }
-        let row: Row =
-            sqlx::query_as("INSERT INTO invites (created_by) VALUES ($1) RETURNING token")
-                .bind(created_by)
-                .fetch_one(&self.pool)
-                .await?;
+        struct Row { token: Uuid }
+        let row: Row = sqlx::query_as("INSERT INTO invites (created_by) VALUES ($1) RETURNING token")
+            .bind(created_by)
+            .fetch_one(pool)
+            .await?;
         Ok(row.token)
     }
 
@@ -37,8 +27,9 @@ impl Invites {
         token: Uuid,
         username: &ValidUsername,
         password_hash: &PasswordHash,
+        pool: &PgPool,
     ) -> Result<RegisterWithInviteResult, sqlx::Error> {
-        let mut transaction = self.pool.begin().await?;
+        let mut transaction = pool.begin().await?;
 
         let rows = sqlx::query(
             "UPDATE invites SET used_at = NOW() \

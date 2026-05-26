@@ -11,14 +11,14 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32, Uuid)>)
         .stages()
         .stage_link(stage_position)
         .attachments()
-        .attachment_by_id(attachment_id)
+        .attachment_by_id(attachment_id, &state.pool)
         .await
     {
         Ok(a) => a,
         Err(_) => return HttpResponse::NotFound().finish(),
     };
 
-    match attachment.content().await {
+    match attachment.content(&state.storage).await {
         Ok((data, content_type, content_disposition)) => HttpResponse::Ok()
             .content_type(content_type)
             .insert_header(("Content-Disposition", content_disposition))

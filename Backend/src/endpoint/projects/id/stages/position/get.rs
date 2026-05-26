@@ -8,7 +8,7 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32)>) -> im
         .projects
         .project_link(project_id)
         .stages()
-        .detailed_stage(position)
+        .detailed_stage(position, &state.pool)
         .await
     {
         Ok(stage) => HttpResponse::Ok().json(stage),

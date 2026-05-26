@@ -19,27 +19,15 @@ struct AttachmentRow {
 pub struct Attachments {
     project_id: Uuid,
     stage_position: i32,
-    pool: PgPool,
-    storage: Storage,
 }
 
 impl Attachments {
-    pub fn new(project_id: Uuid, stage_position: i32, pool: PgPool, storage: Storage) -> Self {
-        Self {
-            project_id,
-            stage_position,
-            pool,
-            storage,
-        }
+    pub fn new(project_id: Uuid, stage_position: i32) -> Self {
+        Self { project_id, stage_position }
     }
 
     pub fn attachment_link(&self, attachment_id: Uuid) -> AttachmentLink {
-        AttachmentLink::new(
-            attachment_id,
-            self.project_id,
-            self.pool.clone(),
-            self.storage.clone(),
-        )
+        AttachmentLink::new(attachment_id, self.project_id)
     }
 
     fn attachment_from_row(&self, row: AttachmentRow) -> Attachment {
@@ -47,18 +35,10 @@ impl Attachments {
             "/api/projects/{}/stages/{}/attachments/{}/download",
             self.project_id, self.stage_position, row.id
         );
-        Attachment::new(
-            row.id,
-            row.filename,
-            row.mime_type,
-            row.size_bytes,
-            row.created_at,
-            url,
-            self.storage.clone(),
-        )
+        Attachment::new(row.id, row.filename, row.mime_type, row.size_bytes, row.created_at, url)
     }
 
-    pub async fn list(&self) -> Result<Vec<Attachment>, sqlx::Error> {
+    pub async fn list(&self, pool: &PgPool) -> Result<Vec<Attachment>, sqlx::Error> {
         let rows = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
@@ -67,16 +47,13 @@ impl Attachments {
         )
         .bind(self.project_id)
         .bind(self.stage_position)
-        .fetch_all(&self.pool)
+        .fetch_all(pool)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| self.attachment_from_row(row))
-            .collect())
+        Ok(rows.into_iter().map(|row| self.attachment_from_row(row)).collect())
     }
 
-    pub async fn attachment_by_id(&self, attachment_id: Uuid) -> Result<Attachment, sqlx::Error> {
+    pub async fn attachment_by_id(&self, attachment_id: Uuid, pool: &PgPool) -> Result<Attachment, sqlx::Error> {
         let row = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
@@ -85,7 +62,7 @@ impl Attachments {
         .bind(attachment_id)
         .bind(self.project_id)
         .bind(self.stage_position)
-        .fetch_one(&self.pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(self.attachment_from_row(row))
@@ -96,13 +73,13 @@ impl Attachments {
         filename: String,
         mime_type: String,
         data: Vec<u8>,
+        pool: &PgPool,
+        storage: &Storage,
     ) -> Result<Uuid, BoxError> {
         let size_bytes = data.len() as i64;
         let attachment_id = Uuid::new_v4();
 
-        self.storage
-            .upload(&attachment_id.to_string(), data, &mime_type, &filename)
-            .await?;
+        storage.upload(&attachment_id.to_string(), data, &mime_type, &filename).await?;
 
         let row: (Uuid,) = sqlx::query_as(
             "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes)
@@ -114,7 +91,7 @@ impl Attachments {
         .bind(filename)
         .bind(mime_type)
         .bind(size_bytes)
-        .fetch_one(&self.pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(row.0)

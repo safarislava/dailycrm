@@ -1,31 +1,22 @@
 use crate::model::project::Project;
 use crate::model::project_link::ProjectLink;
 use crate::model::stage::{Stage, StageWithProjectTitle};
-use crate::storage::Storage;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-#[derive(Clone)]
-pub struct Projects {
-    pool: PgPool,
-    storage: Storage,
-}
+pub struct Projects;
 
 impl Projects {
-    pub fn new(pool: PgPool, storage: Storage) -> Self {
-        Self { pool, storage }
-    }
-
     pub fn project_link(&self, id: Uuid) -> ProjectLink {
-        ProjectLink::new(id, self.pool.clone(), self.storage.clone())
+        ProjectLink::new(id)
     }
 
-    pub async fn list(&self) -> Result<Vec<Project>, sqlx::Error> {
+    pub async fn list(&self, pool: &PgPool) -> Result<Vec<Project>, sqlx::Error> {
         let rows = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
             "SELECT id, title, updated_at FROM projects ORDER BY updated_at DESC",
         )
-        .fetch_all(&self.pool)
+        .fetch_all(pool)
         .await?;
         Ok(rows
             .into_iter()
@@ -33,15 +24,15 @@ impl Projects {
             .collect())
     }
 
-    pub async fn register(&self, title: &str) -> Result<(), sqlx::Error> {
+    pub async fn register(&self, title: &str, pool: &PgPool) -> Result<(), sqlx::Error> {
         sqlx::query("INSERT INTO projects (title) VALUES ($1)")
             .bind(title)
-            .execute(&self.pool)
+            .execute(pool)
             .await?;
         Ok(())
     }
 
-    pub async fn deadlines(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
+    pub async fn deadlines(&self, pool: &PgPool) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
@@ -59,19 +50,13 @@ impl Projects {
              WHERE s.deadline IS NOT NULL
              ORDER BY s.deadline",
         )
-        .fetch_all(&self.pool)
+        .fetch_all(pool)
         .await?;
         Ok(rows
             .into_iter()
             .map(|r| {
                 StageWithProjectTitle::new(
-                    Stage::new(
-                        r.project_id,
-                        r.position,
-                        r.stage_title,
-                        Some(r.deadline),
-                        r.completed,
-                    ),
+                    Stage::new(r.project_id, r.position, r.stage_title, Some(r.deadline), r.completed),
                     r.project_title,
                 )
             })

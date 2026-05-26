@@ -10,7 +10,7 @@ pub async fn create(
     state: web::Data<AppState>,
     body: web::Json<CreateProjectDto>,
 ) -> impl Responder {
-    match state.projects.register(&body.title).await {
+    match state.projects.register(&body.title, &state.pool).await {
         Ok(_) => HttpResponse::Created().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

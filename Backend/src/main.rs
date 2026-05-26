@@ -46,10 +46,11 @@ async fn main() -> std::io::Result<()> {
 
     let state = web::Data::new(AppState {
         pool: pool.clone(),
-        users: Users::new(pool.clone()),
-        projects: Projects::new(pool.clone(), storage),
-        invites: Invites::new(pool.clone()),
-        refresh_tokens: RefreshTokens::new(pool.clone()),
+        storage: storage.clone(),
+        users: Users,
+        projects: Projects,
+        invites: Invites,
+        refresh_tokens: RefreshTokens,
     });
 
     HttpServer::new(move || {

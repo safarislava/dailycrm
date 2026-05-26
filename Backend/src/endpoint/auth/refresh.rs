@@ -21,7 +21,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         return HttpResponse::Unauthorized().body("Invalid refresh token");
     }
 
-    let user_id = match state.refresh_tokens.user_id_with_jti_revocation(claims.jti).await {
+    let user_id = match state.refresh_tokens.user_id_with_jti_revocation(claims.jti, &state.pool).await {
         Ok(Some(id)) => id,
         Ok(None) => return HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),

@@ -13,8 +13,6 @@ pub struct Attachment {
     size_bytes: i64,
     created_at: DateTime<Utc>,
     download_url: String,
-    #[serde(skip)]
-    storage: Storage,
 }
 
 impl Attachment {
@@ -25,21 +23,12 @@ impl Attachment {
         size_bytes: i64,
         created_at: DateTime<Utc>,
         download_url: String,
-        storage: Storage,
     ) -> Self {
-        Self {
-            id,
-            filename,
-            mime_type,
-            size_bytes,
-            created_at,
-            download_url,
-            storage,
-        }
+        Self { id, filename, mime_type, size_bytes, created_at, download_url }
     }
 
-    pub async fn content(&self) -> Result<(Vec<u8>, String, String), BoxError> {
-        let data = self.storage.get_bytes(&self.id.to_string()).await?;
+    pub async fn content(&self, storage: &Storage) -> Result<(Vec<u8>, String, String), BoxError> {
+        let data = storage.get_bytes(&self.id.to_string()).await?;
         let encoded: String = self
             .filename
             .bytes()

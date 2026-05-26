@@ -67,7 +67,7 @@ pub async fn post(
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
-        return match attachments.upload(filename, mime_type, data).await {
+        return match attachments.upload(filename, mime_type, data, &state.pool, &state.storage).await {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
             Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
         };
