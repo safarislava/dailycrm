@@ -1,5 +1,5 @@
 use crate::auth::user_id_from_request;
-use crate::model::user::{Username, ValidUsername};
+use crate::model::username::{Username, ValidUsername};
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -24,7 +24,12 @@ pub async fn patch(
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    match state.users.update_username(user_id, &valid_username).await {
+    match state
+        .users
+        .user_link(user_id)
+        .update_username(&valid_username)
+        .await
+    {
         Ok(true) => HttpResponse::Ok().finish(),
         Ok(false) => HttpResponse::Conflict().body("Username already taken"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

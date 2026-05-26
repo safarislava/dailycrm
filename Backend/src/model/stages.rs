@@ -24,11 +24,20 @@ pub struct Stages {
 
 impl Stages {
     pub fn new(project_id: Uuid, pool: PgPool, storage: Storage) -> Self {
-        Self { project_id, pool, storage }
+        Self {
+            project_id,
+            pool,
+            storage,
+        }
     }
 
     pub fn stage_link(&self, position: i32) -> StageLink {
-        StageLink::new(self.project_id, position, self.pool.clone(), self.storage.clone())
+        StageLink::new(
+            self.project_id,
+            position,
+            self.pool.clone(),
+            self.storage.clone(),
+        )
     }
 
     pub async fn list(&self) -> Result<Vec<Stage>, sqlx::Error> {
@@ -91,7 +100,13 @@ impl Stages {
         .bind(position)
         .fetch_one(&self.pool)
         .await?;
-        let base = Stage::new(row.project_id, row.position, row.title, row.deadline, row.completed);
+        let base = Stage::new(
+            row.project_id,
+            row.position,
+            row.title,
+            row.deadline,
+            row.completed,
+        );
         Ok(DetailedStage::new(base, row.description, row.cost))
     }
 }

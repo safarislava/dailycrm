@@ -25,11 +25,21 @@ pub struct Attachments {
 
 impl Attachments {
     pub fn new(project_id: Uuid, stage_position: i32, pool: PgPool, storage: Storage) -> Self {
-        Self { project_id, stage_position, pool, storage }
+        Self {
+            project_id,
+            stage_position,
+            pool,
+            storage,
+        }
     }
 
     pub fn attachment_link(&self, attachment_id: Uuid) -> AttachmentLink {
-        AttachmentLink::new(attachment_id, self.project_id, self.pool.clone(), self.storage.clone())
+        AttachmentLink::new(
+            attachment_id,
+            self.project_id,
+            self.pool.clone(),
+            self.storage.clone(),
+        )
     }
 
     fn attachment_from_row(&self, row: AttachmentRow) -> Attachment {
@@ -60,7 +70,10 @@ impl Attachments {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows.into_iter().map(|row| self.attachment_from_row(row)).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| self.attachment_from_row(row))
+            .collect())
     }
 
     pub async fn attachment_by_id(&self, attachment_id: Uuid) -> Result<Attachment, sqlx::Error> {

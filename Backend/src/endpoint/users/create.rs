@@ -1,5 +1,8 @@
 use crate::model::invites::RegisterWithInviteResult;
-use crate::model::user::{PasswordHash, Password, Username, ValidPassword, ValidUsername};
+use crate::model::password::Password;
+use crate::model::password::ValidPassword;
+use crate::model::password_hash::PasswordHash;
+use crate::model::username::{Username, ValidUsername};
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;

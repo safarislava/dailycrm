@@ -1,5 +1,6 @@
 use crate::auth::user_id_from_request;
-use crate::model::user::{Password, PasswordHash, ValidPassword, ValidPasswordHash, VerifyError};
+use crate::model::password::{Password, ValidPassword};
+use crate::model::password_hash::{HashError, PasswordHash, VerifyError};
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -25,24 +26,26 @@ pub async fn patch(
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    let stored_hash = match state.users.password_hash_by_id(user_id).await {
-        Ok(Some(h)) => h,
-        Ok(None) => return HttpResponse::NotFound().finish(),
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
+    let link = state.users.user_link(user_id);
 
-    match ValidPasswordHash::try_new(stored_hash, &body.current_password).await {
+    match link.password_verification(&body.current_password).await {
         Ok(_) => {}
-        Err(VerifyError::WrongPassword) => return HttpResponse::Unauthorized().body("Wrong current password"),
-        Err(VerifyError::Internal) => return HttpResponse::InternalServerError().body("Something went wrong"),
+        Err(VerifyError::WrongPassword) => {
+            return HttpResponse::Unauthorized().body("Wrong current password");
+        }
+        Err(VerifyError::Internal) => {
+            return HttpResponse::InternalServerError().body("Something went wrong");
+        }
     };
 
     let new_hash = match PasswordHash::new_from_password(valid_new_password).await {
         Ok(h) => h,
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
+        Err(HashError::Bcrypt) | Err(HashError::Task) => {
+            return HttpResponse::InternalServerError().body("Something went wrong");
+        }
     };
 
-    match state.users.update_password(user_id, &new_hash).await {
+    match link.update_password(&new_hash).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

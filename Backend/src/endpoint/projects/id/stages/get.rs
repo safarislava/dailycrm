@@ -4,7 +4,13 @@ use uuid::Uuid;
 
 pub async fn get(state: web::Data<AppState>, path: web::Path<Uuid>) -> impl Responder {
     let project_id = path.into_inner();
-    match state.projects.project_link(project_id).stages().list().await {
+    match state
+        .projects
+        .project_link(project_id)
+        .stages()
+        .list()
+        .await
+    {
         Ok(stages) => HttpResponse::Ok().json(stages),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

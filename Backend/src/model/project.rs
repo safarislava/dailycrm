@@ -11,6 +11,10 @@ pub struct Project {
 
 impl Project {
     pub fn new(id: Uuid, title: String, updated_at: DateTime<Utc>) -> Self {
-        Project { id, title, updated_at }
+        Project {
+            id,
+            title,
+            updated_at,
+        }
     }
 }

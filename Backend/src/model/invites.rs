@@ -1,4 +1,5 @@
-use crate::model::user::{PasswordHash, ValidUsername};
+use crate::model::password_hash::PasswordHash;
+use crate::model::username::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
 

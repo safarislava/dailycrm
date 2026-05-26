@@ -32,7 +32,12 @@ pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors
     let exp = (Utc::now().timestamp() + 15 * 60) as usize;
     encode(
         &Header::default(),
-        &Claims { sub: user_id, jti: Uuid::new_v4(), typ: "access".into(), exp },
+        &Claims {
+            sub: user_id,
+            jti: Uuid::new_v4(),
+            typ: "access".into(),
+            exp,
+        },
         &EncodingKey::from_secret(jwt_secret().as_bytes()),
     )
 }
@@ -44,7 +49,12 @@ pub fn create_refresh_token(
     let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize;
     encode(
         &Header::default(),
-        &Claims { sub: user_id, jti, typ: "refresh".into(), exp },
+        &Claims {
+            sub: user_id,
+            jti,
+            typ: "refresh".into(),
+            exp,
+        },
         &EncodingKey::from_secret(jwt_secret().as_bytes()),
     )
 }
@@ -104,10 +114,10 @@ where
 
     forward_ready!(service);
 
-    fn call(&self, req: ServiceRequest) -> Self::Future {
+    fn call(&self, request: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
 
-        let authorized = req
+        let authorized = request
             .headers()
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
@@ -118,7 +128,7 @@ where
 
         Box::pin(async move {
             if authorized {
-                svc.call(req).await
+                svc.call(request).await
             } else {
                 Err(actix_web::error::ErrorUnauthorized("Unauthorized"))
             }

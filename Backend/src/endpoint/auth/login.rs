@@ -1,12 +1,9 @@
-use crate::auth::{create_access_token, create_refresh_token};
 use crate::endpoint::auth::AuthResponse;
-use crate::model::user::{ValidPasswordHash, VerifyError};
+use crate::model::user::LoginError;
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpResponse, Responder, web};
-use chrono::{Duration, Utc};
 use serde::Deserialize;
-use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct LoginDto {
@@ -15,32 +12,27 @@ pub struct LoginDto {
 }
 
 pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
-    let (user_id, stored_hash) = match state.users.find_by_username(&body.username).await {
+    let user = match state.users.user_by_username(&body.username).await {
         Ok(Some(u)) => u,
         Ok(None) => return HttpResponse::Unauthorized().body("Invalid credentials"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    match ValidPasswordHash::try_new(stored_hash, &body.password).await {
-        Ok(_) => {}
-        Err(VerifyError::WrongPassword) => return HttpResponse::Unauthorized().body("Invalid credentials"),
-        Err(VerifyError::Internal) => return HttpResponse::InternalServerError().body("Something went wrong"),
+    let (access_token, refresh_token) = match user.tokens(&body.password).await {
+        Ok(tokens) => tokens,
+        Err(LoginError::WrongPassword) => {
+            return HttpResponse::Unauthorized().body("Invalid credentials");
+        }
+        Err(LoginError::Internal) => {
+            return HttpResponse::InternalServerError().body("Something went wrong");
+        }
     };
 
-    let jti = Uuid::new_v4();
-    let expires_at = Utc::now() + Duration::days(7);
-
-    let (access_token, refresh_token) =
-        match (create_access_token(user_id), create_refresh_token(user_id, jti)) {
-            (Ok(at), Ok(rt)) => (at, rt),
-            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-        };
-
-    if state.refresh_tokens.store(jti, user_id, expires_at).await.is_err() {
+    if state.refresh_tokens.store(&refresh_token).await.is_err() {
         return HttpResponse::InternalServerError().body("Something went wrong");
     }
 
-    let cookie = Cookie::build("refresh_token", refresh_token)
+    let cookie = Cookie::build("refresh_token", refresh_token.token_string)
         .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
@@ -50,5 +42,5 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
 
     HttpResponse::Ok()
         .cookie(cookie)
-        .json(AuthResponse { access_token })
+        .json(AuthResponse { access_token: access_token.token_string })
 }
