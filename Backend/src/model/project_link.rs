@@ -1,3 +1,4 @@
+use crate::model::stages::Stages;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -9,6 +10,19 @@ pub struct ProjectLink {
 impl ProjectLink {
     pub fn new(id: Uuid, pool: PgPool) -> Self {
         Self { id, pool }
+    }
+
+    pub fn stages(&self) -> Stages {
+        Stages::new(self.id, self.pool.clone())
+    }
+
+    pub async fn rename(&self, title: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE projects SET title = $2 WHERE id = $1")
+            .bind(self.id)
+            .bind(title)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn remove(self) -> Result<(), sqlx::Error> {

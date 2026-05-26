@@ -9,7 +9,6 @@ use crate::model::attachments::Attachments;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::refresh_tokens::RefreshTokens;
-use crate::model::stages::Stages;
 use crate::model::users::Users;
 use crate::state::AppState;
 use crate::storage::Storage;
@@ -49,7 +48,6 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState {
         users: Users::new(pool.clone()),
         projects: Projects::new(pool.clone()),
-        stages: Stages::new(pool.clone()),
         invites: Invites::new(pool.clone()),
         attachments: Attachments::new(pool.clone(), storage),
         refresh_tokens: RefreshTokens::new(pool.clone()),

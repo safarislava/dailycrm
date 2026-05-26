@@ -16,8 +16,10 @@ pub async fn patch(
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
     match state
-        .stages
-        .stage_link(project_id, position)
+        .projects
+        .project_link(project_id)
+        .stages()
+        .stage_link(position)
         .update_title(body.title.clone())
         .await
     {

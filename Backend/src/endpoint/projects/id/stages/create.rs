@@ -15,7 +15,13 @@ pub async fn create(
     body: Json<CreateStageDto>,
 ) -> impl Responder {
     let project_id = path.into_inner();
-    match state.stages.append(project_id, body.title.clone()).await {
+    match state
+        .projects
+        .project_link(project_id)
+        .stages()
+        .append(body.title.clone())
+        .await
+    {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
