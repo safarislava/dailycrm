@@ -26,9 +26,7 @@ pub async fn patch(
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    let link = state.users.user_link(user_id);
-
-    match link.password_verification(&body.current_password).await {
+    match state.users.password_verification(user_id, &body.current_password).await {
         Ok(_) => {}
         Err(VerifyError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Wrong current password");
@@ -43,7 +41,7 @@ pub async fn patch(
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    match link.update_password(&new_hash).await {
+    match state.users.update_password(user_id, &new_hash).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

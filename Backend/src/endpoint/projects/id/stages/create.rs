@@ -1,4 +1,3 @@
-use crate::model::tail_stage::TailStage;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -16,10 +15,7 @@ pub async fn create(
     body: Json<CreateStageDto>,
 ) -> impl Responder {
     let project_id = path.into_inner();
-    match TailStage::new(project_id, body.title.clone(), state.pool.clone())
-        .save()
-        .await
-    {
+    match state.stages.append(project_id, body.title.clone()).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

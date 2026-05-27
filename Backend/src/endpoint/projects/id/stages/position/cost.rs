@@ -1,4 +1,3 @@
-use crate::model::stage_cost::StageCost;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -16,8 +15,9 @@ pub async fn patch(
     body: Json<UpdateCostDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    match StageCost::new(project_id, position, body.cost, state.pool.clone())
-        .save()
+    match state
+        .stage_fields
+        .update_cost(project_id, position, body.cost)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

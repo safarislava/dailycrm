@@ -1,4 +1,3 @@
-use crate::model::new_attachment::NewAttachment;
 use crate::state::AppState;
 use actix_multipart::Multipart;
 use actix_web::{HttpResponse, Responder, web};
@@ -62,17 +61,10 @@ pub async fn post(
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
-        return match NewAttachment::new(
-            project_id,
-            stage_position,
-            filename,
-            mime_type,
-            data,
-            state.pool.clone(),
-            state.storage.clone(),
-        )
-        .save()
-        .await
+        return match state
+            .attachments
+            .upload(project_id, stage_position, filename, mime_type, data)
+            .await
         {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
             Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

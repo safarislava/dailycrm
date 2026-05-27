@@ -1,18 +1,23 @@
+use crate::contract::Deadlines;
 use crate::model::stage::{Stage, StageWithProjectTitle};
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct Deadlines {
+pub struct PgDeadlines {
     pool: PgPool,
 }
 
-impl Deadlines {
+impl PgDeadlines {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+}
 
-    pub async fn list(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
+#[async_trait]
+impl Deadlines for PgDeadlines {
+    async fn list(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
@@ -32,17 +37,12 @@ impl Deadlines {
         )
         .fetch_all(&self.pool)
         .await?;
+
         Ok(rows
             .into_iter()
             .map(|r| {
                 StageWithProjectTitle::new(
-                    Stage::new(
-                        r.project_id,
-                        r.position,
-                        r.stage_title,
-                        Some(r.deadline),
-                        r.completed,
-                    ),
+                    Stage::new(r.project_id, r.position, r.stage_title, Some(r.deadline), r.completed),
                     r.project_title,
                 )
             })

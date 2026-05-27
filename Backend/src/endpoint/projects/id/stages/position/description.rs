@@ -1,4 +1,3 @@
-use crate::model::stage_description::StageDescription;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -16,8 +15,9 @@ pub async fn patch(
     body: Json<UpdateDescriptionDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    match StageDescription::new(project_id, position, body.description.clone(), state.pool.clone())
-        .save()
+    match state
+        .stage_fields
+        .update_description(project_id, position, body.description.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

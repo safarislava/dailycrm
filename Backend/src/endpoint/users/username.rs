@@ -24,12 +24,7 @@ pub async fn patch(
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    match state
-        .users
-        .user_link(user_id)
-        .update_username(&valid_username)
-        .await
-    {
+    match state.users.update_username(user_id, &valid_username).await {
         Ok(true) => HttpResponse::Ok().finish(),
         Ok(false) => HttpResponse::Conflict().body("Username already taken"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

@@ -1,17 +1,21 @@
 mod auth;
+mod contract;
 mod endpoint;
 mod model;
 mod state;
 mod storage;
 
 use crate::auth::JwtMiddleware;
-use crate::model::deadlines::Deadlines;
-use crate::model::invites::Invites;
-use crate::model::projects::Projects;
-use crate::model::refresh_tokens::RefreshTokens;
-use crate::model::users::Users;
+use crate::model::attachments::PgAttachments;
+use crate::model::deadlines::PgDeadlines;
+use crate::model::invites::PgInvites;
+use crate::model::projects::PgProjects;
+use crate::model::refresh_tokens::PgRefreshTokens;
+use crate::model::stages::PgStages;
+use crate::model::users::PgUsers;
 use crate::state::AppState;
 use crate::storage::Storage;
+use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_governor::governor::clock::QuantaInstant;
@@ -47,12 +51,14 @@ async fn main() -> std::io::Result<()> {
 
     let state = web::Data::new(AppState {
         pool: pool.clone(),
-        storage: storage.clone(),
-        users: Users::new(pool.clone()),
-        projects: Projects::new(pool.clone()),
-        invites: Invites::new(pool.clone()),
-        refresh_tokens: RefreshTokens::new(pool.clone()),
-        deadlines: Deadlines::new(pool.clone()),
+        users: Arc::new(PgUsers::new(pool.clone())),
+        projects: Arc::new(PgProjects::new(pool.clone())),
+        invites: Arc::new(PgInvites::new(pool.clone())),
+        refresh_tokens: Arc::new(PgRefreshTokens::new(pool.clone())),
+        deadlines: Arc::new(PgDeadlines::new(pool.clone())),
+        attachments: Arc::new(PgAttachments::new(pool.clone(), storage.clone())),
+        stages: Arc::new(PgStages::new(pool.clone())),
+        stage_fields: Arc::new(PgStages::new(pool.clone())),
     });
 
     HttpServer::new(move || {

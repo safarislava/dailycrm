@@ -1,11 +1,9 @@
+use crate::contract::Invites;
 use crate::model::password_hash::PasswordHash;
 use crate::model::username::ValidUsername;
+use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-pub struct Invites {
-    pool: PgPool,
-}
 
 pub enum RegisterWithInviteResult {
     Ok,
@@ -13,12 +11,19 @@ pub enum RegisterWithInviteResult {
     UserExists,
 }
 
-impl Invites {
+pub struct PgInvites {
+    pool: PgPool,
+}
+
+impl PgInvites {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+}
 
-    pub async fn create(&self, created_by: Uuid) -> Result<Uuid, sqlx::Error> {
+#[async_trait]
+impl Invites for PgInvites {
+    async fn create(&self, created_by: Uuid) -> Result<Uuid, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             token: Uuid,
@@ -31,7 +36,7 @@ impl Invites {
         Ok(row.token)
     }
 
-    pub async fn consume_and_register(
+    async fn consume_and_register(
         &self,
         token: Uuid,
         username: &ValidUsername,

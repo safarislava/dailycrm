@@ -18,12 +18,7 @@ pub async fn patch(
     if body.title.trim().is_empty() {
         return HttpResponse::BadRequest().body("Title cannot be empty");
     }
-    match state
-        .projects
-        .project_link(id)
-        .rename(body.title.trim())
-        .await
-    {
+    match state.projects.rename(id, body.title.trim()).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().body("Project not found"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
