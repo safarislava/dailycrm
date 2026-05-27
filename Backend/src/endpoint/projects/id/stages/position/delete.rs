@@ -9,7 +9,7 @@ pub async fn delete(state: web::Data<AppState>, path: web::Path<(Uuid, i32)>) ->
         .project_link(project_id)
         .stages()
         .stage_link(position)
-        .remove(&state.pool)
+        .remove()
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

@@ -20,7 +20,7 @@ pub async fn patch(
         .project_link(project_id)
         .stages()
         .stage_link(position)
-        .update_title(body.title.clone(), &state.pool)
+        .update_title(body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

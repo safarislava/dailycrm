@@ -7,19 +7,20 @@ type BoxError = Box<dyn std::error::Error + Send + Sync>;
 pub struct AttachmentLink {
     id: Uuid,
     project_id: Uuid,
+    pool: PgPool,
 }
 
 impl AttachmentLink {
-    pub fn new(id: Uuid, project_id: Uuid) -> Self {
-        Self { id, project_id }
+    pub fn new(id: Uuid, project_id: Uuid, pool: PgPool) -> Self {
+        Self { id, project_id, pool }
     }
 
-    pub async fn delete(self, pool: &PgPool, storage: &Storage) -> Result<(), BoxError> {
+    pub async fn delete(self, storage: &Storage) -> Result<(), BoxError> {
         let _ = storage.delete(&self.id.to_string()).await;
         let result = sqlx::query("DELETE FROM attachments WHERE id = $1 AND project_id = $2")
             .bind(self.id)
             .bind(self.project_id)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
 
         if result.rows_affected() == 0 {

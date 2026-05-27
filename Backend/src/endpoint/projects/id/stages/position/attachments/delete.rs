@@ -15,7 +15,7 @@ pub async fn delete(
         .stage_link(stage_position)
         .attachments()
         .attachment_link(attachment_id)
-        .delete(&state.pool, &state.storage)
+        .delete(&state.storage)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

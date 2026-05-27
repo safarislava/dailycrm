@@ -5,21 +5,22 @@ use uuid::Uuid;
 
 pub struct UserLink {
     id: Uuid,
+    pool: PgPool,
 }
 
 impl UserLink {
-    pub fn new(id: Uuid) -> Self {
-        Self { id }
+    pub fn new(id: Uuid, pool: PgPool) -> Self {
+        Self { id, pool }
     }
 
-    pub async fn username(&self, pool: &PgPool) -> Result<Option<String>, sqlx::Error> {
+    pub async fn username(&self) -> Result<Option<String>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             username: String,
         }
         let row = sqlx::query_as::<_, Row>("SELECT username FROM users WHERE id = $1")
             .bind(self.id)
-            .fetch_optional(pool)
+            .fetch_optional(&self.pool)
             .await?;
         Ok(row.map(|r| r.username))
     }
@@ -27,7 +28,6 @@ impl UserLink {
     pub async fn password_verification(
         &self,
         password: &str,
-        pool: &PgPool,
     ) -> Result<(), VerifyError> {
         #[derive(sqlx::FromRow)]
         struct Row {
@@ -35,7 +35,7 @@ impl UserLink {
         }
         let row = sqlx::query_as::<_, Row>("SELECT password_hash FROM users WHERE id = $1")
             .bind(self.id)
-            .fetch_optional(pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|_| VerifyError::Internal)?;
 
@@ -51,12 +51,11 @@ impl UserLink {
     pub async fn update_username(
         &self,
         username: &ValidUsername,
-        pool: &PgPool,
     ) -> Result<bool, sqlx::Error> {
         let rows = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(username.as_str())
-            .execute(pool)
+            .bind(username)
+            .execute(&self.pool)
             .await;
         match rows {
             Ok(_) => Ok(true),
@@ -68,12 +67,11 @@ impl UserLink {
     pub async fn update_password(
         &self,
         new_hash: &PasswordHash,
-        pool: &PgPool,
     ) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE users SET password_hash = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(new_hash.as_str())
-            .execute(pool)
+            .bind(new_hash)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }

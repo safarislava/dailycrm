@@ -11,7 +11,7 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32, Uuid)>)
         .stages()
         .stage_link(stage_position)
         .attachments()
-        .attachment_by_id(attachment_id, &state.pool)
+        .attachment_by_id(attachment_id)
         .await
     {
         Ok(a) => a,

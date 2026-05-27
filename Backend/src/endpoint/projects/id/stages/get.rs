@@ -8,7 +8,7 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<Uuid>) -> impl Resp
         .projects
         .project_link(project_id)
         .stages()
-        .list(&state.pool)
+        .list()
         .await
     {
         Ok(stages) => HttpResponse::Ok().json(stages),

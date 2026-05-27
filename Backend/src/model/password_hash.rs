@@ -1,4 +1,8 @@
-use crate::model::password::ValidPassword;
+use sqlx::Encode;
+use sqlx::Postgres;
+use sqlx::Type;
+use sqlx::encode::IsNull;
+use sqlx::postgres::PgArgumentBuffer;
 
 #[derive(Clone)]
 pub struct PasswordHash(String);
@@ -12,21 +16,20 @@ impl PasswordHash {
     pub fn new(hash: String) -> Self {
         PasswordHash(hash)
     }
+}
 
-    pub async fn new_from_password(password: ValidPassword) -> Result<Self, HashError> {
-        match actix_web::rt::task::spawn_blocking(move || {
-            bcrypt::hash(password.as_str(), bcrypt::DEFAULT_COST)
-        })
-        .await
-        {
-            Ok(Ok(hash)) => Ok(Self(hash)),
-            Ok(Err(_)) => Err(HashError::Bcrypt),
-            Err(_) => Err(HashError::Task),
-        }
+impl Type<Postgres> for PasswordHash {
+    fn type_info() -> sqlx::postgres::PgTypeInfo {
+        <&str as Type<Postgres>>::type_info()
     }
+}
 
-    pub fn as_str(&self) -> &str {
-        &self.0
+impl<'q> Encode<'q, Postgres> for PasswordHash {
+    fn encode_by_ref(
+        &self,
+        buf: &mut PgArgumentBuffer,
+    ) -> Result<IsNull, Box<dyn std::error::Error + Send + Sync>> {
+        <&str as Encode<Postgres>>::encode_by_ref(&&*self.0, buf)
     }
 }
 

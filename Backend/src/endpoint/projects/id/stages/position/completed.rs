@@ -20,7 +20,7 @@ pub async fn patch(
         .project_link(project_id)
         .stages()
         .stage_link(position)
-        .update_completed(body.completed, &state.pool)
+        .update_completed(body.completed)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

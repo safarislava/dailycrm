@@ -4,30 +4,31 @@ use uuid::Uuid;
 
 pub struct ProjectLink {
     id: Uuid,
+    pool: PgPool,
 }
 
 impl ProjectLink {
-    pub fn new(id: Uuid) -> Self {
-        Self { id }
+    pub fn new(id: Uuid, pool: PgPool) -> Self {
+        Self { id, pool }
     }
 
     pub fn stages(&self) -> Stages {
-        Stages::new(self.id)
+        Stages::new(self.id, self.pool.clone())
     }
 
-    pub async fn rename(&self, title: &str, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn rename(&self, title: &str) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE projects SET title = $2 WHERE id = $1")
             .bind(self.id)
             .bind(title)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn remove(self, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn remove(self) -> Result<(), sqlx::Error> {
         let result = sqlx::query("DELETE FROM projects WHERE id = $1")
             .bind(self.id)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
 
         if result.rows_affected() == 0 {

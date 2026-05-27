@@ -10,7 +10,7 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32)>) -> im
         .stages()
         .stage_link(stage_position)
         .attachments()
-        .list(&state.pool)
+        .list()
         .await
     {
         Ok(attachments) => HttpResponse::Ok().json(attachments),

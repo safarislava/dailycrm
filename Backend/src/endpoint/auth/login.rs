@@ -1,4 +1,3 @@
-use crate::endpoint::auth::AuthResponse;
 use crate::model::user::LoginError;
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
@@ -14,7 +13,7 @@ pub struct LoginDto {
 pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
     let user = match state
         .users
-        .user_by_username(&body.username, &state.pool)
+        .user_by_username(&body.username)
         .await
     {
         Ok(Some(u)) => u,
@@ -45,7 +44,5 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         .max_age(actix_web::cookie::time::Duration::days(7))
         .finish();
 
-    HttpResponse::Ok().cookie(cookie).json(AuthResponse {
-        access_token: access_token.as_string().to_owned(),
-    })
+    HttpResponse::Ok().cookie(cookie).json(access_token)
 }

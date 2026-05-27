@@ -8,7 +8,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    match state.invites.create(user_id, &state.pool).await {
+    match state.invites.create(user_id).await {
         Ok(token) => HttpResponse::Created().json(serde_json::json!({ "token": token })),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

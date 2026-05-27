@@ -4,17 +4,22 @@ use crate::model::user_link::UserLink;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct Users;
+pub struct Users {
+    pool: PgPool,
+}
 
 impl Users {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
     pub fn user_link(&self, id: Uuid) -> UserLink {
-        UserLink::new(id)
+        UserLink::new(id, self.pool.clone())
     }
 
     pub async fn user_by_username(
         &self,
         username: &str,
-        pool: &PgPool,
     ) -> Result<Option<User>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
@@ -24,7 +29,7 @@ impl Users {
         let row =
             sqlx::query_as::<_, Row>("SELECT id, password_hash FROM users WHERE username = $1")
                 .bind(username)
-                .fetch_optional(pool)
+                .fetch_optional(&self.pool)
                 .await?;
         Ok(row.map(|r| User::new(r.id, PasswordHash::new(r.password_hash))))
     }

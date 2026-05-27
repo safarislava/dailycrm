@@ -21,7 +21,7 @@ pub async fn patch(
         .project_link(project_id)
         .stages()
         .stage_link(position)
-        .update_deadline(body.deadline, &state.pool)
+        .update_deadline(body.deadline)
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

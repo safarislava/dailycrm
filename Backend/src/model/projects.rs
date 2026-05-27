@@ -5,18 +5,24 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct Projects;
+pub struct Projects {
+    pool: PgPool,
+}
 
 impl Projects {
-    pub fn project_link(&self, id: Uuid) -> ProjectLink {
-        ProjectLink::new(id)
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
     }
 
-    pub async fn list(&self, pool: &PgPool) -> Result<Vec<Project>, sqlx::Error> {
+    pub fn project_link(&self, id: Uuid) -> ProjectLink {
+        ProjectLink::new(id, self.pool.clone())
+    }
+
+    pub async fn list(&self) -> Result<Vec<Project>, sqlx::Error> {
         let rows = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
             "SELECT id, title, updated_at FROM projects ORDER BY updated_at DESC",
         )
-        .fetch_all(pool)
+        .fetch_all(&self.pool)
         .await?;
         Ok(rows
             .into_iter()
@@ -24,18 +30,15 @@ impl Projects {
             .collect())
     }
 
-    pub async fn register(&self, title: &str, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn register(&self, title: &str) -> Result<(), sqlx::Error> {
         sqlx::query("INSERT INTO projects (title) VALUES ($1)")
             .bind(title)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn deadlines(
-        &self,
-        pool: &PgPool,
-    ) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
+    pub async fn deadlines(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
@@ -53,7 +56,7 @@ impl Projects {
              WHERE s.deadline IS NOT NULL
              ORDER BY s.deadline",
         )
-        .fetch_all(pool)
+        .fetch_all(&self.pool)
         .await?;
         Ok(rows
             .into_iter()

@@ -21,7 +21,7 @@ pub async fn patch(
     match state
         .projects
         .project_link(id)
-        .rename(body.title.trim(), &state.pool)
+        .rename(body.title.trim())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

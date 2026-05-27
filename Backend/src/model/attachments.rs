@@ -19,18 +19,20 @@ struct AttachmentRow {
 pub struct Attachments {
     project_id: Uuid,
     stage_position: i32,
+    pool: PgPool,
 }
 
 impl Attachments {
-    pub fn new(project_id: Uuid, stage_position: i32) -> Self {
+    pub fn new(project_id: Uuid, stage_position: i32, pool: PgPool) -> Self {
         Self {
             project_id,
             stage_position,
+            pool,
         }
     }
 
     pub fn attachment_link(&self, attachment_id: Uuid) -> AttachmentLink {
-        AttachmentLink::new(attachment_id, self.project_id)
+        AttachmentLink::new(attachment_id, self.project_id, self.pool.clone())
     }
 
     fn attachment_from_row(&self, row: AttachmentRow) -> Attachment {
@@ -48,7 +50,7 @@ impl Attachments {
         )
     }
 
-    pub async fn list(&self, pool: &PgPool) -> Result<Vec<Attachment>, sqlx::Error> {
+    pub async fn list(&self) -> Result<Vec<Attachment>, sqlx::Error> {
         let rows = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
              FROM attachments
@@ -57,7 +59,7 @@ impl Attachments {
         )
         .bind(self.project_id)
         .bind(self.stage_position)
-        .fetch_all(pool)
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(rows
@@ -69,7 +71,6 @@ impl Attachments {
     pub async fn attachment_by_id(
         &self,
         attachment_id: Uuid,
-        pool: &PgPool,
     ) -> Result<Attachment, sqlx::Error> {
         let row = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id, filename, mime_type, size_bytes, created_at
@@ -79,7 +80,7 @@ impl Attachments {
         .bind(attachment_id)
         .bind(self.project_id)
         .bind(self.stage_position)
-        .fetch_one(pool)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(self.attachment_from_row(row))
@@ -90,7 +91,6 @@ impl Attachments {
         filename: String,
         mime_type: String,
         data: Vec<u8>,
-        pool: &PgPool,
         storage: &Storage,
     ) -> Result<Uuid, BoxError> {
         let size_bytes = data.len() as i64;
@@ -110,7 +110,7 @@ impl Attachments {
         .bind(filename)
         .bind(mime_type)
         .bind(size_bytes)
-        .fetch_one(pool)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(row.0)

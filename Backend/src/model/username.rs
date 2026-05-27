@@ -1,3 +1,9 @@
+use sqlx::Encode;
+use sqlx::Postgres;
+use sqlx::Type;
+use sqlx::encode::IsNull;
+use sqlx::postgres::PgArgumentBuffer;
+
 pub struct Username(pub String);
 
 pub struct ValidUsername(Username);
@@ -20,9 +26,20 @@ impl ValidUsername {
         }
         Ok(Self(username))
     }
+}
 
-    pub fn as_str(&self) -> &str {
-        &self.0.0
+impl Type<Postgres> for ValidUsername {
+    fn type_info() -> sqlx::postgres::PgTypeInfo {
+        <&str as Type<Postgres>>::type_info()
+    }
+}
+
+impl<'q> Encode<'q, Postgres> for ValidUsername {
+    fn encode_by_ref(
+        &self,
+        buf: &mut PgArgumentBuffer,
+    ) -> Result<IsNull, Box<dyn std::error::Error + Send + Sync>> {
+        <&str as Encode<Postgres>>::encode_by_ref(&&*self.0.0, buf)
     }
 }
 

@@ -19,7 +19,7 @@ pub async fn create(
         .projects
         .project_link(project_id)
         .stages()
-        .register(position, body.title.clone(), &state.pool)
+        .register(position, body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

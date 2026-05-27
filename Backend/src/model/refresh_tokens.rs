@@ -1,13 +1,18 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct RefreshTokens;
+pub struct RefreshTokens {
+    pool: PgPool,
+}
 
 impl RefreshTokens {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
     pub async fn user_id_with_jti_revocation(
         &self,
         jti: Uuid,
-        pool: &PgPool,
     ) -> Result<Option<Uuid>, sqlx::Error> {
         let row: Option<(Uuid,)> = sqlx::query_as(
             "UPDATE refresh_tokens SET revoked_at = NOW() \
@@ -15,17 +20,17 @@ impl RefreshTokens {
              RETURNING user_id",
         )
         .bind(jti)
-        .fetch_optional(pool)
+        .fetch_optional(&self.pool)
         .await?;
         Ok(row.map(|(user_id,)| user_id))
     }
 
-    pub async fn revoke(&self, jti: Uuid, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn revoke(&self, jti: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query(
             "UPDATE refresh_tokens SET revoked_at = NOW() WHERE jti = $1 AND revoked_at IS NULL",
         )
         .bind(jti)
-        .execute(pool)
+        .execute(&self.pool)
         .await?;
         Ok(())
     }

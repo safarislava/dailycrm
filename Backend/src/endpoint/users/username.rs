@@ -27,7 +27,7 @@ pub async fn patch(
     match state
         .users
         .user_link(user_id)
-        .update_username(&valid_username, &state.pool)
+        .update_username(&valid_username)
         .await
     {
         Ok(true) => HttpResponse::Ok().finish(),

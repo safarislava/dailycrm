@@ -68,7 +68,7 @@ pub async fn post(
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
         return match attachments
-            .upload(filename, mime_type, data, &state.pool, &state.storage)
+            .upload(filename, mime_type, data, &state.storage)
             .await
         {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),

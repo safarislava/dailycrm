@@ -1,5 +1,4 @@
 use crate::auth::Claims;
-use crate::endpoint::auth::AuthResponse;
 use crate::model::access_token::AccessToken;
 use crate::model::refresh_token::RefreshToken;
 use crate::state::AppState;
@@ -23,7 +22,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
 
     let user_id = match state
         .refresh_tokens
-        .user_id_with_jti_revocation(claims.jti, &state.pool)
+        .user_id_with_jti_revocation(claims.jti)
         .await
     {
         Ok(Some(id)) => id,
@@ -52,7 +51,5 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         .max_age(actix_web::cookie::time::Duration::days(7))
         .finish();
 
-    HttpResponse::Ok().cookie(new_cookie).json(AuthResponse {
-        access_token: access_token.as_string().to_owned(),
-    })
+    HttpResponse::Ok().cookie(new_cookie).json(access_token)
 }

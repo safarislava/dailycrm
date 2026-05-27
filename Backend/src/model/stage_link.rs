@@ -6,25 +6,27 @@ use uuid::Uuid;
 pub struct StageLink {
     project_id: Uuid,
     position: i32,
+    pool: PgPool,
 }
 
 impl StageLink {
-    pub fn new(project_id: Uuid, position: i32) -> Self {
+    pub fn new(project_id: Uuid, position: i32, pool: PgPool) -> Self {
         Self {
             project_id,
             position,
+            pool,
         }
     }
 
     pub fn attachments(&self) -> Attachments {
-        Attachments::new(self.project_id, self.position)
+        Attachments::new(self.project_id, self.position, self.pool.clone())
     }
 
-    pub async fn remove(self, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn remove(self) -> Result<(), sqlx::Error> {
         let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
 
         if result.rows_affected() == 0 {
@@ -33,12 +35,12 @@ impl StageLink {
         Ok(())
     }
 
-    pub async fn update_title(&self, title: String, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update_title(&self, title: String) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET title = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
             .bind(title)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
@@ -46,13 +48,12 @@ impl StageLink {
     pub async fn update_deadline(
         &self,
         deadline: Option<DateTime<Utc>>,
-        pool: &PgPool,
     ) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET deadline = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
             .bind(deadline)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
@@ -60,37 +61,32 @@ impl StageLink {
     pub async fn update_description(
         &self,
         description: Option<String>,
-        pool: &PgPool,
     ) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
             .bind(description)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn update_cost(&self, cost: Option<i32>, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update_cost(&self, cost: Option<i32>) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET cost = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
             .bind(cost)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn update_completed(
-        &self,
-        completed: bool,
-        pool: &PgPool,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn update_completed(&self, completed: bool) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET completed = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)
             .bind(completed)
-            .execute(pool)
+            .execute(&self.pool)
             .await?;
         Ok(())
     }

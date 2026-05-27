@@ -1,6 +1,6 @@
 use crate::auth::UserIdGettable;
 use crate::model::password::{Password, ValidPassword};
-use crate::model::password_hash::{HashError, PasswordHash, VerifyError};
+use crate::model::password_hash::VerifyError;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -28,10 +28,7 @@ pub async fn patch(
 
     let link = state.users.user_link(user_id);
 
-    match link
-        .password_verification(&body.current_password, &state.pool)
-        .await
-    {
+    match link.password_verification(&body.current_password).await {
         Ok(_) => {}
         Err(VerifyError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Wrong current password");
@@ -41,14 +38,12 @@ pub async fn patch(
         }
     };
 
-    let new_hash = match PasswordHash::new_from_password(valid_new_password).await {
+    let new_hash = match valid_new_password.hashed().await {
         Ok(h) => h,
-        Err(HashError::Bcrypt) | Err(HashError::Task) => {
-            return HttpResponse::InternalServerError().body("Something went wrong");
-        }
+        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    match link.update_password(&new_hash, &state.pool).await {
+    match link.update_password(&new_hash).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

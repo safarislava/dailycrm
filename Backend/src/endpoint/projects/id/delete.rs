@@ -7,7 +7,7 @@ pub async fn delete(state: web::Data<AppState>, path: web::Path<Uuid>) -> impl R
     match state
         .projects
         .project_link(project_id)
-        .remove(&state.pool)
+        .remove()
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),
