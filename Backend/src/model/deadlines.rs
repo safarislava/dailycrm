@@ -1,5 +1,5 @@
 use crate::contract::Deadlines;
-use crate::model::stage::{Stage, StageWithProjectTitle};
+use crate::model::stage::{StageSummary, StageSummaryWithProjectTitle};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -17,7 +17,7 @@ impl PgDeadlines {
 
 #[async_trait]
 impl Deadlines for PgDeadlines {
-    async fn list(&self) -> Result<Vec<StageWithProjectTitle>, sqlx::Error> {
+    async fn list(&self) -> Result<Vec<StageSummaryWithProjectTitle>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
@@ -41,8 +41,8 @@ impl Deadlines for PgDeadlines {
         Ok(rows
             .into_iter()
             .map(|r| {
-                StageWithProjectTitle::new(
-                    Stage::new(
+                StageSummaryWithProjectTitle::new(
+                    StageSummary::new(
                         r.project_id,
                         r.position,
                         r.stage_title,

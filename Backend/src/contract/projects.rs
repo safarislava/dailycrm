@@ -1,12 +1,12 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::project::Project;
+use crate::model::project::{Project, ProjectDetails};
 
 #[async_trait]
 pub trait Projects: Send + Sync {
-    async fn list(&self) -> Result<Vec<Project>, sqlx::Error>;
+    fn project(&self, id: Uuid) -> Project;
+    async fn list(&self) -> Result<Vec<ProjectDetails>, sqlx::Error>;
     async fn register(&self, title: &str) -> Result<(), sqlx::Error>;
-    async fn rename(&self, id: Uuid, title: &str) -> Result<(), sqlx::Error>;
     async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error>;
 }

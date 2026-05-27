@@ -6,12 +6,10 @@ mod state;
 mod storage;
 
 use crate::auth::JwtMiddleware;
-use crate::model::attachments::PgAttachments;
 use crate::model::deadlines::PgDeadlines;
 use crate::model::invites::PgInvites;
 use crate::model::projects::PgProjects;
 use crate::model::refresh_tokens::PgRefreshTokens;
-use crate::model::stages::PgStages;
 use crate::model::users::PgUsers;
 use crate::state::AppState;
 use crate::storage::Storage;
@@ -53,7 +51,8 @@ async fn main() -> std::io::Result<()> {
     let minio_access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
     let minio_secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
 
-    let s3_credentials = Credentials::new(&minio_access_key, &minio_secret_key, None, None, "minio");
+    let s3_credentials =
+        Credentials::new(&minio_access_key, &minio_secret_key, None, None, "minio");
     let s3_client = Client::from_conf(
         Builder::new()
             .behavior_version(BehaviorVersion::latest())
@@ -70,13 +69,10 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState {
         pool: pool.clone(),
         users: Arc::new(PgUsers::new(pool.clone())),
-        projects: Arc::new(PgProjects::new(pool.clone())),
+        projects: Arc::new(PgProjects::new(pool.clone(), storage.clone())),
         invites: Arc::new(PgInvites::new(pool.clone())),
         refresh_tokens: Arc::new(PgRefreshTokens::new(pool.clone())),
         deadlines: Arc::new(PgDeadlines::new(pool.clone())),
-        attachments: Arc::new(PgAttachments::new(pool.clone(), storage.clone())),
-        stages: Arc::new(PgStages::new(pool.clone())),
-        stage_fields: Arc::new(PgStages::new(pool.clone())),
     });
 
     HttpServer::new(move || {

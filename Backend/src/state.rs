@@ -9,7 +9,4 @@ pub struct AppState {
     pub invites: Arc<dyn contract::Invites>,
     pub refresh_tokens: Arc<dyn contract::RefreshTokens>,
     pub deadlines: Arc<dyn contract::Deadlines>,
-    pub attachments: Arc<dyn contract::Attachments>,
-    pub stages: Arc<dyn contract::Stages>,
-    pub stage_fields: Arc<dyn contract::StageFields>,
 }

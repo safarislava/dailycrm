@@ -1,26 +1,16 @@
 use async_trait::async_trait;
-use uuid::Uuid;
 
-use crate::model::stage::{DetailedStage, Stage};
+use crate::model::stage::{Stage, StageSummary};
 
 #[async_trait]
 pub trait Stages: Send + Sync {
-    async fn list(&self, project_id: Uuid) -> Result<Vec<Stage>, sqlx::Error>;
+    fn stage(&self, position: i32) -> Stage;
 
-    async fn detailed_stage(
-        &self,
-        project_id: Uuid,
-        position: i32,
-    ) -> Result<DetailedStage, sqlx::Error>;
+    async fn list(&self) -> Result<Vec<StageSummary>, sqlx::Error>;
 
-    async fn append(&self, project_id: Uuid, title: String) -> Result<(), sqlx::Error>;
+    async fn append(&self, title: String) -> Result<(), sqlx::Error>;
 
-    async fn insert(
-        &self,
-        project_id: Uuid,
-        position: i32,
-        title: String,
-    ) -> Result<(), sqlx::Error>;
+    async fn insert(&self, position: i32, title: String) -> Result<(), sqlx::Error>;
 
-    async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error>;
+    async fn remove(&self, position: i32) -> Result<(), sqlx::Error>;
 }

@@ -1,3 +1,4 @@
+use crate::contract::Details;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -15,11 +16,12 @@ pub async fn patch(
     body: Json<UpdateTitleDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    match state
-        .stage_fields
-        .update_title(project_id, position, body.title.clone())
-        .await
-    {
+    let stage = state.projects.project(project_id).stages().stage(position);
+    let result = match stage.details().await {
+        Ok(details) => details.update_title(body.title.clone()).await,
+        Err(error) => Err(error),
+    };
+    match result {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

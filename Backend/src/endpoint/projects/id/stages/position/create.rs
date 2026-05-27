@@ -16,8 +16,10 @@ pub async fn create(
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
     match state
-        .stages
-        .insert(project_id, position, body.title.clone())
+        .projects
+        .project(project_id)
+        .stages()
+        .insert(position, body.title.clone())
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

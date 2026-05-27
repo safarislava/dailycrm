@@ -1,3 +1,4 @@
+use crate::contract::Details;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -18,7 +19,12 @@ pub async fn patch(
     if body.title.trim().is_empty() {
         return HttpResponse::BadRequest().body("Title cannot be empty");
     }
-    match state.projects.rename(id, body.title.trim()).await {
+    let project = state.projects.project(id);
+    let result = match project.details().await {
+        Ok(details) => details.rename(body.title.trim()).await,
+        Err(error) => Err(error),
+    };
+    match result {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().body("Project not found"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
