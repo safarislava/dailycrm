@@ -1,3 +1,4 @@
+use crate::model::stage_deadline::StageDeadline;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -16,12 +17,8 @@ pub async fn patch(
     body: Json<UpdateDeadlineDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    match state
-        .projects
-        .project_link(project_id)
-        .stages()
-        .stage_link(position)
-        .update_deadline(body.deadline)
+    match StageDeadline::new(project_id, position, body.deadline, state.pool.clone())
+        .save()
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),
