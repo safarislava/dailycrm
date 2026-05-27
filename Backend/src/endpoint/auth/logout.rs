@@ -1,12 +1,12 @@
-use crate::auth::Claims;
+use crate::auth::JwtToken;
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     if let Some(cookie) = request.cookie("refresh_token") {
-        if let Ok(claims) = Claims::new(cookie.value()) {
-            let _ = state.refresh_tokens.revoke(claims.jti).await;
+        if let Some(jti) = JwtToken::new(cookie.value()).refresh_jti() {
+            let _ = state.refresh_tokens.revoke(jti).await;
         }
     }
 

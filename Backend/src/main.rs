@@ -5,6 +5,7 @@ mod state;
 mod storage;
 
 use crate::auth::JwtMiddleware;
+use crate::model::deadlines::Deadlines;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::refresh_tokens::RefreshTokens;
@@ -51,6 +52,7 @@ async fn main() -> std::io::Result<()> {
         projects: Projects::new(pool.clone()),
         invites: Invites::new(pool.clone()),
         refresh_tokens: RefreshTokens::new(pool.clone()),
+        deadlines: Deadlines::new(pool.clone()),
     });
 
     HttpServer::new(move || {

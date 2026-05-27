@@ -1,3 +1,4 @@
+use crate::model::positioned_stage::PositionedStage;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -15,11 +16,8 @@ pub async fn create(
     body: Json<InsertStageDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    match state
-        .projects
-        .project_link(project_id)
-        .stages()
-        .register(position, body.title.clone())
+    match PositionedStage::new(project_id, position, body.title.clone(), state.pool.clone())
+        .save()
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

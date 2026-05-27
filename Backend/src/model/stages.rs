@@ -42,53 +42,7 @@ impl Stages {
             .collect())
     }
 
-    pub async fn append(&self, title: String) -> Result<(), sqlx::Error> {
-        #[derive(sqlx::FromRow)]
-        struct Row {
-            max: Option<i32>,
-        }
-        let row: Row =
-            sqlx::query_as("SELECT MAX(position) AS max FROM stages WHERE project_id = $1")
-                .bind(self.project_id)
-                .fetch_one(&self.pool)
-                .await?;
-        let position = row.max.unwrap_or(0) + 1;
-        sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
-            .bind(self.project_id)
-            .bind(position)
-            .bind(title)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn register(
-        &self,
-        position: i32,
-        title: String,
-    ) -> Result<(), sqlx::Error> {
-        let mut tx = self.pool.begin().await?;
-        sqlx::query(
-            "UPDATE stages SET position = position + 1 WHERE project_id = $1 AND position >= $2",
-        )
-        .bind(self.project_id)
-        .bind(position)
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
-            .bind(self.project_id)
-            .bind(position)
-            .bind(title)
-            .execute(&mut *tx)
-            .await?;
-        tx.commit().await?;
-        Ok(())
-    }
-
-    pub async fn detailed_stage(
-        &self,
-        position: i32,
-    ) -> Result<DetailedStage, sqlx::Error> {
+    pub async fn detailed_stage(&self, position: i32) -> Result<DetailedStage, sqlx::Error> {
         let row = sqlx::query_as::<_, StageRow>(
             "SELECT * FROM stages WHERE project_id = $1 AND position = $2",
         )

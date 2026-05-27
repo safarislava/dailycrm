@@ -1,4 +1,4 @@
-use crate::auth::Claims;
+use crate::auth::JwtToken;
 use crate::model::access_token::AccessToken;
 use crate::model::refresh_token::RefreshToken;
 use crate::state::AppState;
@@ -11,20 +11,12 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         None => return HttpResponse::Unauthorized().body("No refresh token"),
     };
 
-    let claims = match Claims::new(cookie.value()) {
-        Ok(c) => c,
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid refresh token"),
+    let jti = match JwtToken::new(cookie.value()).refresh_jti() {
+        Some(jti) => jti,
+        None => return HttpResponse::Unauthorized().body("Invalid refresh token"),
     };
 
-    if claims.typ != "refresh" {
-        return HttpResponse::Unauthorized().body("Invalid refresh token");
-    }
-
-    let user_id = match state
-        .refresh_tokens
-        .user_id_with_jti_revocation(claims.jti)
-        .await
-    {
+    let user_id = match state.refresh_tokens.user_id_with_jti_revocation(jti).await {
         Ok(Some(id)) => id,
         Ok(None) => return HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),

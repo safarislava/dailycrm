@@ -28,10 +28,30 @@ pub struct Claims {
     pub exp: usize,
 }
 
-impl Claims {
-    pub fn new(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+pub struct JwtToken {
+    raw: String,
+}
+
+impl JwtToken {
+    pub fn new(raw: &str) -> Self {
+        Self { raw: raw.to_owned() }
+    }
+
+    pub fn access_user_id(&self) -> Option<Uuid> {
+        self.decode().ok()
+            .filter(|c| c.typ == "access")
+            .map(|c| c.sub)
+    }
+
+    pub fn refresh_jti(&self) -> Option<Uuid> {
+        self.decode().ok()
+            .filter(|c| c.typ == "refresh")
+            .map(|c| c.jti)
+    }
+
+    fn decode(&self) -> Result<Claims, jsonwebtoken::errors::Error> {
         let data = decode::<Claims>(
-            token,
+            &self.raw,
             &DecodingKey::from_secret(jwt_secret().as_bytes()),
             &Validation::default(),
         )?;
@@ -49,9 +69,7 @@ impl UserIdGettable for HttpRequest {
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .and_then(|token| Claims::new(token).ok())
-            .filter(|claims| claims.typ == "access")
-            .map(|claims| claims.sub)
+            .and_then(|token| JwtToken::new(token).access_user_id())
     }
 }
 
@@ -98,8 +116,7 @@ where
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .and_then(|token| Claims::new(token).ok())
-            .map(|claims| claims.typ == "access")
+            .map(|token| JwtToken::new(token).access_user_id().is_some())
             .unwrap_or(false);
 
         Box::pin(async move {

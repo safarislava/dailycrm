@@ -1,3 +1,4 @@
+use crate::model::deadlines::Deadlines;
 use crate::model::invites::Invites;
 use crate::model::projects::Projects;
 use crate::model::refresh_tokens::RefreshTokens;
@@ -12,4 +13,5 @@ pub struct AppState {
     pub projects: Projects,
     pub invites: Invites,
     pub refresh_tokens: RefreshTokens,
+    pub deadlines: Deadlines,
 }
