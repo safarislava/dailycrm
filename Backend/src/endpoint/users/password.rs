@@ -1,5 +1,5 @@
 use crate::auth::UserIdGettable;
-use crate::model::password::{Password, ValidPassword};
+use crate::model::password::Password;
 use crate::model::password_hash::VerifyError;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
@@ -21,7 +21,7 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    let valid_new_password = match ValidPassword::try_new(Password(body.new_password.clone())) {
+    let valid_new_password = match Password(body.new_password.clone()).validated() {
         Ok(p) => p,
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };

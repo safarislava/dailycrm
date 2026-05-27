@@ -1,5 +1,5 @@
 use crate::contract::Users;
-use crate::model::password_hash::{PasswordHash, ValidPasswordHash, VerifyError};
+use crate::model::password_hash::{PasswordHash, VerifyError};
 use crate::model::user::User;
 use crate::model::username::ValidUsername;
 use async_trait::async_trait;
@@ -80,7 +80,7 @@ impl Users for PgUsers {
             None => return Err(VerifyError::Internal),
         };
 
-        ValidPasswordHash::try_new(hash, password).await?;
+        hash.verify(password).await?;
         Ok(())
     }
 

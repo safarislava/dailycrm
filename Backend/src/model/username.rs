@@ -8,23 +8,23 @@ pub struct Username(pub String);
 
 pub struct ValidUsername(Username);
 
-impl ValidUsername {
-    pub fn try_new(username: Username) -> Result<Self, UsernameError> {
-        let len = username.0.len();
+impl Username {
+    pub fn validated(self) -> Result<ValidUsername, UsernameError> {
+        let len = self.0.len();
         if len < 3 {
             return Err(UsernameError::TooShort);
         }
         if len > 50 {
             return Err(UsernameError::TooLong);
         }
-        if !username
+        if !self
             .0
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
         {
             return Err(UsernameError::InvalidChars);
         }
-        Ok(Self(username))
+        Ok(ValidUsername(self))
     }
 }
 

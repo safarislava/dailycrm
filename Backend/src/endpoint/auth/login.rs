@@ -22,9 +22,6 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         Err(LoginError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Invalid credentials");
         }
-        Err(LoginError::Internal) => {
-            return HttpResponse::InternalServerError().body("Something went wrong");
-        }
     };
 
     let refresh_token_string = match refresh_token.store(&state.pool).await {

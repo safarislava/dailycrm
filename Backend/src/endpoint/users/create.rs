@@ -1,6 +1,6 @@
 use crate::model::invites::RegisterWithInviteResult;
-use crate::model::password::{Password, ValidPassword};
-use crate::model::username::{Username, ValidUsername};
+use crate::model::password::Password;
+use crate::model::username::Username;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;
@@ -13,12 +13,12 @@ pub struct CreateUserDto {
 }
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
-    let valid_username = match ValidUsername::try_new(Username(body.username.clone())) {
+    let valid_username = match Username(body.username.clone()).validated() {
         Ok(u) => u,
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    let valid_password = match ValidPassword::try_new(Password(body.password.clone())) {
+    let valid_password = match Password(body.password.clone()).validated() {
         Ok(p) => p,
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };

@@ -22,16 +22,10 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    let access_token = match AccessToken::new(user_id) {
-        Ok(t) => t,
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
+    let access_token = AccessToken::new(user_id);
 
-    let refresh_token_string = match RefreshToken::new(user_id) {
-        Ok(t) => match t.store(&state.pool).await {
-            Ok(s) => s,
-            Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-        },
+    let refresh_token_string = match RefreshToken::new(user_id).store(&state.pool).await {
+        Ok(s) => s,
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 

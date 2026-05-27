@@ -17,6 +17,9 @@ use crate::state::AppState;
 use crate::storage::Storage;
 use std::sync::Arc;
 
+use aws_sdk_s3::Client;
+use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
+
 use actix_cors::Cors;
 use actix_governor::governor::clock::QuantaInstant;
 use actix_governor::governor::middleware::NoOpMiddleware;
@@ -46,7 +49,22 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to migrate the database");
 
-    let storage = Storage::new();
+    let minio_endpoint = env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set");
+    let minio_access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
+    let minio_secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
+
+    let s3_credentials = Credentials::new(&minio_access_key, &minio_secret_key, None, None, "minio");
+    let s3_client = Client::from_conf(
+        Builder::new()
+            .behavior_version(BehaviorVersion::latest())
+            .endpoint_url(&minio_endpoint)
+            .credentials_provider(s3_credentials)
+            .region(Region::new("us-east-1"))
+            .force_path_style(true)
+            .build(),
+    );
+
+    let storage = Storage::new(s3_client);
     storage.ensure_bucket().await;
 
     let state = web::Data::new(AppState {

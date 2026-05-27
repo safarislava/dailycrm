@@ -4,18 +4,20 @@ pub struct Password(pub String);
 
 pub struct ValidPassword(Password);
 
-impl ValidPassword {
-    pub fn try_new(password: Password) -> Result<Self, PasswordError> {
-        let len = password.0.len();
+impl Password {
+    pub fn validated(self) -> Result<ValidPassword, PasswordError> {
+        let len = self.0.len();
         if len < 8 {
             return Err(PasswordError::TooShort);
         }
         if len > 72 {
             return Err(PasswordError::TooLong);
         }
-        Ok(Self(password))
+        Ok(ValidPassword(self))
     }
+}
 
+impl ValidPassword {
     pub async fn hashed(self) -> Result<PasswordHash, HashError> {
         let raw = self.0.0;
         match actix_web::rt::task::spawn_blocking(move || bcrypt::hash(&raw, bcrypt::DEFAULT_COST))

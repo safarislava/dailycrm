@@ -1,5 +1,5 @@
 use crate::auth::UserIdGettable;
-use crate::model::username::{Username, ValidUsername};
+use crate::model::username::Username;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -19,7 +19,7 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    let valid_username = match ValidUsername::try_new(Username(body.username.clone())) {
+    let valid_username = match Username(body.username.clone()).validated() {
         Ok(u) => u,
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };

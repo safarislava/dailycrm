@@ -1,7 +1,5 @@
 use aws_sdk_s3::Client;
-use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
 use aws_sdk_s3::primitives::ByteStream;
-use std::env;
 
 const BUCKET: &str = "crm-attachments";
 
@@ -13,22 +11,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn new() -> Self {
-        let endpoint = env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set");
-        let access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
-        let secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
-
-        let creds = Credentials::new(&access_key, &secret_key, None, None, "minio");
-        let client = Client::from_conf(
-            Builder::new()
-                .behavior_version(BehaviorVersion::latest())
-                .endpoint_url(&endpoint)
-                .credentials_provider(creds)
-                .region(Region::new("us-east-1"))
-                .force_path_style(true)
-                .build(),
-        );
-
+    pub fn new(client: Client) -> Self {
         Self { client }
     }
 
