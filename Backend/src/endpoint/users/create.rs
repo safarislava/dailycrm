@@ -30,11 +30,7 @@ pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) 
 
     match state
         .invites
-        .consume_and_register(
-            body.invite_token,
-            &valid_username,
-            &password_hash,
-        )
+        .consume_and_register(body.invite_token, &valid_username, &password_hash)
         .await
     {
         Ok(RegisterWithInviteResult::Ok) => HttpResponse::Created().finish(),

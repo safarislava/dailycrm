@@ -11,11 +11,7 @@ pub struct LoginDto {
 }
 
 pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
-    let user = match state
-        .users
-        .user_by_username(&body.username)
-        .await
-    {
+    let user = match state.users.user_by_username(&body.username).await {
         Ok(Some(u)) => u,
         Ok(None) => return HttpResponse::Unauthorized().body("Invalid credentials"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),

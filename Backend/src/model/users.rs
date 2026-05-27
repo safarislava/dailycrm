@@ -24,12 +24,11 @@ impl Users for PgUsers {
             id: Uuid,
             password_hash: String,
         }
-        let row = sqlx::query_as::<_, Row>(
-            "SELECT id, password_hash FROM users WHERE username = $1",
-        )
-        .bind(username)
-        .fetch_optional(&self.pool)
-        .await?;
+        let row =
+            sqlx::query_as::<_, Row>("SELECT id, password_hash FROM users WHERE username = $1")
+                .bind(username)
+                .fetch_optional(&self.pool)
+                .await?;
 
         Ok(row.map(|r| User::new(r.id, PasswordHash::new(r.password_hash))))
     }

@@ -42,7 +42,13 @@ impl Deadlines for PgDeadlines {
             .into_iter()
             .map(|r| {
                 StageWithProjectTitle::new(
-                    Stage::new(r.project_id, r.position, r.stage_title, Some(r.deadline), r.completed),
+                    Stage::new(
+                        r.project_id,
+                        r.position,
+                        r.stage_title,
+                        Some(r.deadline),
+                        r.completed,
+                    ),
                     r.project_title,
                 )
             })

@@ -1,8 +1,8 @@
+use actix_web::HttpRequest;
 use actix_web::{
     Error,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
-use actix_web::HttpRequest;
 use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -34,17 +34,21 @@ pub struct JwtToken {
 
 impl JwtToken {
     pub fn new(raw: &str) -> Self {
-        Self { raw: raw.to_owned() }
+        Self {
+            raw: raw.to_owned(),
+        }
     }
 
     pub fn access_user_id(&self) -> Option<Uuid> {
-        self.decode().ok()
+        self.decode()
+            .ok()
             .filter(|c| c.typ == "access")
             .map(|c| c.sub)
     }
 
     pub fn refresh_jti(&self) -> Option<Uuid> {
-        self.decode().ok()
+        self.decode()
+            .ok()
             .filter(|c| c.typ == "refresh")
             .map(|c| c.jti)
     }

@@ -21,6 +21,13 @@ impl Attachment {
         created_at: DateTime<Utc>,
         download_url: String,
     ) -> Self {
-        Self { id, filename, mime_type, size_bytes, created_at, download_url }
+        Self {
+            id,
+            filename,
+            mime_type,
+            size_bytes,
+            created_at,
+            download_url,
+        }
     }
 }

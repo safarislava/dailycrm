@@ -111,13 +111,11 @@ impl Stages for PgStages {
     }
 
     async fn remove(&self, project_id: Uuid, position: i32) -> Result<(), sqlx::Error> {
-        let result = sqlx::query(
-            "DELETE FROM stages WHERE project_id = $1 AND position = $2",
-        )
-        .bind(project_id)
-        .bind(position)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .execute(&self.pool)
+            .await?;
 
         if result.rows_affected() == 0 {
             return Err(sqlx::Error::RowNotFound);
@@ -164,14 +162,12 @@ impl StageFields for PgStages {
         position: i32,
         description: Option<String>,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2",
-        )
-        .bind(project_id)
-        .bind(position)
-        .bind(description)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2")
+            .bind(project_id)
+            .bind(position)
+            .bind(description)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 

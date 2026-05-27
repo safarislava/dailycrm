@@ -26,7 +26,11 @@ pub async fn patch(
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    match state.users.password_verification(user_id, &body.current_password).await {
+    match state
+        .users
+        .password_verification(user_id, &body.current_password)
+        .await
+    {
         Ok(_) => {}
         Err(VerifyError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Wrong current password");

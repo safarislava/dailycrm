@@ -18,10 +18,8 @@ impl ValidPassword {
 
     pub async fn hashed(self) -> Result<PasswordHash, HashError> {
         let raw = self.0.0;
-        match actix_web::rt::task::spawn_blocking(move || {
-            bcrypt::hash(&raw, bcrypt::DEFAULT_COST)
-        })
-        .await
+        match actix_web::rt::task::spawn_blocking(move || bcrypt::hash(&raw, bcrypt::DEFAULT_COST))
+            .await
         {
             Ok(Ok(hash)) => Ok(PasswordHash::new(hash)),
             Ok(Err(_)) => Err(HashError::Bcrypt),
