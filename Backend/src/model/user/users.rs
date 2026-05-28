@@ -20,7 +20,7 @@ impl Users for PgUsers {
         User::new(self.pool.clone(), id)
     }
 
-    async fn user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
+    async fn with_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
         let id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE username = $1")
             .bind(username)
             .fetch_optional(&self.pool)

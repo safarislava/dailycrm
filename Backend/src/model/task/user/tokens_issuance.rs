@@ -1,0 +1,30 @@
+use aws_sdk_s3::error::BoxError;
+use crate::contract::RefreshTokens;
+use crate::contract::task::Task;
+use crate::model::credential::hash_verification::VerificationError;
+use crate::model::session::access_token::AccessToken;
+use crate::model::session::refresh_token::NewRefreshToken;
+use crate::model::user::protected_user::ProtectedUser;
+use std::sync::Arc;
+
+pub struct TokenIssuance {
+    refresh_tokens: Arc<dyn RefreshTokens>,
+    protected_user: ProtectedUser,
+}
+
+impl TokenIssuance {
+    pub fn new(refresh_tokens: Arc<dyn RefreshTokens>, protected_user: ProtectedUser) -> Self {
+        Self { refresh_tokens, protected_user }
+    }
+}
+
+impl Task for TokenIssuance {
+    type Output = (AccessToken, NewRefreshToken);
+    async fn output(&self) -> Result<Self::Output, BoxError> {
+        let user = self.protected_user.unprotected().await?;
+        let access_token = AccessToken::new(user.id());
+        let refresh_token = self.refresh_tokens.new_token(user.id()).await
+            .map_err(|_| VerificationError::Internal)?;
+        Ok((access_token, refresh_token))
+    }
+}
