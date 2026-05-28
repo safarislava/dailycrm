@@ -42,16 +42,4 @@ impl Projects for PgProjects {
             .await?;
         Ok(())
     }
-
-    async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        let result = sqlx::query("DELETE FROM projects WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
-
-        if result.rows_affected() == 0 {
-            return Err(sqlx::Error::RowNotFound);
-        }
-        Ok(())
-    }
 }

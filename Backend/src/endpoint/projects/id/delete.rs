@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 pub async fn delete(state: web::Data<AppState>, path: web::Path<Uuid>) -> impl Responder {
     let project_id = path.into_inner();
-    match state.projects.remove(project_id).await {
+    match state.projects.project(project_id).remove().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().body("Project not found"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

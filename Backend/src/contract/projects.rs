@@ -8,5 +8,4 @@ pub trait Projects: Send + Sync {
     fn project(&self, id: Uuid) -> Project;
     async fn list(&self) -> Result<Vec<ProjectDetails>, sqlx::Error>;
     async fn register(&self, title: &str) -> Result<(), sqlx::Error>;
-    async fn remove(&self, id: Uuid) -> Result<(), sqlx::Error>;
 }
