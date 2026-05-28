@@ -15,3 +15,4 @@ pub mod stages;
 pub mod user;
 pub mod username;
 pub mod users;
+pub mod valid_username;

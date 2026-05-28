@@ -1,8 +1,11 @@
 use crate::model::authorized_user::ConfirmingUser;
 use crate::model::password::ValidPassword;
-use crate::model::username::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::common::BoxError;
+use crate::contract::sting_contentable::StringContentable;
+use crate::model::username::Username;
+use crate::model::valid_username::ValidUsername;
 
 pub struct User {
     pool: PgPool,
@@ -18,7 +21,7 @@ impl User {
         ConfirmingUser::new(self.pool.clone(), self.id, password)
     }
 
-    pub async fn username(&self) -> Result<Option<String>, sqlx::Error> {
+    pub async fn username(&self) -> Result<Option<Username>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             username: String,
@@ -28,20 +31,20 @@ impl User {
             .fetch_optional(&self.pool)
             .await?;
 
-        Ok(row.map(|r| r.username))
+        Ok(row.map(|r| Username::new(r.username)))
     }
 
-    pub async fn update_username(&self, username: &ValidUsername) -> Result<bool, sqlx::Error> {
+    pub async fn update_username(&self, new_username: &ValidUsername) -> Result<bool, BoxError> {
         let result = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(username)
+            .bind(new_username.content()?)
             .execute(&self.pool)
             .await;
 
         match result {
             Ok(_) => Ok(true),
             Err(sqlx::Error::Database(_)) => Ok(false),
-            Err(e) => Err(e),
+            Err(e) => Err(Box::new(e)),
         }
     }
 }

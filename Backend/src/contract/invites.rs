@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use uuid::Uuid;
-
+use crate::common::BoxError;
 use crate::model::invites::RegisterWithInviteResult;
 use crate::model::password_hash::PasswordHash;
-use crate::model::username::ValidUsername;
+use crate::model::valid_username::ValidUsername;
 
 #[async_trait]
 pub trait Invites: Send + Sync {
@@ -14,5 +14,5 @@ pub trait Invites: Send + Sync {
         token: Uuid,
         username: &ValidUsername,
         password_hash: &PasswordHash,
-    ) -> Result<RegisterWithInviteResult, sqlx::Error>;
+    ) -> Result<RegisterWithInviteResult, BoxError>;
 }

@@ -3,6 +3,7 @@ use crate::model::username::Username;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
+use crate::model::valid_username::ValidUsername;
 
 #[derive(Deserialize)]
 pub struct UpdateUsernameDto {
@@ -19,15 +20,11 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    let valid_username = match Username(body.username.clone()).validated() {
-        Ok(u) => u,
-        Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
-    };
-
+    let username = ValidUsername::new(Username::new(body.username.clone()));
     match state
         .users
         .user(user_id)
-        .update_username(&valid_username)
+        .update_username(&username)
         .await
     {
         Ok(true) => HttpResponse::Ok().finish(),

@@ -1,9 +1,11 @@
 use crate::contract::Invites;
 use crate::model::password_hash::PasswordHash;
-use crate::model::username::ValidUsername;
+use crate::model::valid_username::ValidUsername;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::common::BoxError;
+use crate::contract::sting_contentable::StringContentable;
 
 pub enum RegisterWithInviteResult {
     Ok,
@@ -41,7 +43,7 @@ impl Invites for PgInvites {
         token: Uuid,
         username: &ValidUsername,
         password_hash: &PasswordHash,
-    ) -> Result<RegisterWithInviteResult, sqlx::Error> {
+    ) -> Result<RegisterWithInviteResult, BoxError> {
         let mut transaction = self.pool.begin().await?;
 
         let rows = sqlx::query(
@@ -59,7 +61,7 @@ impl Invites for PgInvites {
         }
 
         let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
-            .bind(username)
+            .bind(username.content()?)
             .bind(password_hash)
             .execute(&mut *transaction)
             .await;
@@ -75,7 +77,7 @@ impl Invites for PgInvites {
             }
             Err(e) => {
                 transaction.rollback().await?;
-                Err(e)
+                Err(Box::new(e))
             }
         }
     }
