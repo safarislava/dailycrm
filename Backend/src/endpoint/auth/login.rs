@@ -1,4 +1,5 @@
-use crate::model::user::LoginError;
+use crate::model::authorized_user::LoginError;
+use crate::model::password::Password;
 use crate::state::AppState;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpResponse, Responder, web};
@@ -17,7 +18,11 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    let (access_token, refresh_token) = match user.tokens(&body.password).await {
+    let password = match Password(body.password.clone()).validated() {
+        Ok(p) => p,
+        Err(_) => return HttpResponse::Unauthorized().body("Invalid credentials"),
+    };
+    let (access_token, refresh_token) = match user.confirming(password).tokens().await {
         Ok(tokens) => tokens,
         Err(LoginError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Invalid credentials");

@@ -8,7 +8,7 @@ pub async fn get(state: web::Data<AppState>, request: HttpRequest) -> impl Respo
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    match state.users.username(user_id).await {
+    match state.users.user(user_id).username().await {
         Ok(Some(username)) => HttpResponse::Ok().json(serde_json::json!({ "username": username })),
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

@@ -1,6 +1,6 @@
 use crate::auth::UserIdGettable;
+use crate::model::authorized_user::UpdatePasswordError;
 use crate::model::password::Password;
-use crate::model::password_hash::VerifyError;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -21,32 +21,25 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
 
-    let valid_new_password = match Password(body.new_password.clone()).validated() {
+    let current_password = match Password(body.current_password.clone()).validated() {
+        Ok(p) => p,
+        Err(_) => return HttpResponse::Unauthorized().body("Wrong current password"),
+    };
+
+    let new_password = match Password(body.new_password.clone()).validated() {
         Ok(p) => p,
         Err(e) => return HttpResponse::UnprocessableEntity().body(e.message()),
     };
 
-    match state
-        .users
-        .password_verification(user_id, &body.current_password)
-        .await
-    {
-        Ok(_) => {}
-        Err(VerifyError::WrongPassword) => {
-            return HttpResponse::Unauthorized().body("Wrong current password");
-        }
-        Err(VerifyError::Internal) => {
-            return HttpResponse::InternalServerError().body("Something went wrong");
-        }
-    };
+    let user = state.users.user(user_id).confirming(current_password);
 
-    let new_hash = match valid_new_password.hashed().await {
-        Ok(h) => h,
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
-
-    match state.users.update_password(user_id, &new_hash).await {
+    match user.update_password(new_password).await {
         Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+        Err(UpdatePasswordError::WrongPassword) => {
+            HttpResponse::Unauthorized().body("Wrong current password")
+        }
+        Err(UpdatePasswordError::Internal) => {
+            HttpResponse::InternalServerError().body("Something went wrong")
+        }
     }
 }

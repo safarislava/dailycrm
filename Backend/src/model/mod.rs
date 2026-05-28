@@ -1,4 +1,5 @@
 pub mod access_token;
+pub mod authorized_user;
 pub mod attachment;
 pub mod attachments;
 pub mod deadlines;

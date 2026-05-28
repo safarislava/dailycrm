@@ -22,7 +22,7 @@ impl PasswordHash {
         PasswordHash(hash)
     }
 
-    pub async fn verify(&self, password: &str) -> Result<(), VerifyError> {
+    pub async fn verification(&self, password: &str) -> Result<(), VerifyError> {
         let raw = self.0.clone();
         let password = password.to_owned();
         match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(&password, &raw)).await {

@@ -1,4 +1,4 @@
-use crate::model::password_hash::{HashError, PasswordHash};
+use crate::model::password_hash::{HashError, PasswordHash, VerifyError};
 
 pub struct Password(pub String);
 
@@ -18,6 +18,10 @@ impl Password {
 }
 
 impl ValidPassword {
+    pub async fn matches(&self, hash: &PasswordHash) -> Result<(), VerifyError> {
+        hash.verification(&self.0.0).await
+    }
+
     pub async fn hashed(self) -> Result<PasswordHash, HashError> {
         let raw = self.0.0;
         match actix_web::rt::task::spawn_blocking(move || bcrypt::hash(&raw, bcrypt::DEFAULT_COST))
