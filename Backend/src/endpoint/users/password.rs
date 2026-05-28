@@ -1,12 +1,12 @@
 use crate::auth::UserIdGettable;
+use crate::contract::task::Task;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
+use crate::model::task::user::password_update::PasswordUpdate;
+use crate::model::user::protected_user::ProtectedUser;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
-use crate::contract::task::Task;
-use crate::model::task::user::password_update::PasswordUpdate;
-use crate::model::user::protected_user::ProtectedUser;
 
 #[derive(Deserialize)]
 pub struct UpdatePasswordDto {
@@ -27,7 +27,11 @@ pub async fn patch(
     let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
     let new_password = ValidPassword::new(Password::new(body.new_password.clone()));
 
-    let user = ProtectedUser::new(state.pool.clone(), state.users.user(user_id), current_password);
+    let user = ProtectedUser::new(
+        state.pool.clone(),
+        state.users.user(user_id),
+        current_password,
+    );
     let task = PasswordUpdate::new(state.pool.clone(), user, new_password);
     match task.output().await {
         Ok(_) => HttpResponse::Ok().finish(),

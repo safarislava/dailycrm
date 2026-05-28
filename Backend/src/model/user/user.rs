@@ -12,9 +12,9 @@ impl User {
     pub fn new(pool: PgPool, id: Uuid) -> Self {
         Self { pool, id }
     }
-    
+
     pub fn id(&self) -> Uuid {
-        self.id 
+        self.id
     }
 
     pub async fn username(&self) -> Result<Option<Username>, sqlx::Error> {

@@ -6,8 +6,8 @@ pub mod invites;
 pub mod projects;
 pub mod refresh_tokens;
 pub mod stages;
-pub mod users;
 pub mod task;
+pub mod users;
 
 pub use attachments::Attachments;
 pub use deadlines::Deadlines;

@@ -1,11 +1,11 @@
+use crate::contract::task::Task;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
+use crate::model::task::user::tokens_issuance::TokenIssuance;
+use crate::model::user::protected_user::ProtectedUser;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use serde::Deserialize;
-use crate::contract::task::Task;
-use crate::model::task::user::tokens_issuance::TokenIssuance;
-use crate::model::user::protected_user::ProtectedUser;
 
 #[derive(Deserialize)]
 pub struct LoginDto {
@@ -25,7 +25,9 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
     let task = TokenIssuance::new(state.refresh_tokens.clone(), user);
 
     match task.output().await {
-        Ok((access_token, refresh_token)) => HttpResponse::Ok().cookie(refresh_token.cookie()).json(access_token),
+        Ok((access_token, refresh_token)) => HttpResponse::Ok()
+            .cookie(refresh_token.cookie())
+            .json(access_token),
         Err(_) => HttpResponse::Unauthorized().body("Invalid credentials"),
     }
 }

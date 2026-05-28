@@ -1,10 +1,10 @@
 use crate::contract::contentable::Contentable;
 use crate::model::credential::hashed_password::HashedPassword;
-use crate::model::user::invites::RegisterWithInviteResult;
 use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::credential::valid_username::ValidUsername;
+use crate::model::user::invites::RegisterWithInviteResult;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;

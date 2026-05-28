@@ -1,4 +1,3 @@
-use sqlx::PgPool;
 use crate::common::BoxError;
 use crate::contract::contentable::Contentable;
 use crate::contract::task::Task;
@@ -6,6 +5,7 @@ use crate::model::credential::hash_verification::VerificationError;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::user::protected_user::ProtectedUser;
+use sqlx::PgPool;
 
 pub struct PasswordUpdate {
     pool: PgPool,
@@ -15,7 +15,11 @@ pub struct PasswordUpdate {
 
 impl PasswordUpdate {
     pub fn new(pool: PgPool, protected_user: ProtectedUser, new_password: ValidPassword) -> Self {
-        Self { pool, protected_user, new_password }
+        Self {
+            pool,
+            protected_user,
+            new_password,
+        }
     }
 }
 

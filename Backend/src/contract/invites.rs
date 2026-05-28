@@ -1,7 +1,7 @@
 use crate::common::BoxError;
 use crate::model::credential::hash::Hash;
-use crate::model::user::invites::RegisterWithInviteResult;
 use crate::model::credential::valid_username::ValidUsername;
+use crate::model::user::invites::RegisterWithInviteResult;
 use async_trait::async_trait;
 use uuid::Uuid;
 

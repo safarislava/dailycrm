@@ -8,9 +8,9 @@ mod storage;
 
 use crate::auth::JwtMiddleware;
 use crate::model::project::deadlines::PgDeadlines;
-use crate::model::user::invites::PgInvites;
 use crate::model::project::projects::PgProjects;
 use crate::model::session::refresh_tokens::PgRefreshTokens;
+use crate::model::user::invites::PgInvites;
 use crate::model::user::users::PgUsers;
 use crate::state::AppState;
 use crate::storage::Storage;

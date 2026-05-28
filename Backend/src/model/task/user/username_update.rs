@@ -1,9 +1,9 @@
-use sqlx::PgPool;
 use crate::common::BoxError;
 use crate::contract::contentable::Contentable;
 use crate::contract::task::Task;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::user::user::User;
+use sqlx::PgPool;
 
 pub struct UsernameUpdate {
     pool: PgPool,
@@ -13,7 +13,11 @@ pub struct UsernameUpdate {
 
 impl UsernameUpdate {
     pub fn new(pool: PgPool, user: User, new_username: ValidUsername) -> Self {
-        Self { pool, user, new_username }
+        Self {
+            pool,
+            user,
+            new_username,
+        }
     }
 }
 
