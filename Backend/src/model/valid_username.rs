@@ -10,9 +10,10 @@ impl ValidUsername {
     }
 }
 
+#[async_trait::async_trait]
 impl StringContentable for ValidUsername {
-    fn content(&self) -> Result<String, BoxError> {
-        let content = self.0.content()?;
+    async fn content(&self) -> Result<String, BoxError> {
+        let content = self.0.content().await?;
         let len = content.len();
         if len < 3 {
             return Err(Box::new(&UsernameError::TooShort));

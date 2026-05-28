@@ -1,5 +1,5 @@
-use crate::model::authorized_user::ConfirmingUser;
-use crate::model::password::ValidPassword;
+use crate::model::authorized_user::ConfirmedUser;
+use crate::model::valid_password::ValidPassword;
 use sqlx::PgPool;
 use uuid::Uuid;
 use crate::common::BoxError;
@@ -17,8 +17,8 @@ impl User {
         Self { pool, id }
     }
 
-    pub fn confirming(&self, password: ValidPassword) -> ConfirmingUser {
-        ConfirmingUser::new(self.pool.clone(), self.id, password)
+    pub fn confirmed(&self, password: ValidPassword) -> ConfirmedUser {
+        ConfirmedUser::new(self.pool.clone(), self.id, password)
     }
 
     pub async fn username(&self) -> Result<Option<Username>, sqlx::Error> {
@@ -37,7 +37,7 @@ impl User {
     pub async fn update_username(&self, new_username: &ValidUsername) -> Result<bool, BoxError> {
         let result = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(new_username.content()?)
+            .bind(new_username.content().await?)
             .execute(&self.pool)
             .await;
 

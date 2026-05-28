@@ -1,5 +1,6 @@
 use crate::common::BoxError;
 
+#[async_trait::async_trait]
 pub trait StringContentable {
-    fn content(&self) -> Result<String, BoxError>;
+    async fn content(&self) -> Result<String, BoxError>;
 }

@@ -1,9 +1,9 @@
-use crate::model::authorized_user::LoginError;
+use crate::model::hash_verification::VerificationError as LoginError;
 use crate::model::password::Password;
 use crate::state::AppState;
-use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpResponse, Responder, web};
 use serde::Deserialize;
+use crate::model::valid_password::ValidPassword;
 
 #[derive(Deserialize)]
 pub struct LoginDto {
@@ -18,12 +18,9 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    let password = match Password(body.password.clone()).validated() {
-        Ok(p) => p,
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid credentials"),
-    };
+    let password = ValidPassword::new(Password::new(body.password.clone()));
     let (access_token, refresh_token) = match user
-        .confirming(password)
+        .confirmed(password)
         .tokens(state.refresh_tokens.as_ref())
         .await
     {
@@ -36,13 +33,5 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         }
     };
 
-    let cookie = Cookie::build("refresh_token", refresh_token.encoded().to_owned())
-        .http_only(true)
-        .secure(true)
-        .same_site(SameSite::Strict)
-        .path("/api/auth")
-        .max_age(actix_web::cookie::time::Duration::days(7))
-        .finish();
-
-    HttpResponse::Ok().cookie(cookie).json(access_token)
+    HttpResponse::Ok().cookie(refresh_token.cookie()).json(access_token)
 }

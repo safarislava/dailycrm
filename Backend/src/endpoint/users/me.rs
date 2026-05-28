@@ -10,10 +10,10 @@ pub async fn get(state: web::Data<AppState>, request: HttpRequest) -> impl Respo
     };
 
     match state.users.user(user_id).username().await {
-        Ok(Some(username)) => username
-            .content()
-            .map(|c| HttpResponse::Ok().json(serde_json::json!({ "username": c })))
-            .unwrap_or_else(|_| HttpResponse::InternalServerError().body("Something went wrong")),
+        Ok(Some(username)) => match username.content().await {
+            Ok(c) => HttpResponse::Ok().json(serde_json::json!({ "username": c })),
+            Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+        },
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

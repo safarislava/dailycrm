@@ -1,28 +1,21 @@
 use crate::contract::RefreshTokens;
 use crate::model::access_token::AccessToken;
-use crate::model::password::ValidPassword;
-use crate::model::password_hash::{PasswordHash, VerifyError};
 use crate::model::refresh_token::NewRefreshToken;
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::contract::sting_contentable::StringContentable;
+use crate::model::hash::Hash;
+use crate::model::hash_verification::{HashVerification, VerificationError};
+use crate::model::hashed_password::HashedPassword;
+use crate::model::valid_password::ValidPassword;
 
-pub enum LoginError {
-    WrongPassword,
-    Internal,
-}
-
-pub enum UpdatePasswordError {
-    WrongPassword,
-    Internal,
-}
-
-pub struct ConfirmingUser {
+pub struct ConfirmedUser {
     pool: PgPool,
     id: Uuid,
     password: ValidPassword,
 }
 
-impl ConfirmingUser {
+impl ConfirmedUser {
     pub fn new(pool: PgPool, id: Uuid, password: ValidPassword) -> Self {
         Self { pool, id, password }
     }
@@ -30,40 +23,35 @@ impl ConfirmingUser {
     pub async fn tokens(
         &self,
         refresh_tokens: &dyn RefreshTokens,
-    ) -> Result<(AccessToken, NewRefreshToken), LoginError> {
-        self.verify().await.map_err(|_| LoginError::WrongPassword)?;
+    ) -> Result<(AccessToken, NewRefreshToken), VerificationError> {
+        self.verification().await?;
+
         let access_token = AccessToken::new(self.id);
         let refresh_token = refresh_tokens
             .new_token(self.id)
             .await
-            .map_err(|_| LoginError::Internal)?;
+            .map_err(|_| VerificationError::Internal)?;
         Ok((access_token, refresh_token))
     }
 
     pub async fn update_password(
         &self,
         new_password: ValidPassword,
-    ) -> Result<(), UpdatePasswordError> {
-        self.verify().await.map_err(|e| match e {
-            VerifyError::WrongPassword => UpdatePasswordError::WrongPassword,
-            VerifyError::Internal => UpdatePasswordError::Internal,
-        })?;
+    ) -> Result<(), VerificationError> {
+        self.verification().await?;
 
-        let hash = new_password
-            .hashed()
-            .await
-            .map_err(|_| UpdatePasswordError::Internal)?;
-
+        let hashed_password = HashedPassword::new(new_password);
+        let hash = hashed_password.content().await.map_err(|_| VerificationError::Internal)?;
         sqlx::query("UPDATE users SET password_hash = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(&hash)
+            .bind(hash.content().await.map_err(|_| VerificationError::Internal)?)
             .execute(&self.pool)
             .await
-            .map_err(|_| UpdatePasswordError::Internal)?;
+            .map_err(|_| VerificationError::Internal)?;
         Ok(())
     }
 
-    async fn verify(&self) -> Result<(), VerifyError> {
+    async fn verification(&self) -> Result<(), VerificationError> {
         #[derive(sqlx::FromRow)]
         struct Row {
             password_hash: String,
@@ -72,13 +60,13 @@ impl ConfirmingUser {
             .bind(self.id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|_| VerifyError::Internal)?;
+            .map_err(|_| VerificationError::Internal)?;
 
         let hash = match row {
-            Some(r) => PasswordHash::new(r.password_hash),
-            None => return Err(VerifyError::Internal),
+            Some(r) => Hash::new(r.password_hash),
+            None => return Err(VerificationError::Internal),
         };
 
-        self.password.matches(&hash).await
+        HashVerification::new(hash, self.password.clone()).status().await
     }
 }

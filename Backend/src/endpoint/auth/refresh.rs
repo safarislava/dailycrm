@@ -1,7 +1,6 @@
 use crate::auth::JwtToken;
 use crate::model::access_token::AccessToken;
 use crate::state::AppState;
-use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
@@ -28,13 +27,5 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    let new_cookie = Cookie::build("refresh_token", refresh_token.encoded().to_owned())
-        .http_only(true)
-        .secure(true)
-        .same_site(SameSite::Strict)
-        .path("/api/auth")
-        .max_age(actix_web::cookie::time::Duration::days(7))
-        .finish();
-
-    HttpResponse::Ok().cookie(new_cookie).json(access_token)
+    HttpResponse::Ok().cookie(refresh_token.cookie()).json(access_token)
 }

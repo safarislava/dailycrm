@@ -47,4 +47,14 @@ impl NewRefreshToken {
     pub fn encoded(&self) -> &str {
         &self.encoded
     }
+
+    pub fn cookie(&self) -> actix_web::cookie::Cookie<'static> {
+        actix_web::cookie::Cookie::build("refresh_token", self.encoded.clone())
+            .http_only(true)
+            .secure(true)
+            .same_site(actix_web::cookie::SameSite::Strict)
+            .path("/api/auth")
+            .max_age(actix_web::cookie::time::Duration::days(7))
+            .finish()
+    }
 }
