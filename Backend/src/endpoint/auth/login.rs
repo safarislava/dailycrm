@@ -22,19 +22,21 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         Ok(p) => p,
         Err(_) => return HttpResponse::Unauthorized().body("Invalid credentials"),
     };
-    let (access_token, refresh_token) = match user.confirming(password).tokens().await {
+    let (access_token, refresh_token) = match user
+        .confirming(password)
+        .tokens(state.refresh_tokens.as_ref())
+        .await
+    {
         Ok(tokens) => tokens,
         Err(LoginError::WrongPassword) => {
             return HttpResponse::Unauthorized().body("Invalid credentials");
         }
+        Err(LoginError::Internal) => {
+            return HttpResponse::InternalServerError().body("Something went wrong");
+        }
     };
 
-    let refresh_token_string = match refresh_token.store(&state.pool).await {
-        Ok(s) => s,
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
-
-    let cookie = Cookie::build("refresh_token", refresh_token_string)
+    let cookie = Cookie::build("refresh_token", refresh_token.encoded().to_owned())
         .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)

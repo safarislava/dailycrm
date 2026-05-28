@@ -1,8 +1,12 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
+use crate::model::refresh_token::{NewRefreshToken, RefreshToken};
+
+type BoxError = Box<dyn std::error::Error + Send + Sync>;
+
 #[async_trait]
 pub trait RefreshTokens: Send + Sync {
-    async fn user_id_with_jti_revocation(&self, jti: Uuid) -> Result<Option<Uuid>, sqlx::Error>;
-    async fn revoke(&self, jti: Uuid) -> Result<(), sqlx::Error>;
+    fn token(&self, jti: Uuid) -> RefreshToken;
+    async fn new_token(&self, user_id: Uuid) -> Result<NewRefreshToken, BoxError>;
 }

@@ -1,12 +1,14 @@
+use crate::contract::RefreshTokens;
 use crate::model::access_token::AccessToken;
 use crate::model::password::ValidPassword;
 use crate::model::password_hash::{PasswordHash, VerifyError};
-use crate::model::refresh_token::RefreshToken;
+use crate::model::refresh_token::NewRefreshToken;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 pub enum LoginError {
     WrongPassword,
+    Internal,
 }
 
 pub enum UpdatePasswordError {
@@ -25,9 +27,17 @@ impl ConfirmingUser {
         Self { pool, id, password }
     }
 
-    pub async fn tokens(&self) -> Result<(AccessToken, RefreshToken), LoginError> {
+    pub async fn tokens(
+        &self,
+        refresh_tokens: &dyn RefreshTokens,
+    ) -> Result<(AccessToken, NewRefreshToken), LoginError> {
         self.verify().await.map_err(|_| LoginError::WrongPassword)?;
-        Ok((AccessToken::new(self.id), RefreshToken::new(self.id)))
+        let access_token = AccessToken::new(self.id);
+        let refresh_token = refresh_tokens
+            .new_token(self.id)
+            .await
+            .map_err(|_| LoginError::Internal)?;
+        Ok((access_token, refresh_token))
     }
 
     pub async fn update_password(

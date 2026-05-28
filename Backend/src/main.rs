@@ -67,7 +67,6 @@ async fn main() -> std::io::Result<()> {
     storage.ensure_bucket().await;
 
     let state = web::Data::new(AppState {
-        pool: pool.clone(),
         users: Arc::new(PgUsers::new(pool.clone())),
         projects: Arc::new(PgProjects::new(pool.clone(), storage.clone())),
         invites: Arc::new(PgInvites::new(pool.clone())),

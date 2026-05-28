@@ -1,7 +1,13 @@
+use crate::auth::{Claims, jwt_secret};
 use crate::contract::RefreshTokens;
+use crate::model::refresh_token::{NewRefreshToken, RefreshToken};
 use async_trait::async_trait;
+use chrono::{Duration, Utc};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use sqlx::PgPool;
 use uuid::Uuid;
+
+type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
 pub struct PgRefreshTokens {
     pool: PgPool,
@@ -15,26 +21,29 @@ impl PgRefreshTokens {
 
 #[async_trait]
 impl RefreshTokens for PgRefreshTokens {
-    async fn user_id_with_jti_revocation(&self, jti: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
-        let row: Option<(Uuid,)> = sqlx::query_as(
-            "UPDATE refresh_tokens SET revoked_at = NOW() \
-             WHERE jti = $1 AND revoked_at IS NULL AND expires_at > NOW() \
-             RETURNING user_id",
-        )
-        .bind(jti)
-        .fetch_optional(&self.pool)
-        .await?;
-        Ok(row.map(|(user_id,)| user_id))
+    fn token(&self, jti: Uuid) -> RefreshToken {
+        RefreshToken::new(self.pool.clone(), jti)
     }
 
-    async fn revoke(&self, jti: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "UPDATE refresh_tokens SET revoked_at = NOW()
-             WHERE jti = $1 AND revoked_at IS NULL",
-        )
-        .bind(jti)
-        .execute(&self.pool)
-        .await?;
-        Ok(())
+    async fn new_token(&self, user_id: Uuid) -> Result<NewRefreshToken, BoxError> {
+        let jti = Uuid::new_v4();
+        let expires_at = Utc::now() + Duration::days(7);
+        let token_string = encode(
+            &Header::default(),
+            &Claims {
+                sub: user_id,
+                jti,
+                typ: "refresh".into(),
+                exp: expires_at.timestamp() as usize,
+            },
+            &EncodingKey::from_secret(jwt_secret().as_bytes()),
+        )?;
+        sqlx::query("INSERT INTO refresh_tokens (jti, user_id, expires_at) VALUES ($1, $2, $3)")
+            .bind(jti)
+            .bind(user_id)
+            .bind(expires_at)
+            .execute(&self.pool)
+            .await?;
+        Ok(NewRefreshToken::new(token_string))
     }
 }

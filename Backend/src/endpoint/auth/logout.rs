@@ -6,7 +6,7 @@ use actix_web::{HttpRequest, HttpResponse, Responder, web};
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     if let Some(cookie) = request.cookie("refresh_token") {
         if let Some(jti) = JwtToken::new(cookie.value()).refresh_jti() {
-            let _ = state.refresh_tokens.revoke(jti).await;
+            let _ = state.refresh_tokens.token(jti).revoke().await;
         }
     }
 

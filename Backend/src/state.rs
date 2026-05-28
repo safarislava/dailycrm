@@ -1,9 +1,7 @@
 use crate::contract;
-use sqlx::PgPool;
 use std::sync::Arc;
 
 pub struct AppState {
-    pub pool: PgPool,
     pub users: Arc<dyn contract::Users>,
     pub projects: Arc<dyn contract::Projects>,
     pub invites: Arc<dyn contract::Invites>,
