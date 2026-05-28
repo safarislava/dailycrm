@@ -40,7 +40,11 @@ impl Details for Stage {
     type Detail = StageDetails;
 
     async fn details(&self) -> Result<StageDetails, sqlx::Error> {
-        Ok(StageDetails::new(self.pool.clone(), self.project_id, self.position))
+        Ok(StageDetails::new(
+            self.pool.clone(),
+            self.project_id,
+            self.position,
+        ))
     }
 }
 
@@ -103,10 +107,7 @@ impl StageDetails {
         Ok(())
     }
 
-    pub async fn update_description(
-        &self,
-        description: Option<String>,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn update_description(&self, description: Option<String>) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE stages SET description = $3 WHERE project_id = $1 AND position = $2")
             .bind(self.project_id)
             .bind(self.position)

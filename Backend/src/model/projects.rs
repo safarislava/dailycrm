@@ -23,11 +23,9 @@ impl Projects for PgProjects {
     }
 
     async fn list(&self) -> Result<Vec<ProjectDetails>, sqlx::Error> {
-        let ids = sqlx::query_scalar::<_, Uuid>(
-            "SELECT id FROM projects ORDER BY updated_at DESC",
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let ids = sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects ORDER BY updated_at DESC")
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(ids
             .into_iter()

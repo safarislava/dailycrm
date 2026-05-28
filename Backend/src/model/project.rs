@@ -20,7 +20,11 @@ impl Project {
     }
 
     pub fn stages(&self) -> Box<dyn Stages> {
-        Box::new(PgStages::new(self.pool.clone(), self.storage.clone(), self.id))
+        Box::new(PgStages::new(
+            self.pool.clone(),
+            self.storage.clone(),
+            self.id,
+        ))
     }
 
     pub async fn remove(&self) -> Result<(), sqlx::Error> {
@@ -62,12 +66,10 @@ impl ProjectDetails {
             title: String,
             updated_at: DateTime<Utc>,
         }
-        sqlx::query_as::<_, Row>(
-            "SELECT id, title, updated_at FROM projects WHERE id = $1",
-        )
-        .bind(self.id)
-        .fetch_one(&self.pool)
-        .await
+        sqlx::query_as::<_, Row>("SELECT id, title, updated_at FROM projects WHERE id = $1")
+            .bind(self.id)
+            .fetch_one(&self.pool)
+            .await
     }
 
     pub async fn rename(&self, title: &str) -> Result<(), sqlx::Error> {

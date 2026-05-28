@@ -31,10 +31,7 @@ impl User {
         Ok(row.map(|r| r.username))
     }
 
-    pub async fn update_username(
-        &self,
-        username: &ValidUsername,
-    ) -> Result<bool, sqlx::Error> {
+    pub async fn update_username(&self, username: &ValidUsername) -> Result<bool, sqlx::Error> {
         let result = sqlx::query("UPDATE users SET username = $2 WHERE id = $1")
             .bind(self.id)
             .bind(username)
