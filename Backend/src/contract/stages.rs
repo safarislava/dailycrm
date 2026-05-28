@@ -11,6 +11,4 @@ pub trait Stages: Send + Sync {
     async fn append(&self, title: String) -> Result<(), sqlx::Error>;
 
     async fn insert(&self, position: i32, title: String) -> Result<(), sqlx::Error>;
-
-    async fn remove(&self, position: i32) -> Result<(), sqlx::Error>;
 }

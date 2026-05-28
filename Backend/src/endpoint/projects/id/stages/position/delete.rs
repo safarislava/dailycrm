@@ -8,7 +8,8 @@ pub async fn delete(state: web::Data<AppState>, path: web::Path<(Uuid, i32)>) ->
         .projects
         .project(project_id)
         .stages()
-        .remove(position)
+        .stage(position)
+        .remove()
         .await
     {
         Ok(_) => HttpResponse::Ok().finish(),

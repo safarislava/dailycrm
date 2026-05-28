@@ -33,6 +33,19 @@ impl Stage {
             self.position,
         ))
     }
+
+    pub async fn remove(&self) -> Result<(), sqlx::Error> {
+        let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
+            .bind(self.project_id)
+            .bind(self.position)
+            .execute(&self.pool)
+            .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(sqlx::Error::RowNotFound);
+        }
+        Ok(())
+    }
 }
 
 #[async_trait]

@@ -96,17 +96,4 @@ impl Stages for PgStages {
         transaction.commit().await?;
         Ok(())
     }
-
-    async fn remove(&self, position: i32) -> Result<(), sqlx::Error> {
-        let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
-            .bind(self.project_id)
-            .bind(position)
-            .execute(&self.pool)
-            .await?;
-
-        if result.rows_affected() == 0 {
-            return Err(sqlx::Error::RowNotFound);
-        }
-        Ok(())
-    }
 }
