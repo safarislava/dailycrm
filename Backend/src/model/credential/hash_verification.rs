@@ -1,6 +1,6 @@
 use crate::contract::contentable::Contentable;
-use crate::model::hash::Hash;
-use crate::model::valid_password::ValidPassword;
+use crate::model::credential::hash::Hash;
+use crate::model::credential::valid_password::ValidPassword;
 
 pub struct HashVerification {
     hash: Hash,

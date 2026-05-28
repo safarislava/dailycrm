@@ -1,5 +1,5 @@
 use crate::contract::Deadlines;
-use crate::model::stage::{StageSummary, StageSummaryWithProjectTitle};
+use crate::model::project::stage::{StageSummary, StageSummaryWithProjectTitle};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;

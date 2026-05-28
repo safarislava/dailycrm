@@ -1,11 +1,11 @@
 use crate::contract::RefreshTokens;
 use crate::contract::contentable::Contentable;
-use crate::model::access_token::AccessToken;
-use crate::model::hash::Hash;
-use crate::model::hash_verification::{HashVerification, VerificationError};
-use crate::model::hashed_password::HashedPassword;
-use crate::model::refresh_token::NewRefreshToken;
-use crate::model::valid_password::ValidPassword;
+use crate::model::session::access_token::AccessToken;
+use crate::model::credential::hash::Hash;
+use crate::model::credential::hash_verification::{HashVerification, VerificationError};
+use crate::model::credential::hashed_password::HashedPassword;
+use crate::model::session::refresh_token::NewRefreshToken;
+use crate::model::credential::valid_password::ValidPassword;
 use sqlx::PgPool;
 use uuid::Uuid;
 

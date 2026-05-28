@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::refresh_token::{NewRefreshToken, RefreshToken};
+use crate::model::session::refresh_token::{NewRefreshToken, RefreshToken};
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 

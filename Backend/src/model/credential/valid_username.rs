@@ -1,6 +1,6 @@
 use crate::common::BoxError;
 use crate::contract::contentable::Contentable;
-use crate::model::username::Username;
+use crate::model::credential::username::Username;
 
 pub struct ValidUsername(Username);
 

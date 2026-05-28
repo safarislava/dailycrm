@@ -1,5 +1,5 @@
 use crate::auth::JwtToken;
-use crate::model::access_token::AccessToken;
+use crate::model::session::access_token::AccessToken;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 

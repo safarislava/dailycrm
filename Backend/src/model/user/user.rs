@@ -1,9 +1,9 @@
 use crate::common::BoxError;
 use crate::contract::contentable::Contentable;
-use crate::model::authorized_user::ConfirmedUser;
-use crate::model::username::Username;
-use crate::model::valid_password::ValidPassword;
-use crate::model::valid_username::ValidUsername;
+use crate::model::user::authorized_user::ConfirmedUser;
+use crate::model::credential::username::Username;
+use crate::model::credential::valid_password::ValidPassword;
+use crate::model::credential::valid_username::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
 

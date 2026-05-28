@@ -1,6 +1,6 @@
 use crate::common::BoxError;
 use crate::contract::contentable::Contentable;
-use crate::model::password::Password;
+use crate::model::credential::password::Password;
 use std::fmt::Formatter;
 
 #[derive(Clone)]

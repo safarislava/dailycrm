@@ -1,7 +1,7 @@
 use crate::auth::UserIdGettable;
-use crate::model::hash_verification::VerificationError;
-use crate::model::password::Password;
-use crate::model::valid_password::ValidPassword;
+use crate::model::credential::hash_verification::VerificationError;
+use crate::model::credential::password::Password;
+use crate::model::credential::valid_password::ValidPassword;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;

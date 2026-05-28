@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::attachment::{Attachment, AttachmentSummary};
+use crate::model::project::attachment::{Attachment, AttachmentSummary};
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 

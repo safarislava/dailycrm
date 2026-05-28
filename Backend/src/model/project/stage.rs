@@ -5,7 +5,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::contract::{Attachments, Details};
-use crate::model::attachments::PgAttachments;
+use crate::model::project::attachments::PgAttachments;
 use crate::storage::Storage;
 
 pub struct Stage {

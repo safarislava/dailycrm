@@ -1,5 +1,5 @@
 use crate::contract::Users;
-use crate::model::user::User;
+use crate::model::user::user::User;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;

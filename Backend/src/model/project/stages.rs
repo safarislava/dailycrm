@@ -1,5 +1,5 @@
 use crate::contract::Stages;
-use crate::model::stage::{Stage, StageSummary};
+use crate::model::project::stage::{Stage, StageSummary};
 use crate::storage::Storage;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

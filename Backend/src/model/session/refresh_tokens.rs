@@ -1,6 +1,6 @@
 use crate::auth::{Claims, jwt_secret};
 use crate::contract::RefreshTokens;
-use crate::model::refresh_token::{NewRefreshToken, RefreshToken};
+use crate::model::session::refresh_token::{NewRefreshToken, RefreshToken};
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};

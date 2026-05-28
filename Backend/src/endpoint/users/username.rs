@@ -1,6 +1,6 @@
 use crate::auth::UserIdGettable;
-use crate::model::username::Username;
-use crate::model::valid_username::ValidUsername;
+use crate::model::credential::username::Username;
+use crate::model::credential::valid_username::ValidUsername;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;

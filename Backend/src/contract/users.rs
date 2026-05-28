@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::user::User;
+use crate::model::user::user::User;
 
 #[async_trait]
 pub trait Users: Send + Sync {

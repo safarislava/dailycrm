@@ -7,11 +7,11 @@ mod state;
 mod storage;
 
 use crate::auth::JwtMiddleware;
-use crate::model::deadlines::PgDeadlines;
-use crate::model::invites::PgInvites;
-use crate::model::projects::PgProjects;
-use crate::model::refresh_tokens::PgRefreshTokens;
-use crate::model::users::PgUsers;
+use crate::model::project::deadlines::PgDeadlines;
+use crate::model::user::invites::PgInvites;
+use crate::model::project::projects::PgProjects;
+use crate::model::session::refresh_tokens::PgRefreshTokens;
+use crate::model::user::users::PgUsers;
 use crate::state::AppState;
 use crate::storage::Storage;
 use std::sync::Arc;

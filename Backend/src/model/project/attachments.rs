@@ -1,5 +1,5 @@
 use crate::contract::Attachments;
-use crate::model::attachment::{Attachment, AttachmentSummary};
+use crate::model::project::attachment::{Attachment, AttachmentSummary};
 use crate::storage::Storage;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

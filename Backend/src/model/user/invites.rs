@@ -1,8 +1,8 @@
 use crate::common::BoxError;
 use crate::contract::Invites;
 use crate::contract::contentable::Contentable;
-use crate::model::hash::Hash;
-use crate::model::valid_username::ValidUsername;
+use crate::model::credential::hash::Hash;
+use crate::model::credential::valid_username::ValidUsername;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;

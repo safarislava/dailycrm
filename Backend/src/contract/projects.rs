@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::project::{Project, ProjectDetails};
+use crate::model::project::project::{Project, ProjectDetails};
 
 #[async_trait]
 pub trait Projects: Send + Sync {

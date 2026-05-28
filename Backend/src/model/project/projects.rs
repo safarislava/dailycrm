@@ -1,5 +1,5 @@
 use crate::contract::Projects;
-use crate::model::project::{Project, ProjectDetails};
+use crate::model::project::project::{Project, ProjectDetails};
 use crate::storage::Storage;
 use async_trait::async_trait;
 use sqlx::PgPool;

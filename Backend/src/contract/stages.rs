@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::model::stage::{Stage, StageSummary};
+use crate::model::project::stage::{Stage, StageSummary};
 
 #[async_trait]
 pub trait Stages: Send + Sync {
