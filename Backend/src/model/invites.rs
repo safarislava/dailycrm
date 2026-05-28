@@ -1,11 +1,11 @@
+use crate::common::BoxError;
 use crate::contract::Invites;
+use crate::contract::contentable::Contentable;
 use crate::model::hash::Hash;
 use crate::model::valid_username::ValidUsername;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
 
 pub enum RegisterWithInviteResult {
     Ok,

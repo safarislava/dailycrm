@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
+use crate::contract::contentable::Contentable;
 
 #[derive(Clone)]
 pub struct Hash(String);
@@ -11,13 +11,10 @@ impl Hash {
 }
 
 #[async_trait::async_trait]
-impl StringContentable for Hash {
+impl Contentable for Hash {
+    type Output = String;
+
     async fn content(&self) -> Result<String, BoxError> {
         Ok(self.0.clone())
     }
-}
-
-pub enum HashError {
-    Bcrypt,
-    Task,
 }

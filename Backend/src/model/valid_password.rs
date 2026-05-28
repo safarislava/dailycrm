@@ -1,17 +1,20 @@
-use std::fmt::Formatter;
 use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
+use crate::contract::contentable::Contentable;
 use crate::model::password::Password;
+use std::fmt::Formatter;
 
 #[derive(Clone)]
 pub struct ValidPassword(Password);
 
 impl ValidPassword {
-    pub fn new(password: Password) -> Self { ValidPassword(password) }
+    pub fn new(password: Password) -> Self {
+        ValidPassword(password)
+    }
 }
 
 #[async_trait::async_trait]
-impl StringContentable for ValidPassword {
+impl Contentable for ValidPassword {
+    type Output = String;
     async fn content(&self) -> Result<String, BoxError> {
         let content = self.0.content().await?;
         let len = content.len();

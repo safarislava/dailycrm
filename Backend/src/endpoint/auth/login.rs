@@ -1,9 +1,9 @@
 use crate::model::hash_verification::VerificationError as LoginError;
 use crate::model::password::Password;
+use crate::model::valid_password::ValidPassword;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use serde::Deserialize;
-use crate::model::valid_password::ValidPassword;
 
 #[derive(Deserialize)]
 pub struct LoginDto {
@@ -33,5 +33,7 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
         }
     };
 
-    HttpResponse::Ok().cookie(refresh_token.cookie()).json(access_token)
+    HttpResponse::Ok()
+        .cookie(refresh_token.cookie())
+        .json(access_token)
 }

@@ -1,13 +1,13 @@
 use crate::contract::RefreshTokens;
+use crate::contract::contentable::Contentable;
 use crate::model::access_token::AccessToken;
-use crate::model::refresh_token::NewRefreshToken;
-use sqlx::PgPool;
-use uuid::Uuid;
-use crate::contract::sting_contentable::StringContentable;
 use crate::model::hash::Hash;
 use crate::model::hash_verification::{HashVerification, VerificationError};
 use crate::model::hashed_password::HashedPassword;
+use crate::model::refresh_token::NewRefreshToken;
 use crate::model::valid_password::ValidPassword;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct ConfirmedUser {
     pool: PgPool,
@@ -41,10 +41,17 @@ impl ConfirmedUser {
         self.verification().await?;
 
         let hashed_password = HashedPassword::new(new_password);
-        let hash = hashed_password.content().await.map_err(|_| VerificationError::Internal)?;
+        let hash = hashed_password
+            .content()
+            .await
+            .map_err(|_| VerificationError::Internal)?;
         sqlx::query("UPDATE users SET password_hash = $2 WHERE id = $1")
             .bind(self.id)
-            .bind(hash.content().await.map_err(|_| VerificationError::Internal)?)
+            .bind(
+                hash.content()
+                    .await
+                    .map_err(|_| VerificationError::Internal)?,
+            )
             .execute(&self.pool)
             .await
             .map_err(|_| VerificationError::Internal)?;
@@ -67,6 +74,8 @@ impl ConfirmedUser {
             None => return Err(VerificationError::Internal),
         };
 
-        HashVerification::new(hash, self.password.clone()).status().await
+        HashVerification::new(hash, self.password.clone())
+            .status()
+            .await
     }
 }

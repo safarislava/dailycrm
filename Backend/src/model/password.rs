@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
+use crate::contract::contentable::Contentable;
 
 #[derive(Clone)]
 pub struct Password(String);
@@ -11,7 +11,8 @@ impl Password {
 }
 
 #[async_trait::async_trait]
-impl StringContentable for Password {
+impl Contentable for Password {
+    type Output = String;
     async fn content(&self) -> Result<String, BoxError> {
         Ok(self.0.clone())
     }

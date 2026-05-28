@@ -1,11 +1,11 @@
+use crate::common::BoxError;
+use crate::contract::contentable::Contentable;
 use crate::model::authorized_user::ConfirmedUser;
+use crate::model::username::Username;
 use crate::model::valid_password::ValidPassword;
+use crate::model::valid_username::ValidUsername;
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
-use crate::model::username::Username;
-use crate::model::valid_username::ValidUsername;
 
 pub struct User {
     pool: PgPool,

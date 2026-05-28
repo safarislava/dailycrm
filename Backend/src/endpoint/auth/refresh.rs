@@ -14,7 +14,12 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         None => return HttpResponse::Unauthorized().body("Invalid refresh token"),
     };
 
-    let user_id = match state.refresh_tokens.token(jti).user_id_with_revocation().await {
+    let user_id = match state
+        .refresh_tokens
+        .token(jti)
+        .user_id_with_revocation()
+        .await
+    {
         Ok(Some(id)) => id,
         Ok(None) => return HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
@@ -27,5 +32,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
 
-    HttpResponse::Ok().cookie(refresh_token.cookie()).json(access_token)
+    HttpResponse::Ok()
+        .cookie(refresh_token.cookie())
+        .json(access_token)
 }

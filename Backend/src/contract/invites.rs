@@ -1,9 +1,9 @@
+use crate::common::BoxError;
+use crate::model::hash::Hash;
+use crate::model::invites::RegisterWithInviteResult;
+use crate::model::valid_username::ValidUsername;
 use async_trait::async_trait;
 use uuid::Uuid;
-use crate::common::BoxError;
-use crate::model::invites::RegisterWithInviteResult;
-use crate::model::hash::Hash;
-use crate::model::valid_username::ValidUsername;
 
 #[async_trait]
 pub trait Invites: Send + Sync {

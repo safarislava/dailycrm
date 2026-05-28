@@ -1,9 +1,9 @@
 use crate::auth::UserIdGettable;
 use crate::model::username::Username;
+use crate::model::valid_username::ValidUsername;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
-use crate::model::valid_username::ValidUsername;
 
 #[derive(Deserialize)]
 pub struct UpdateUsernameDto {
@@ -21,12 +21,7 @@ pub async fn patch(
     };
 
     let username = ValidUsername::new(Username::new(body.username.clone()));
-    match state
-        .users
-        .user(user_id)
-        .update_username(&username)
-        .await
-    {
+    match state.users.user(user_id).update_username(&username).await {
         Ok(true) => HttpResponse::Ok().finish(),
         Ok(false) => HttpResponse::Conflict().body("Username already taken"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

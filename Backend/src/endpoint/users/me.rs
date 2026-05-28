@@ -1,7 +1,7 @@
 use crate::auth::UserIdGettable;
+use crate::contract::contentable::Contentable;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
-use crate::contract::sting_contentable::StringContentable;
 
 pub async fn get(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     let user_id = match request.user_id() {

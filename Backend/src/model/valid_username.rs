@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::contract::sting_contentable::StringContentable;
+use crate::contract::contentable::Contentable;
 use crate::model::username::Username;
 
 pub struct ValidUsername(Username);
@@ -11,7 +11,8 @@ impl ValidUsername {
 }
 
 #[async_trait::async_trait]
-impl StringContentable for ValidUsername {
+impl Contentable for ValidUsername {
+    type Output = String;
     async fn content(&self) -> Result<String, BoxError> {
         let content = self.0.content().await?;
         let len = content.len();
@@ -21,7 +22,10 @@ impl StringContentable for ValidUsername {
         if len > 50 {
             return Err(Box::new(&UsernameError::TooLong));
         }
-        if !content.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+        if !content
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
             return Err(Box::new(&UsernameError::InvalidChars));
         }
         Ok(content)

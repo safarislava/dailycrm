@@ -1,4 +1,4 @@
-use crate::contract::sting_contentable::StringContentable;
+use crate::contract::contentable::Contentable;
 use crate::model::hash::Hash;
 use crate::model::valid_password::ValidPassword;
 
@@ -13,8 +13,16 @@ impl HashVerification {
     }
 
     pub async fn status(&self) -> Result<(), VerificationError> {
-        let hash = self.hash.content().await.map_err(|_| VerificationError::Internal)?;
-        let password = self.password.content().await.map_err(|_| VerificationError::Internal)?;
+        let hash = self
+            .hash
+            .content()
+            .await
+            .map_err(|_| VerificationError::Internal)?;
+        let password = self
+            .password
+            .content()
+            .await
+            .map_err(|_| VerificationError::Internal)?;
         match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(&password, &hash)).await {
             Ok(Ok(true)) => Ok(()),
             Ok(Ok(false)) => Err(VerificationError::WrongPassword),
@@ -31,7 +39,7 @@ pub enum VerificationError {
 
 impl std::fmt::Display for VerificationError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(match self { 
+        f.write_str(match self {
             VerificationError::WrongPassword => "Wrong password",
             VerificationError::Internal => "Internal error",
         })

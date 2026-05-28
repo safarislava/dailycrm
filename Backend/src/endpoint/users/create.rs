@@ -1,12 +1,13 @@
+use crate::contract::contentable::Contentable;
+use crate::model::hashed_password::HashedPassword;
 use crate::model::invites::RegisterWithInviteResult;
 use crate::model::password::Password;
 use crate::model::username::Username;
+use crate::model::valid_password::ValidPassword;
+use crate::model::valid_username::ValidUsername;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;
-use crate::model::hashed_password::HashedPassword;
-use crate::model::valid_password::ValidPassword;
-use crate::model::valid_username::ValidUsername;
 
 #[derive(serde::Deserialize)]
 pub struct CreateUserDto {
@@ -18,7 +19,8 @@ pub struct CreateUserDto {
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
     let username = ValidUsername::new(Username::new(body.username.clone()));
 
-    let hashed_password = HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
+    let hashed_password =
+        HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
     let hash = match hashed_password.content().await {
         Ok(hash) => hash,
         Err(_) => return HttpResponse::BadRequest().finish(),

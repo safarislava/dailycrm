@@ -1,4 +1,5 @@
 pub mod attachments;
+pub mod contentable;
 pub mod deadlines;
 pub mod details;
 pub mod invites;
@@ -6,7 +7,6 @@ pub mod projects;
 pub mod refresh_tokens;
 pub mod stages;
 pub mod users;
-pub mod sting_contentable;
 
 pub use attachments::Attachments;
 pub use deadlines::Deadlines;

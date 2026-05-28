@@ -1,10 +1,10 @@
 mod auth;
+mod common;
 mod contract;
 mod endpoint;
 mod model;
 mod state;
 mod storage;
-mod common;
 
 use crate::auth::JwtMiddleware;
 use crate::model::deadlines::PgDeadlines;
