@@ -1,11 +1,17 @@
 use aws_sdk_s3::Client;
 use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
 use aws_sdk_s3::primitives::ByteStream;
+use bytes::Bytes;
+use futures_util::Stream;
 use std::env;
+use std::pin::Pin;
+use tokio_util::io::ReaderStream;
 
 const BUCKET: &str = "crm-attachments";
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
+
+pub type FileStream = Pin<Box<dyn Stream<Item = Result<Bytes, std::io::Error>> + Send>>;
 
 #[derive(Clone)]
 pub struct Storage {
@@ -70,7 +76,7 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn get_bytes(&self, key: &str) -> Result<Vec<u8>, BoxError> {
+    pub async fn get_stream(&self, key: &str) -> Result<FileStream, BoxError> {
         let output = self
             .client
             .get_object()
@@ -78,7 +84,6 @@ impl Storage {
             .key(key)
             .send()
             .await?;
-        let bytes = output.body.collect().await?.into_bytes();
-        Ok(bytes.to_vec())
+        Ok(Box::pin(ReaderStream::new(output.body.into_async_read())))
     }
 }

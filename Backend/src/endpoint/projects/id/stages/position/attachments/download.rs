@@ -14,10 +14,11 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<(Uuid, i32, Uuid)>)
         .download()
         .await
     {
-        Ok((data, content_type, content_disposition)) => HttpResponse::Ok()
+        Ok((stream, content_length, content_type, content_disposition)) => HttpResponse::Ok()
             .content_type(content_type)
             .insert_header(("Content-Disposition", content_disposition))
-            .body(data),
+            .insert_header(("Content-Length", content_length.to_string()))
+            .streaming(stream),
         Err(_) => HttpResponse::NotFound().finish(),
     }
 }

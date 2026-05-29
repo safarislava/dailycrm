@@ -3,7 +3,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::storage::Storage;
+use crate::storage::{FileStream, Storage};
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -32,9 +32,9 @@ impl Attachment {
         }
     }
 
-    pub async fn download(&self) -> Result<(Vec<u8>, String, String), BoxError> {
-        let (filename, mime_type): (String, String) = sqlx::query_as(
-            "SELECT filename, mime_type FROM attachments
+    pub async fn download(&self) -> Result<(FileStream, i64, String, String), BoxError> {
+        let (filename, mime_type, size_bytes): (String, String, i64) = sqlx::query_as(
+            "SELECT filename, mime_type, size_bytes FROM attachments
              WHERE id = $1 AND project_id = $2 AND stage_position = $3",
         )
         .bind(self.id)
@@ -43,7 +43,7 @@ impl Attachment {
         .fetch_one(&self.pool)
         .await?;
 
-        let data = self.storage.get_bytes(&self.id.to_string()).await?;
+        let stream = self.storage.get_stream(&self.id.to_string()).await?;
 
         let encoded: String = filename
             .bytes()
@@ -61,7 +61,7 @@ impl Attachment {
             ascii_fallback, encoded
         );
 
-        Ok((data, mime_type, disposition))
+        Ok((stream, size_bytes, mime_type, disposition))
     }
 
     pub async fn delete(&self) -> Result<(), BoxError> {

@@ -18,5 +18,7 @@ aws-sdk-s3 = "1"
 actix-multipart = "0.7"
 actix-governor = "0.10.0"
 futures-util = "0.3"
+bytes = "1"
+tokio-util = { version = "0.7", features = ["io"] }
 infer = "0.19.0"
 async-trait = "0.1"

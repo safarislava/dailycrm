@@ -13,6 +13,7 @@ dependencies = [
  "async-trait",
  "aws-sdk-s3",
  "bcrypt",
+ "bytes",
  "chrono",
  "dotenvy",
  "futures-util",
@@ -21,6 +22,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tokio-util",
  "uuid",
 ]
 
