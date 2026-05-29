@@ -1,4 +1,5 @@
 use crate::auth::UserIdGettable;
+use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::task::task::Task;
@@ -24,13 +25,14 @@ pub async fn patch(
         None => return HttpResponse::Unauthorized().finish(),
     };
     let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
-    let new_password = ValidPassword::new(Password::new(body.new_password.clone()));
+    let new_password =
+        HashedPassword::new(ValidPassword::new(Password::new(body.new_password.clone())));
     let user = ProtectedUser::new(
         state.pool.clone(),
         state.users.user(user_id),
         current_password,
     );
-    let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), new_password);
+    let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password));
     match task.output().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::Unauthorized().body("Wrong current password"),

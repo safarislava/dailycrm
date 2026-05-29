@@ -1,8 +1,7 @@
 use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
+use crate::model::credential::hash::Hash;
 use crate::model::credential::hash_verification::VerificationError;
-use crate::model::credential::hashed_password::HashedPassword;
-use crate::model::credential::valid_password::ValidPassword;
 use crate::model::task::task::Task;
 use crate::model::user::contract::protected::Protected;
 use crate::model::user::user::User;
@@ -11,14 +10,14 @@ use sqlx::PgPool;
 pub struct PasswordUpdate {
     pool: PgPool,
     protected_user: Box<dyn Protected<Output = User>>,
-    new_password: ValidPassword,
+    new_password: Box<dyn Contentable<Output = Hash>>,
 }
 
 impl PasswordUpdate {
     pub fn new(
         pool: PgPool,
         protected_user: Box<dyn Protected<Output = User>>,
-        new_password: ValidPassword,
+        new_password: Box<dyn Contentable<Output = Hash>>,
     ) -> Self {
         Self {
             pool,
@@ -34,8 +33,8 @@ impl Task for PasswordUpdate {
 
     async fn output(&self) -> Result<(), BoxError> {
         let user = self.protected_user.unprotected().await?;
-        let hashed_password = HashedPassword::new(self.new_password.clone());
-        let hash = hashed_password
+        let hash = self
+            .new_password
             .content()
             .await
             .map_err(|_| VerificationError::Internal)?;

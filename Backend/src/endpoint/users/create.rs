@@ -1,3 +1,4 @@
+use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_password::ValidPassword;
@@ -19,8 +20,9 @@ pub struct CreateUserDto {
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
     let invite = Invite::new(body.invite_token);
     let username = ValidUsername::new(Username::new(body.username.clone()));
-    let password = ValidPassword::new(Password::new(body.password.clone()));
-    let invite_consumption = InviteConsumption::new(state.pool.clone(), invite, username, password);
+    let password = HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
+    let invite_consumption =
+        InviteConsumption::new(state.pool.clone(), invite, username, Box::new(password));
     match invite_consumption.output().await {
         Ok(InviteStatus::Ok) => HttpResponse::Created().finish(),
         Ok(InviteStatus::InvalidInvite) => {

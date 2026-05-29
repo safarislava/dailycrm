@@ -31,7 +31,6 @@ impl Task for UsernameUpdate {
             .bind(self.new_username.content().await?)
             .execute(&self.pool)
             .await;
-
         match result {
             Ok(_) => Ok(()),
             Err(e) => Err(Box::new(e)),

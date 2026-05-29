@@ -1,7 +1,6 @@
 use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
-use crate::model::credential::hashed_password::HashedPassword;
-use crate::model::credential::valid_password::ValidPassword;
+use crate::model::credential::hash::Hash;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::task::task::Task;
 use crate::model::user::invite::Invite;
@@ -11,7 +10,7 @@ pub struct InviteConsumption {
     pool: PgPool,
     invite: Invite,
     username: ValidUsername,
-    password: ValidPassword,
+    password: Box<dyn Contentable<Output = Hash>>,
 }
 
 impl InviteConsumption {
@@ -19,7 +18,7 @@ impl InviteConsumption {
         pool: PgPool,
         invite: Invite,
         username: ValidUsername,
-        password: ValidPassword,
+        password: Box<dyn Contentable<Output = Hash>>,
     ) -> Self {
         Self {
             pool,
@@ -58,7 +57,7 @@ impl Task for InviteConsumption {
             transaction.rollback().await?;
             return Ok(InviteStatus::InvalidInvite);
         }
-        let hash = HashedPassword::new(self.password.clone()).content().await?;
+        let hash = self.password.content().await?;
         let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
             .bind(self.username.content().await?)
             .bind(hash.content().await?)
