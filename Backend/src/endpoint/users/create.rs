@@ -1,15 +1,13 @@
-use crate::model::credential::contract::contentable::Contentable;
-use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::credential::valid_username::ValidUsername;
-use crate::state::AppState;
-use actix_web::{HttpResponse, Responder, web};
-use uuid::Uuid;
 use crate::model::task::task::Task;
 use crate::model::task::user::invite_consumption::{InviteConsumption, InviteStatus};
 use crate::model::user::invite::Invite;
+use crate::state::AppState;
+use actix_web::{HttpResponse, Responder, web};
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct CreateUserDto {
@@ -28,9 +26,7 @@ pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) 
         Ok(InviteStatus::InvalidInvite) => {
             HttpResponse::Forbidden().body("Invalid or expired invite")
         }
-        Ok(InviteStatus::UserExists) => {
-            HttpResponse::Conflict().body("User already exists")
-        }
+        Ok(InviteStatus::UserExists) => HttpResponse::Conflict().body("User already exists"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
 }

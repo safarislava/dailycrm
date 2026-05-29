@@ -1,15 +1,15 @@
 mod auth;
 mod common;
+mod cors;
 mod db;
 mod endpoint;
 mod model;
 mod routes;
 mod state;
 mod storage;
-mod cors;
 
-use crate::model::project::projects::PgProjects;
 use crate::model::project::deadlines::PgDeadlines;
+use crate::model::project::projects::PgProjects;
 use crate::model::session::refresh_tokens::PgRefreshTokens;
 use crate::model::user::users::PgUsers;
 use crate::state::AppState;
@@ -20,8 +20,8 @@ use std::sync::Arc;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
-    let allowed_origin = env::var("ALLOWED_ORIGIN")
-        .unwrap_or_else(|_| "http://localhost:5173".to_string());
+    let allowed_origin =
+        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
 
     let pool = db::connect().await;
     let storage = storage::Storage::from_env().await;

@@ -6,7 +6,10 @@ pub fn cors(allowed_origin: &str) -> Cors {
     Cors::default()
         .allowed_origin(allowed_origin)
         .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-        .allowed_headers(vec![http::header::AUTHORIZATION, http::header::CONTENT_TYPE])
+        .allowed_headers(vec![
+            http::header::AUTHORIZATION,
+            http::header::CONTENT_TYPE,
+        ])
         .supports_credentials()
         .max_age(3600)
 }

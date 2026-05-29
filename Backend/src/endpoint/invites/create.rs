@@ -1,10 +1,10 @@
 use crate::auth::UserIdGettable;
-use crate::state::AppState;
-use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use crate::model::credential::contract::contentable::Contentable;
 use crate::model::task::task::Task;
 use crate::model::task::user::invite_creation::InviteCreation;
 use crate::model::user::user::User;
+use crate::state::AppState;
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     let user_id = match request.user_id() {

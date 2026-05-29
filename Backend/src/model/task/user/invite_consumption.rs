@@ -1,4 +1,3 @@
-use sqlx::{PgPool, Postgres, Transaction};
 use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
 use crate::model::credential::hashed_password::HashedPassword;
@@ -6,6 +5,7 @@ use crate::model::credential::valid_password::ValidPassword;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::task::task::Task;
 use crate::model::user::invite::Invite;
+use sqlx::{PgPool, Postgres, Transaction};
 
 pub struct InviteConsumption {
     pool: PgPool,
@@ -15,22 +15,36 @@ pub struct InviteConsumption {
 }
 
 impl InviteConsumption {
-    pub fn new(pool: PgPool, invite: Invite, username: ValidUsername, password: ValidPassword) -> Self {
-        Self { pool, invite, username, password }
+    pub fn new(
+        pool: PgPool,
+        invite: Invite,
+        username: ValidUsername,
+        password: ValidPassword,
+    ) -> Self {
+        Self {
+            pool,
+            invite,
+            username,
+            password,
+        }
     }
 }
 
 impl InviteConsumption {
-    async fn invite_exists(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<bool, BoxError> {
+    async fn invite_exists(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<bool, BoxError> {
         let token = self.invite.content().await?;
         Ok(sqlx::query(
             "UPDATE invites SET used_at = NOW() \
              WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()",
         )
-            .bind(token)
-            .execute(&mut **transaction)
-            .await?
-            .rows_affected() > 0)
+        .bind(token)
+        .execute(&mut **transaction)
+        .await?
+        .rows_affected()
+            > 0)
     }
 }
 
@@ -72,4 +86,3 @@ pub enum InviteStatus {
     InvalidInvite,
     UserExists,
 }
-

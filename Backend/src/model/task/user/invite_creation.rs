@@ -1,9 +1,9 @@
-use sqlx::PgPool;
-use uuid::Uuid;
 use crate::common::BoxError;
 use crate::model::task::task::Task;
 use crate::model::user::invite::Invite;
 use crate::model::user::user::User;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct InviteCreation {
     pool: PgPool,

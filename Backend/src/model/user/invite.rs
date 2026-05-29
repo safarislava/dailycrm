@@ -1,6 +1,6 @@
-use uuid::Uuid;
 use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
+use uuid::Uuid;
 
 pub struct Invite {
     token: Uuid,
