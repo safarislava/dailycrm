@@ -22,7 +22,7 @@ pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl
 
     let password = ValidPassword::new(Password::new(body.password.clone()));
     let user = ProtectedUser::new(state.pool.clone(), user, password);
-    let task = TokenIssuance::new(state.refresh_tokens.clone(), user);
+    let task = TokenIssuance::new(state.refresh_tokens.clone(), Box::new(user));
 
     match task.output().await {
         Ok((access_token, refresh_token)) => HttpResponse::Ok()

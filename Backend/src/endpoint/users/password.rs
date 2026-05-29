@@ -32,7 +32,7 @@ pub async fn patch(
         state.users.user(user_id),
         current_password,
     );
-    let task = PasswordUpdate::new(state.pool.clone(), user, new_password);
+    let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), new_password);
     match task.output().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::Unauthorized().body("Wrong current password"),

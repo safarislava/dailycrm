@@ -8,6 +8,7 @@ pub mod refresh_tokens;
 pub mod stages;
 pub mod task;
 pub mod users;
+pub mod protected;
 
 pub use attachments::Attachments;
 pub use deadlines::Deadlines;

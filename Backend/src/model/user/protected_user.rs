@@ -3,6 +3,7 @@ use crate::model::credential::hash_verification::{HashVerification, Verification
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::user::user::User;
 use sqlx::PgPool;
+use crate::contract::protected::Protected;
 
 pub struct ProtectedUser {
     pool: PgPool,
@@ -18,8 +19,13 @@ impl ProtectedUser {
             password,
         }
     }
+}
 
-    pub async fn unprotected(&self) -> Result<User, VerificationError> {
+#[async_trait::async_trait]
+impl Protected for ProtectedUser {
+    type Output = User;
+
+    async fn unprotected(&self) -> Result<Self::Output, VerificationError> {
         #[derive(sqlx::FromRow)]
         struct Row {
             password_hash: String,

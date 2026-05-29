@@ -4,17 +4,18 @@ use crate::contract::task::Task;
 use crate::model::credential::hash_verification::VerificationError;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::valid_password::ValidPassword;
-use crate::model::user::protected_user::ProtectedUser;
 use sqlx::PgPool;
+use crate::contract::protected::Protected;
+use crate::model::user::user::User;
 
 pub struct PasswordUpdate {
     pool: PgPool,
-    protected_user: ProtectedUser,
+    protected_user: Box<dyn Protected<Output=User>>,
     new_password: ValidPassword,
 }
 
 impl PasswordUpdate {
-    pub fn new(pool: PgPool, protected_user: ProtectedUser, new_password: ValidPassword) -> Self {
+    pub fn new(pool: PgPool, protected_user: Box<dyn Protected<Output=User>>, new_password: ValidPassword) -> Self {
         Self {
             pool,
             protected_user,
