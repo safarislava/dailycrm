@@ -4,10 +4,12 @@ use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::credential::valid_username::ValidUsername;
-use crate::model::user::invites::RegisterWithInviteResult;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;
+use crate::model::task::task::Task;
+use crate::model::task::user::invite_consumption::{InviteConsumption, InviteStatus};
+use crate::model::user::invite::Invite;
 
 #[derive(serde::Deserialize)]
 pub struct CreateUserDto {
@@ -17,25 +19,16 @@ pub struct CreateUserDto {
 }
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
+    let invite = Invite::new(body.invite_token);
     let username = ValidUsername::new(Username::new(body.username.clone()));
-
-    let hashed_password =
-        HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
-    let hash = match hashed_password.content().await {
-        Ok(hash) => hash,
-        Err(_) => return HttpResponse::BadRequest().finish(),
-    };
-
-    match state
-        .invites
-        .consume_and_register(body.invite_token, &username, &hash)
-        .await
-    {
-        Ok(RegisterWithInviteResult::Ok) => HttpResponse::Created().finish(),
-        Ok(RegisterWithInviteResult::InvalidInvite) => {
+    let password = ValidPassword::new(Password::new(body.password.clone()));
+    let invite_consumption = InviteConsumption::new(state.pool.clone(), invite, username, password);
+    match invite_consumption.output().await {
+        Ok(InviteStatus::Ok) => HttpResponse::Created().finish(),
+        Ok(InviteStatus::InvalidInvite) => {
             HttpResponse::Forbidden().body("Invalid or expired invite")
         }
-        Ok(RegisterWithInviteResult::UserExists) => {
+        Ok(InviteStatus::UserExists) => {
             HttpResponse::Conflict().body("User already exists")
         }
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

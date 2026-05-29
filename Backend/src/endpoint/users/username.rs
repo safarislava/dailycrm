@@ -21,11 +21,9 @@ pub async fn patch(
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };
-
     let username = ValidUsername::new(Username::new(body.username.clone()));
     let user = state.users.user(user_id);
     let task = UsernameUpdate::new(state.pool.clone(), user, username);
-
     match task.output().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

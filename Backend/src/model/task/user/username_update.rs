@@ -21,6 +21,7 @@ impl UsernameUpdate {
     }
 }
 
+#[async_trait::async_trait]
 impl Task for UsernameUpdate {
     type Output = ();
 

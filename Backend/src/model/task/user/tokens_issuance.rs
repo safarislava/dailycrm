@@ -25,6 +25,7 @@ impl TokenIssuance {
     }
 }
 
+#[async_trait::async_trait]
 impl Task for TokenIssuance {
     type Output = (AccessToken, NewRefreshToken);
     async fn output(&self) -> Result<Self::Output, BoxError> {

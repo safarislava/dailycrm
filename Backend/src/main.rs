@@ -9,7 +9,6 @@ use crate::auth::JwtMiddleware;
 use crate::model::project::deadlines::PgDeadlines;
 use crate::model::project::projects::PgProjects;
 use crate::model::session::refresh_tokens::PgRefreshTokens;
-use crate::model::user::invites::PgInvites;
 use crate::model::user::users::PgUsers;
 use crate::state::AppState;
 use crate::storage::Storage;
@@ -70,7 +69,6 @@ async fn main() -> std::io::Result<()> {
         pool: pool.clone(),
         users: Arc::new(PgUsers::new(pool.clone())),
         projects: Arc::new(PgProjects::new(pool.clone(), storage.clone())),
-        invites: Arc::new(PgInvites::new(pool.clone())),
         refresh_tokens: Arc::new(PgRefreshTokens::new(pool.clone())),
         deadlines: Arc::new(PgDeadlines::new(pool.clone())),
     });

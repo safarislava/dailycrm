@@ -23,10 +23,8 @@ pub async fn patch(
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };
-
     let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
     let new_password = ValidPassword::new(Password::new(body.new_password.clone()));
-
     let user = ProtectedUser::new(
         state.pool.clone(),
         state.users.user(user_id),

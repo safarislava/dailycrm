@@ -1,0 +1,75 @@
+use sqlx::{PgPool, Postgres, Transaction};
+use crate::common::BoxError;
+use crate::model::credential::contract::contentable::Contentable;
+use crate::model::credential::hashed_password::HashedPassword;
+use crate::model::credential::valid_password::ValidPassword;
+use crate::model::credential::valid_username::ValidUsername;
+use crate::model::task::task::Task;
+use crate::model::user::invite::Invite;
+
+pub struct InviteConsumption {
+    pool: PgPool,
+    invite: Invite,
+    username: ValidUsername,
+    password: ValidPassword,
+}
+
+impl InviteConsumption {
+    pub fn new(pool: PgPool, invite: Invite, username: ValidUsername, password: ValidPassword) -> Self {
+        Self { pool, invite, username, password }
+    }
+}
+
+impl InviteConsumption {
+    async fn invite_exists(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<bool, BoxError> {
+        let token = self.invite.content().await?;
+        Ok(sqlx::query(
+            "UPDATE invites SET used_at = NOW() \
+             WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()",
+        )
+            .bind(token)
+            .execute(&mut **transaction)
+            .await?
+            .rows_affected() > 0)
+    }
+}
+
+#[async_trait::async_trait]
+impl Task for InviteConsumption {
+    type Output = InviteStatus;
+
+    async fn output(&self) -> Result<Self::Output, BoxError> {
+        let mut transaction = self.pool.begin().await?;
+        if !self.invite_exists(&mut transaction).await? {
+            transaction.rollback().await?;
+            return Ok(InviteStatus::InvalidInvite);
+        }
+        let hash = HashedPassword::new(self.password.clone()).content().await?;
+        let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
+            .bind(self.username.content().await?)
+            .bind(hash.content().await?)
+            .execute(&mut *transaction)
+            .await;
+        match result {
+            Ok(_) => {
+                transaction.commit().await?;
+                Ok(InviteStatus::Ok)
+            }
+            Err(sqlx::Error::Database(_)) => {
+                transaction.rollback().await?;
+                Ok(InviteStatus::UserExists)
+            }
+            Err(e) => {
+                transaction.rollback().await?;
+                Err(Box::new(e))
+            }
+        }
+    }
+}
+
+pub enum InviteStatus {
+    Ok,
+    InvalidInvite,
+    UserExists,
+}
+

@@ -28,12 +28,12 @@ impl PasswordUpdate {
     }
 }
 
+#[async_trait::async_trait]
 impl Task for PasswordUpdate {
     type Output = ();
 
     async fn output(&self) -> Result<(), BoxError> {
         let user = self.protected_user.unprotected().await?;
-
         let hashed_password = HashedPassword::new(self.new_password.clone());
         let hash = hashed_password
             .content()
