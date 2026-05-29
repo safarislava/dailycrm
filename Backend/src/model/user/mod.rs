@@ -1,3 +1,4 @@
+pub mod contract;
 pub mod invites;
 pub mod protected_user;
 pub mod user;

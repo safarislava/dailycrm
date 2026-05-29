@@ -1,6 +1,5 @@
 mod auth;
 mod common;
-mod contract;
 mod endpoint;
 mod model;
 mod state;

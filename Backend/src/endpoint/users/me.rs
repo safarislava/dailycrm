@@ -1,5 +1,5 @@
 use crate::auth::UserIdGettable;
-use crate::contract::contentable::Contentable;
+use crate::model::credential::contract::contentable::Contentable;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 

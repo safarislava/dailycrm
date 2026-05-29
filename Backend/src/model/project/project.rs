@@ -4,7 +4,8 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::contract::{Details, Stages};
+use crate::model::project::contract::details::Details;
+use crate::model::project::contract::stages::Stages;
 use crate::model::project::stages::PgStages;
 use crate::storage::Storage;
 

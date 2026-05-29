@@ -1,4 +1,4 @@
-use crate::contract::Stages;
+use crate::model::project::contract::stages::Stages;
 use crate::model::project::stage::{Stage, StageSummary};
 use crate::storage::Storage;
 use async_trait::async_trait;

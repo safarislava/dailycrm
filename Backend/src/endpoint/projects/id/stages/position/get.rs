@@ -1,4 +1,4 @@
-use crate::contract::Details;
+use crate::model::project::contract::details::Details;
 use crate::state::AppState;
 use actix_web::{HttpResponse, Responder, web};
 use uuid::Uuid;

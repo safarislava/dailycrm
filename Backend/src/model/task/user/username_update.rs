@@ -1,7 +1,7 @@
 use crate::common::BoxError;
-use crate::contract::contentable::Contentable;
-use crate::contract::task::Task;
+use crate::model::credential::contract::contentable::Contentable;
 use crate::model::credential::valid_username::ValidUsername;
+use crate::model::task::task::Task;
 use crate::model::user::user::User;
 use sqlx::PgPool;
 

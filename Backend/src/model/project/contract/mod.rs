@@ -1,8 +1,6 @@
-pub mod attachment;
 pub mod attachments;
-pub mod contract;
 pub mod deadlines;
-pub mod project;
+pub mod details;
 pub mod projects;
-pub mod stage;
 pub mod stages;
+pub mod users;

@@ -1,7 +1,7 @@
 use crate::auth::UserIdGettable;
-use crate::contract::task::Task;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_username::ValidUsername;
+use crate::model::task::task::Task;
 use crate::model::task::user::username_update::UsernameUpdate;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};

@@ -1,4 +1,4 @@
-use crate::contract::Users;
+use crate::model::project::contract::users::Users;
 use crate::model::user::user::User;
 use async_trait::async_trait;
 use sqlx::PgPool;

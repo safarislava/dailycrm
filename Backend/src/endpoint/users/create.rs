@@ -1,4 +1,4 @@
-use crate::contract::contentable::Contentable;
+use crate::model::credential::contract::contentable::Contentable;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;

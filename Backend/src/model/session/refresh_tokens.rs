@@ -1,5 +1,5 @@
 use crate::auth::{Claims, jwt_secret};
-use crate::contract::RefreshTokens;
+use crate::model::session::contract::refresh_tokens::RefreshTokens;
 use crate::model::session::refresh_token::{NewRefreshToken, RefreshToken};
 use async_trait::async_trait;
 use chrono::{Duration, Utc};

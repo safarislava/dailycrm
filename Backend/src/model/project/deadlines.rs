@@ -1,4 +1,4 @@
-use crate::contract::Deadlines;
+use crate::model::project::contract::deadlines::Deadlines;
 use crate::model::project::stage::{StageSummary, StageSummaryWithProjectTitle};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

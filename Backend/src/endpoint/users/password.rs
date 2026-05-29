@@ -1,7 +1,7 @@
 use crate::auth::UserIdGettable;
-use crate::contract::task::Task;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
+use crate::model::task::task::Task;
 use crate::model::task::user::password_update::PasswordUpdate;
 use crate::model::user::protected_user::ProtectedUser;
 use crate::state::AppState;

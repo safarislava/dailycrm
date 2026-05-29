@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::contract::contentable::Contentable;
+use crate::model::credential::contract::contentable::Contentable;
 
 pub struct Username(String);
 

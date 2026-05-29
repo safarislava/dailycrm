@@ -1,9 +1,9 @@
 use crate::model::credential::hash::Hash;
 use crate::model::credential::hash_verification::{HashVerification, VerificationError};
 use crate::model::credential::valid_password::ValidPassword;
+use crate::model::user::contract::protected::Protected;
 use crate::model::user::user::User;
 use sqlx::PgPool;
-use crate::contract::protected::Protected;
 
 pub struct ProtectedUser {
     pool: PgPool,

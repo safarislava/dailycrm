@@ -1,3 +1,4 @@
+pub mod contract;
 pub mod hash;
 pub mod hash_verification;
 pub mod hashed_password;

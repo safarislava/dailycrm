@@ -1,6 +1,6 @@
-use crate::contract::task::Task;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
+use crate::model::task::task::Task;
 use crate::model::task::user::tokens_issuance::TokenIssuance;
 use crate::model::user::protected_user::ProtectedUser;
 use crate::state::AppState;
