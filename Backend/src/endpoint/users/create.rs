@@ -15,14 +15,20 @@ pub struct CreateUserDto {
     username: String,
     password: String,
     invite_token: Uuid,
+    email: String,
 }
 
 pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
     let invite = Invite::new(body.invite_token);
     let username = ValidUsername::new(Username::new(body.username.clone()));
     let password = HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
-    let invite_consumption =
-        InviteConsumption::new(state.pool.clone(), invite, username, Box::new(password));
+    let invite_consumption = InviteConsumption::new(
+        state.pool.clone(),
+        invite,
+        username,
+        Box::new(password),
+        body.email.clone(),
+    );
     match invite_consumption.done().await {
         Ok(InviteStatus::Ok) => HttpResponse::Created().finish(),
         Ok(InviteStatus::InvalidInvite) => {

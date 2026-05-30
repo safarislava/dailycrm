@@ -24,4 +24,28 @@ impl DetailedUser {
             .await?;
         Ok(row.map(|r| Username::new(r.username)))
     }
+
+    pub async fn email(&self) -> Result<Option<String>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            email: String,
+        }
+        let row = sqlx::query_as::<_, Row>("SELECT email FROM users WHERE id = $1")
+            .bind(self.user.id())
+            .fetch_optional(self.pool.as_ref())
+            .await?;
+        Ok(row.map(|r| r.email))
+    }
+
+    pub async fn notifications_enabled(&self) -> Result<Option<bool>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            notifications_enabled: bool,
+        }
+        let row = sqlx::query_as::<_, Row>("SELECT notifications_enabled FROM users WHERE id = $1")
+            .bind(self.user.id())
+            .fetch_optional(self.pool.as_ref())
+            .await?;
+        Ok(row.map(|r| r.notifications_enabled))
+    }
 }

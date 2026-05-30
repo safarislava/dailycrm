@@ -12,6 +12,7 @@ pub struct InviteConsumption {
     invite: Invite,
     username: ValidUsername,
     password: Box<dyn Contentable<Output = Hash>>,
+    email: String,
 }
 
 impl InviteConsumption {
@@ -20,12 +21,14 @@ impl InviteConsumption {
         invite: Invite,
         username: ValidUsername,
         password: Box<dyn Contentable<Output = Hash>>,
+        email: String,
     ) -> Self {
         Self {
             pool,
             invite,
             username,
             password,
+            email,
         }
     }
 }
@@ -59,11 +62,13 @@ impl Task for InviteConsumption {
             return Ok(InviteStatus::InvalidInvite);
         }
         let hash = self.password.content().await?;
-        let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES ($1, $2)")
-            .bind(self.username.content().await?)
-            .bind(hash.content().await?)
-            .execute(&mut *transaction)
-            .await;
+        let result =
+            sqlx::query("INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3)")
+                .bind(self.username.content().await?)
+                .bind(hash.content().await?)
+                .bind(&self.email)
+                .execute(&mut *transaction)
+                .await;
         match result {
             Ok(_) => {
                 transaction.commit().await?;

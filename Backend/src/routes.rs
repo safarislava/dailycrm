@@ -22,7 +22,12 @@ pub fn configure(config: &mut web::ServiceConfig) {
                     .wrap(JwtMiddleware)
                     .service(web::resource("").get(endpoint::users::me::get))
                     .service(web::resource("/username").patch(endpoint::users::username::patch))
-                    .service(web::resource("/password").patch(endpoint::users::password::patch)),
+                    .service(web::resource("/password").patch(endpoint::users::password::patch))
+                    .service(web::resource("/email").patch(endpoint::users::email::patch))
+                    .service(
+                        web::resource("/notifications")
+                            .patch(endpoint::users::notifications::patch),
+                    ),
             )
             .service(
                 web::scope("")
