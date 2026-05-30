@@ -1,25 +1,26 @@
+use crate::common::BoxError;
 use crate::model::credential::hash_verification::VerificationError;
 use crate::model::session::access_token::AccessToken;
-use crate::model::session::contract::refresh_tokens::RefreshTokens;
-use crate::model::session::refresh_token::NewRefreshToken;
+use crate::model::session::new_token::NewToken;
+use crate::model::session::refresh_token::{REFRESH_LIFETIME, RefreshToken};
+use crate::model::task::session::refresh_token_submission::RefreshTokenSubmission;
 use crate::model::task::task::Task;
 use crate::model::user::contract::protected::Protected;
 use crate::model::user::user::User;
-use aws_sdk_s3::error::BoxError;
-use std::sync::Arc;
+use chrono::{Duration, Utc};
+use sqlx::PgPool;
+use uuid::Uuid;
+use crate::model::session::token_kind::TokenKind;
 
 pub struct TokenIssuance {
-    refresh_tokens: Arc<dyn RefreshTokens>,
+    pool: PgPool,
     protected_user: Box<dyn Protected<Output = User>>,
 }
 
 impl TokenIssuance {
-    pub fn new(
-        refresh_tokens: Arc<dyn RefreshTokens>,
-        protected_user: Box<dyn Protected<Output = User>>,
-    ) -> Self {
+    pub fn new(pool: PgPool, protected_user: Box<dyn Protected<Output = User>>) -> Self {
         Self {
-            refresh_tokens,
+            pool,
             protected_user,
         }
     }
@@ -27,15 +28,34 @@ impl TokenIssuance {
 
 #[async_trait::async_trait]
 impl Task for TokenIssuance {
-    type Output = (AccessToken, NewRefreshToken);
+    type Output = Option<(AccessToken, RefreshToken)>;
+
     async fn output(&self) -> Result<Self::Output, BoxError> {
-        let user = self.protected_user.unprotected().await?;
-        let access_token = AccessToken::new(user.id());
-        let refresh_token = self
-            .refresh_tokens
-            .new_token(user.id())
-            .await
-            .map_err(|_| VerificationError::Internal)?;
-        Ok((access_token, refresh_token))
+        let user = match self.protected_user.unprotected().await {
+            Ok(user) => user,
+            Err(VerificationError::WrongPassword) => return Ok(None),
+            Err(other) => return Err(BoxError::from(other)),
+        };
+        let access_token = AccessToken::new(Box::new(NewToken::new(
+            user.id(),
+            Uuid::new_v4(),
+            TokenKind::Access,
+            Utc::now() + Duration::minutes(15),
+        )));
+        let jti = Uuid::new_v4();
+        let refresh_expires_at = Utc::now() + REFRESH_LIFETIME;
+        let refresh_token = RefreshToken::new(
+            jti,
+            Box::new(NewToken::new(
+                user.id(),
+                jti,
+                TokenKind::Refresh,
+                refresh_expires_at,
+            )),
+        );
+        RefreshTokenSubmission::new(self.pool.clone(), user.id(), jti, refresh_expires_at)
+            .output()
+            .await?;
+        Ok(Some((access_token, refresh_token)))
     }
 }

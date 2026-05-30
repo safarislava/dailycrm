@@ -1,56 +1,33 @@
-use sqlx::PgPool;
+use chrono::{Duration, TimeDelta};
+use crate::common::BoxError;
+use crate::model::credential::contract::contentable::Contentable;
+use crate::model::session::contract::token::Token;
 use uuid::Uuid;
 
+pub const REFRESH_LIFETIME: TimeDelta = Duration::weeks(1);
+
 pub struct RefreshToken {
-    pool: PgPool,
-    jti: Uuid,
+    id: Uuid,
+    token: Box<dyn Token>,
 }
 
 impl RefreshToken {
-    pub fn new(pool: PgPool, jti: Uuid) -> Self {
-        Self { pool, jti }
+    pub fn new(id: Uuid, token: Box<dyn Token>) -> Self {
+        Self { id, token }
     }
 
-    pub async fn user_id_with_revocation(&self) -> Result<Option<Uuid>, sqlx::Error> {
-        let row: Option<(Uuid,)> = sqlx::query_as(
-            "UPDATE refresh_tokens SET revoked_at = NOW() \
-             WHERE jti = $1 AND revoked_at IS NULL AND expires_at > NOW() \
-             RETURNING user_id",
-        )
-        .bind(self.jti)
-        .fetch_optional(&self.pool)
-        .await?;
-        Ok(row.map(|(user_id,)| user_id))
-    }
-
-    pub async fn revoke(&self) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "UPDATE refresh_tokens SET revoked_at = NOW() \
-             WHERE jti = $1 AND revoked_at IS NULL",
-        )
-        .bind(self.jti)
-        .execute(&self.pool)
-        .await?;
-        Ok(())
+    pub fn id(&self) -> Uuid {
+        self.id
     }
 }
 
-pub struct NewRefreshToken {
-    encoded: String,
-}
+#[async_trait::async_trait]
+impl Contentable for RefreshToken {
+    type Output = String;
 
-impl NewRefreshToken {
-    pub fn new(encoded: String) -> Self {
-        Self { encoded }
-    }
-
-    pub fn cookie(&self) -> actix_web::cookie::Cookie<'static> {
-        actix_web::cookie::Cookie::build("refresh_token", self.encoded.clone())
-            .http_only(true)
-            .secure(true)
-            .same_site(actix_web::cookie::SameSite::Strict)
-            .path("/api/auth")
-            .max_age(actix_web::cookie::time::Duration::days(7))
-            .finish()
+    async fn content(&self) -> Result<Self::Output, BoxError> {
+        Ok(self.token.content().await?)
     }
 }
+
+impl Token for RefreshToken {}

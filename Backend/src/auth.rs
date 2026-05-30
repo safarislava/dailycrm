@@ -3,6 +3,7 @@ use actix_web::{
     Error,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
+use crate::model::session::token_kind::TokenKind;
 use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -42,14 +43,14 @@ impl JwtToken {
     pub fn access_user_id(&self) -> Option<Uuid> {
         self.decode()
             .ok()
-            .filter(|c| c.typ == "access")
+            .filter(|c| c.typ == TokenKind::Access.as_str())
             .map(|c| c.sub)
     }
 
-    pub fn refresh_jti(&self) -> Option<Uuid> {
+    pub fn jti(&self) -> Option<Uuid> {
         self.decode()
             .ok()
-            .filter(|c| c.typ == "refresh")
+            .filter(|c| c.typ == TokenKind::Refresh.as_str())
             .map(|c| c.jti)
     }
 
