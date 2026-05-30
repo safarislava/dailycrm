@@ -1,4 +1,11 @@
-use crate::auth::user_id_from_request;
+use crate::auth::UserIdGettable;
+use crate::model::credential::hashed_password::HashedPassword;
+use crate::model::credential::password::Password;
+use crate::model::credential::valid_password::ValidPassword;
+use crate::model::task::contract::task::Task;
+use crate::model::task::user::password_update::PasswordUpdate;
+use crate::model::user::protected_user::ProtectedUser;
+use crate::model::user::user::User;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -11,45 +18,20 @@ pub struct UpdatePasswordDto {
 
 pub async fn patch(
     state: web::Data<AppState>,
-    req: HttpRequest,
+    request: HttpRequest,
     body: web::Json<UpdatePasswordDto>,
 ) -> impl Responder {
-    let user_id = match user_id_from_request(&req) {
+    let user_id = match request.user_id() {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };
-
-    let stored_hash = match state.users.password_hash_by_id(user_id).await {
-        Ok(Some(h)) => h,
-        Ok(None) => return HttpResponse::NotFound().finish(),
-        Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
-
-    let current = body.current_password.clone();
-    let valid =
-        match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(current, &stored_hash))
-            .await
-        {
-            Ok(Ok(v)) => v,
-            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-        };
-
-    if !valid {
-        return HttpResponse::Unauthorized().body("Wrong current password");
-    }
-
-    let new_password = body.new_password.clone();
-    let new_hash = match actix_web::rt::task::spawn_blocking(move || {
-        bcrypt::hash(new_password, bcrypt::DEFAULT_COST)
-    })
-    .await
-    {
-        Ok(Ok(h)) => h,
-        _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-    };
-
-    match state.users.update_password(user_id, &new_hash).await {
+    let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
+    let new_password =
+        HashedPassword::new(ValidPassword::new(Password::new(body.new_password.clone())));
+    let user = ProtectedUser::new(state.pool.clone(), User::new(user_id), current_password);
+    let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password));
+    match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+        Err(_) => HttpResponse::Unauthorized().body("Wrong current password"),
     }
 }

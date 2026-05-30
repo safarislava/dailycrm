@@ -2,7 +2,13 @@ import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../../store'
 import { setUserPageOpen } from '../../store/uiSlice'
-import { useGetMeQuery, useUpdateUsernameMutation, useUpdatePasswordMutation } from '../../store/crmApi'
+import {
+  useGetMeQuery,
+  useUpdateUsernameMutation,
+  useUpdatePasswordMutation,
+  useUpdateEmailMutation,
+  useUpdateNotificationsMutation,
+} from '../../store/crmApi'
 import styles from './UserPage.module.scss'
 
 export default function UserPage() {
@@ -19,8 +25,14 @@ export default function UserPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
+  const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [emailSuccess, setEmailSuccess] = useState(false)
+
   const [updateUsername, { isLoading: savingUsername }] = useUpdateUsernameMutation()
   const [updatePassword, { isLoading: savingPassword }] = useUpdatePasswordMutation()
+  const [updateEmail, { isLoading: savingEmail }] = useUpdateEmailMutation()
+  const [updateNotifications, { isLoading: savingNotifications }] = useUpdateNotificationsMutation()
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +46,19 @@ export default function UserPage() {
     } else {
       setUsernameSuccess(true)
       setUsername('')
+    }
+  }
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEmailError(null)
+    setEmailSuccess(false)
+    const result = await updateEmail({ email: email.trim() })
+    if ('error' in result) {
+      setEmailError('Что-то пошло не так')
+    } else {
+      setEmailSuccess(true)
+      setEmail('')
     }
   }
 
@@ -86,6 +111,45 @@ export default function UserPage() {
               {savingUsername ? '…' : 'Сохранить'}
             </button>
           </form>
+        </section>
+
+        <div className={styles.divider} />
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Email</h2>
+          {me && <p className={styles.current}>Текущий: <strong>{me.email}</strong></p>}
+          <form className={styles.form} onSubmit={handleEmailSubmit}>
+            <input
+              className={styles.input}
+              type="email"
+              placeholder="Новый email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setEmailSuccess(false) }}
+              autoComplete="email"
+              required
+            />
+            {emailError && <p className={styles.error}>{emailError}</p>}
+            {emailSuccess && <p className={styles.success}>Email изменён</p>}
+            <button className={styles.btn} type="submit" disabled={savingEmail || !email.trim()}>
+              {savingEmail ? '…' : 'Сохранить'}
+            </button>
+          </form>
+        </section>
+
+        <div className={styles.divider} />
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Уведомления</h2>
+          <p className={styles.current}>Письма о дедлайнах на следующий день</p>
+          {me && (
+            <button
+              className={`${styles.btn} ${me.notifications_enabled ? styles.btnDanger : ''}`}
+              onClick={() => updateNotifications({ enabled: !me.notifications_enabled })}
+              disabled={savingNotifications}
+            >
+              {savingNotifications ? '…' : me.notifications_enabled ? 'Отключить' : 'Включить'}
+            </button>
+          )}
         </section>
 
         <div className={styles.divider} />

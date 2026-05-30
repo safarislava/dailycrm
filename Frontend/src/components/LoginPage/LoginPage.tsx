@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
   const [inviteToken, setInviteToken] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -26,6 +27,7 @@ export default function LoginPage() {
       const result = await register({
         username: username.trim(),
         password,
+        email: email.trim(),
         invite_token: inviteToken.trim(),
       })
       if ('error' in result) {
@@ -37,6 +39,7 @@ export default function LoginPage() {
       }
       setMode('login')
       setPassword('')
+      setEmail('')
       setInviteToken('')
       return
     }
@@ -89,14 +92,25 @@ export default function LoginPage() {
           required
         />
         {mode === 'register' && (
-          <input
-            className={styles.input}
-            placeholder="Инвайт-токен"
-            value={inviteToken}
-            onChange={(e) => setInviteToken(e.target.value)}
-            autoComplete="off"
-            required
-          />
+          <>
+            <input
+              className={styles.input}
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+            <input
+              className={styles.input}
+              placeholder="Инвайт-токен"
+              value={inviteToken}
+              onChange={(e) => setInviteToken(e.target.value)}
+              autoComplete="off"
+              required
+            />
+          </>
         )}
         {error && <p className={styles.error}>{error}</p>}
         <button className={styles.submit} type="submit" disabled={loading}>

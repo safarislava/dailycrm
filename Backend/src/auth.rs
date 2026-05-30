@@ -1,63 +1,81 @@
+use crate::model::session::token_kind::TokenKind;
+use actix_web::HttpRequest;
 use actix_web::{
     Error,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
-use chrono::Utc;
-use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
     future::{Future, Ready, ready},
     pin::Pin,
     rc::Rc,
+    sync::OnceLock,
 };
 use uuid::Uuid;
+
+static JWT_SECRET: OnceLock<String> = OnceLock::new();
+
+pub fn jwt_secret() -> &'static str {
+    JWT_SECRET.get_or_init(|| env::var("JWT_SECRET").expect("JWT_SECRET must be set"))
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: Uuid,
+    pub jti: Uuid,
+    pub typ: String,
     pub exp: usize,
 }
 
-fn jwt_secret() -> String {
-    env::var("JWT_SECRET").expect("JWT_SECRET must be set")
+pub struct JwtToken {
+    raw: String,
 }
 
-pub fn create_access_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 15 * 60) as usize;
-    encode(
-        &Header::default(),
-        &Claims { sub: user_id, exp },
-        &EncodingKey::from_secret(jwt_secret().as_bytes()),
-    )
+impl JwtToken {
+    pub fn new(raw: &str) -> Self {
+        Self {
+            raw: raw.to_owned(),
+        }
+    }
+
+    pub fn access_user_id(&self) -> Option<Uuid> {
+        self.decode()
+            .ok()
+            .filter(|c| c.typ == TokenKind::Access.as_str())
+            .map(|c| c.sub)
+    }
+
+    pub fn jti(&self) -> Option<Uuid> {
+        self.decode()
+            .ok()
+            .filter(|c| c.typ == TokenKind::Refresh.as_str())
+            .map(|c| c.jti)
+    }
+
+    fn decode(&self) -> Result<Claims, jsonwebtoken::errors::Error> {
+        let data = decode::<Claims>(
+            &self.raw,
+            &DecodingKey::from_secret(jwt_secret().as_bytes()),
+            &Validation::default(),
+        )?;
+        Ok(data.claims)
+    }
 }
 
-pub fn create_refresh_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let exp = (Utc::now().timestamp() + 7 * 24 * 3600) as usize;
-    encode(
-        &Header::default(),
-        &Claims { sub: user_id, exp },
-        &EncodingKey::from_secret(jwt_secret().as_bytes()),
-    )
+pub trait UserIdGettable {
+    fn user_id(&self) -> Option<Uuid>;
 }
 
-pub fn user_id_from_request(request: &actix_web::HttpRequest) -> Option<Uuid> {
-    request
-        .headers()
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .and_then(|token| verify_token(token).ok())
-        .map(|claims| claims.sub)
-}
-
-pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(jwt_secret().as_bytes()),
-        &Validation::default(),
-    )?;
-    Ok(data.claims)
+impl UserIdGettable for HttpRequest {
+    fn user_id(&self) -> Option<Uuid> {
+        self.headers()
+            .get("Authorization")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.strip_prefix("Bearer "))
+            .and_then(|token| JwtToken::new(token).access_user_id())
+    }
 }
 
 pub struct JwtMiddleware;
@@ -95,20 +113,20 @@ where
 
     forward_ready!(service);
 
-    fn call(&self, req: ServiceRequest) -> Self::Future {
+    fn call(&self, request: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
 
-        let authorized = req
+        let authorized = request
             .headers()
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .map(|token| verify_token(token).is_ok())
+            .map(|token| JwtToken::new(token).access_user_id().is_some())
             .unwrap_or(false);
 
         Box::pin(async move {
             if authorized {
-                svc.call(req).await
+                svc.call(request).await
             } else {
                 Err(actix_web::error::ErrorUnauthorized("Unauthorized"))
             }

@@ -1,3 +1,6 @@
+use crate::model::project::project::Project;
+use crate::model::task::contract::task::Task;
+use crate::model::task::project::project_rename::ProjectRename;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -14,11 +17,13 @@ pub async fn patch(
     path: web::Path<Uuid>,
     body: Json<RenameProjectDto>,
 ) -> impl Responder {
-    let id = path.into_inner();
-    if body.title.trim().is_empty() {
+    let project = Project::new(path.into_inner());
+    let title = String::from(body.title.trim());
+    if title.is_empty() {
         return HttpResponse::BadRequest().body("Title cannot be empty");
     }
-    match state.projects.rename(id, body.title.trim()).await {
+    let task = ProjectRename::new(state.pool.clone(), project, title.clone());
+    match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

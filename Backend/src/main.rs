@@ -1,137 +1,56 @@
 mod auth;
+mod common;
+mod cors;
+mod db;
 mod endpoint;
+mod mail;
 mod model;
+mod routes;
 mod state;
 mod storage;
 
-use crate::auth::JwtMiddleware;
-use crate::model::attachments::Attachments;
-use crate::model::invites::Invites;
-use crate::model::projects::Projects;
-use crate::model::stages::Stages;
-use crate::model::users::Users;
+use crate::mail::Mailer;
+use crate::model::schedule::contract::scheduled::Scheduled;
+use crate::model::schedule::schedule::Schedule;
+use crate::model::schedule::time_of_day::TimeOfDay;
+use crate::model::schedule::timetable::Timetable;
+use crate::model::task::notification::deadline_digest_notification::DeadlineDigestNotification;
 use crate::state::AppState;
 use crate::storage::Storage;
-
-use actix_cors::Cors;
 use actix_web::{App, HttpServer, web};
-use sqlx::postgres::PgPoolOptions;
+use chrono::NaiveTime;
 use std::env;
+use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
-    let database_url =
-        env::var("DATABASE_URL").expect("Environment variable DATABASE_URL does not exist");
-
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
-        .expect("Failed to connect to database");
-
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to migrate the database");
-
-    let storage = Storage::new();
-    storage.ensure_bucket().await;
-
+    let allowed_origin =
+        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
+    let pool = Arc::new(db::connect().await);
+    let mailer = Arc::new(Mailer::from_env());
     let state = web::Data::new(AppState {
-        users: Users::new(pool.clone()),
-        projects: Projects::new(pool.clone()),
-        stages: Stages::new(pool.clone()),
-        invites: Invites::new(pool.clone()),
-        attachments: Attachments::new(pool.clone(), storage),
+        pool: pool.clone(),
+        storage: Arc::new(Storage::from_env().await),
+        mailer: mailer.clone(),
     });
-
+    let timetable = Timetable::new(vec![Schedule::new(
+        Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).expect("valid time"))),
+        Arc::new(DeadlineDigestNotification::new(pool, mailer)),
+    )]);
+    actix_web::rt::spawn(async move {
+        if let Err(error) = timetable.run().await {
+            eprintln!("schedule stopped: {error}");
+        }
+    });
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())
-            .wrap(Cors::permissive())
-            .configure(configure_api)
+            .wrap(cors::cors(&allowed_origin))
+            .wrap(cors::security_headers())
+            .configure(routes::configure)
     })
     .bind(("0.0.0.0", 8080))?
     .run()
     .await
-}
-
-fn configure_api(config: &mut web::ServiceConfig) {
-    config.service(
-        web::scope("/api")
-            .service(web::resource("/auth/login").post(endpoint::auth::login::post))
-            .service(web::resource("/auth/refresh").post(endpoint::auth::refresh::post))
-            .service(web::resource("/auth/logout").post(endpoint::auth::logout::post))
-            .service(web::resource("/users").post(endpoint::users::create::create))
-            .service(
-                web::scope("/users/me")
-                    .wrap(JwtMiddleware)
-                    .service(web::resource("").get(endpoint::users::me::get))
-                    .service(web::resource("/username").patch(endpoint::users::username::patch))
-                    .service(web::resource("/password").patch(endpoint::users::password::patch)),
-            )
-            .service(
-                web::scope("")
-                    .wrap(JwtMiddleware)
-                    .service(web::resource("/invites").post(endpoint::invites::create::post))
-                    .service(
-                        web::scope("/projects")
-                            .service(web::resource("/deadlines").get(endpoint::deadlines::get::get))
-                            .service(
-                                web::resource("")
-                                    .get(endpoint::projects::get::get)
-                                    .post(endpoint::projects::create::create),
-                            )
-                            .service(
-                                web::resource("/{project_id}")
-                                    .delete(endpoint::projects::id::delete::delete),
-                            )
-                            .service(
-                                web::resource("/{project_id}/title")
-                                    .patch(endpoint::projects::id::rename::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages")
-                                    .get(endpoint::projects::id::stages::get::get)
-                                    .post(endpoint::projects::id::stages::create::create),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}")
-                                    .post(endpoint::projects::id::stages::position::create::create)
-                                    .get(endpoint::projects::id::stages::position::get::get)
-                                    .delete(endpoint::projects::id::stages::position::delete::delete),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/title")
-                                    .patch(endpoint::projects::id::stages::position::title::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/deadline")
-                                    .patch(endpoint::projects::id::stages::position::deadline::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/description")
-                                    .patch(endpoint::projects::id::stages::position::description::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/cost")
-                                    .patch(endpoint::projects::id::stages::position::cost::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/completed")
-                                    .patch(endpoint::projects::id::stages::position::completed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/attachments")
-                                    .get(endpoint::projects::id::stages::position::attachments::list::get)
-                                    .post(endpoint::projects::id::stages::position::attachments::upload::post),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}")
-                                    .delete(endpoint::projects::id::stages::position::attachments::delete::delete),
-                            ),
-                    ),
-            ),
-    );
 }

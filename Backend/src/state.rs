@@ -1,14 +1,10 @@
-use crate::model::attachments::Attachments;
-use crate::model::invites::Invites;
-use crate::model::projects::Projects;
-use crate::model::stages::Stages;
-use crate::model::users::Users;
+use crate::mail::Mailer;
+use crate::storage::Storage;
+use sqlx::PgPool;
+use std::sync::Arc;
 
-#[derive(Clone)]
 pub struct AppState {
-    pub users: Users,
-    pub projects: Projects,
-    pub stages: Stages,
-    pub invites: Invites,
-    pub attachments: Attachments,
+    pub pool: Arc<PgPool>,
+    pub storage: Arc<Storage>,
+    pub mailer: Arc<Mailer>,
 }

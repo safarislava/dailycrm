@@ -157,7 +157,7 @@ export default function Sidebar() {
         />
       )}
       <header className={styles.header}>
-        <span className={styles.logo}>CRM</span>
+        <span className={styles.logo}>DailyCRM</span>
         <div className={styles.headerActions}>
           <button
             ref={bellRef}

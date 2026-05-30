@@ -18,6 +18,7 @@ body {
   color: v.$text-primary;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button {
@@ -28,14 +29,16 @@ button {
   font-family: inherit;
   color: inherit;
   padding: 0;
+  touch-action: manipulation;
 }
 
-input, textarea {
+input, textarea, select {
   font-family: inherit;
   outline: none;
   border: none;
   color: v.$text-primary;
   background: transparent;
+  touch-action: manipulation;
 
   &::placeholder { color: v.$text-secondary; }
 }

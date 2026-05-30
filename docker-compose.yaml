@@ -24,6 +24,13 @@ services:
     volumes:
       - minio_data:/data
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: crm_mailpit
+    restart: always
+    ports:
+      - "8025:8025"
+
   backend:
     build: ./Backend
     container_name: crm_backend
@@ -31,6 +38,7 @@ services:
     depends_on:
       - postgres
       - minio
+      - mailpit
     environment:
       DATABASE_URL: postgres://admin:admin@postgres:5432/crm
       JWT_SECRET: change-me-in-production
@@ -38,6 +46,11 @@ services:
       MINIO_PUBLIC_URL: http://localhost:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_USERNAME: test
+      SMTP_PASSWORD: test
+      MAIL_FROM: CRM <noreply@crm.local>
 
   frontend:
     build: ./Frontend

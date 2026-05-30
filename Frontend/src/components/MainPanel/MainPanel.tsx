@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { selectProject, selectStage } from '../../store/uiSlice'
+import { store } from '../../store'
 import {
   useGetProjectsQuery,
   useGetStagesQuery,
@@ -61,10 +62,16 @@ export default function MainPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file || !projectId || stagePos === null) return
+      const original = e.target.files?.[0]
+      if (!original || !projectId || stagePos === null) return
+      const buffer = await readFile(original)
+      const file = new File(
+        [buffer],
+        original.name || 'file',
+        { type: original.type || 'application/octet-stream' },
+      )
       await uploadAttachment({ projectId, position: Number(stagePos), file })
-      e.target.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
     },
     [projectId, stagePos, uploadAttachment],
   )
@@ -236,22 +243,21 @@ export default function MainPanel() {
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Файлы</span>
-                  <button
-                    className={styles.attachUploadBtn}
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
+                  <label
+                    className={`${styles.attachUploadBtn} ${uploading ? styles.attachUploadDisabled : ''}`}
                     title="Прикрепить файл"
                   >
                     {uploading ? <SpinnerIcon /> : <PaperclipIcon />}
                     {uploading ? 'Загрузка…' : 'Прикрепить'}
-                  </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className={styles.fileInputHidden}
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                    />
+                  </label>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className={styles.fileInputHidden}
-                  onChange={handleFileChange}
-                />
                 {attachments.length === 0 && !uploading && (
                   <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>
                 )}
@@ -259,15 +265,12 @@ export default function MainPanel() {
                   <div key={a.id} className={styles.attachItem}>
                     <FileIcon mime={a.mime_type} />
                     <div className={styles.attachInfo}>
-                      <a
+                      <button
                         className={styles.attachName}
-                        href={a.download_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        download={a.filename}
+                        onClick={() => downloadFile(a.download_url, a.filename)}
                       >
                         {a.filename}
-                      </a>
+                      </button>
                       <span className={styles.attachMeta}>{formatBytes(a.size_bytes)}</span>
                     </div>
                     <button
@@ -549,6 +552,32 @@ function EditableField({
 }
 
 // ── Helpers ────────────────────────────────────────────
+async function downloadFile(url: string, filename: string) {
+  const token = store.getState().auth.accessToken
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) return
+  const blob = await res.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+}
+
+function readFile(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`

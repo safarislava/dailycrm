@@ -5,6 +5,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   background: v.$bg-primary;
 }
 
@@ -12,11 +13,16 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 360px;
+  width: min(360px, calc(100vw - 32px));
   padding: 40px 32px 32px;
   background: v.$bg-secondary;
   border-radius: v.$radius-md;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+
+  @media (max-width: 400px) {
+    padding: 32px 20px 24px;
+    border-radius: v.$radius-sm;
+  }
 }
 
 .title {
@@ -64,7 +70,7 @@
   border: 1px solid transparent;
   border-radius: v.$radius-sm;
   color: v.$text-primary;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
   transition: border-color v.$transition-fast;
 

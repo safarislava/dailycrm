@@ -1,20 +1,27 @@
-use crate::auth::{create_access_token, verify_token};
-use crate::endpoint::auth::AuthResponse;
-use actix_web::{HttpRequest, HttpResponse, Responder};
+use crate::auth::JwtToken;
+use crate::endpoint::auth::session_response::SessionResponse;
+use crate::model::session::refresh_token::RefreshToken;
+use crate::model::task::contract::task::Task;
+use crate::model::task::user::tokens_issuance::TokenIssuance;
+use crate::model::user::jwt_protected_user::JwtProtectedUser;
+use crate::state::AppState;
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
-pub async fn post(request: HttpRequest) -> impl Responder {
+pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Responder {
     let cookie = match request.cookie("refresh_token") {
         Some(c) => c,
         None => return HttpResponse::Unauthorized().body("No refresh token"),
     };
-
-    let claims = match verify_token(cookie.value()) {
-        Ok(c) => c,
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid refresh token"),
+    let jti = match JwtToken::new(cookie.value()).jti() {
+        Some(jti) => jti,
+        None => return HttpResponse::Unauthorized().body("Invalid refresh token"),
     };
-
-    match create_access_token(claims.sub) {
-        Ok(access_token) => HttpResponse::Ok().json(AuthResponse { access_token }),
+    let refresh_token = RefreshToken::new(jti, Box::new(cookie.value().to_string()));
+    let user = JwtProtectedUser::new(state.pool.clone(), refresh_token);
+    let task = TokenIssuance::new(state.pool.clone(), Box::new(user));
+    match task.done().await {
+        Ok(Some((access, refresh))) => SessionResponse::new(access, refresh).response().await,
+        Ok(None) => HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
 }

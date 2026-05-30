@@ -47,14 +47,14 @@ export const crmApi = createApi({
   tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment'],
   endpoints: (builder) => ({
 
-    register: builder.mutation<void, { username: string; password: string; invite_token: string }>({
+    register: builder.mutation<void, { username: string; password: string; invite_token: string; email: string }>({
       query: (body) => ({ url: '/users', method: 'POST', body }),
     }),
     createInvite: builder.mutation<{ token: string }, void>({
       query: () => ({ url: '/invites', method: 'POST' }),
     }),
 
-    getMe: builder.query<{ username: string }, void>({
+    getMe: builder.query<{ username: string; email: string; notifications_enabled: boolean }, void>({
       query: () => '/users/me',
       providesTags: ['Me'],
     }),
@@ -64,6 +64,14 @@ export const crmApi = createApi({
     }),
     updatePassword: builder.mutation<void, { current_password: string; new_password: string }>({
       query: (body) => ({ url: '/users/me/password', method: 'PATCH', body }),
+    }),
+    updateEmail: builder.mutation<void, { email: string }>({
+      query: (body) => ({ url: '/users/me/email', method: 'PATCH', body }),
+      invalidatesTags: ['Me'],
+    }),
+    updateNotifications: builder.mutation<void, { enabled: boolean }>({
+      query: (body) => ({ url: '/users/me/notifications', method: 'PATCH', body }),
+      invalidatesTags: ['Me'],
     }),
     login: builder.mutation<{ access_token: string }, { username: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -252,6 +260,8 @@ export const {
   useGetMeQuery,
   useUpdateUsernameMutation,
   useUpdatePasswordMutation,
+  useUpdateEmailMutation,
+  useUpdateNotificationsMutation,
   useRefreshMutation,
   useLogoutApiMutation,
   useGetDeadlinesQuery,

@@ -1,4 +1,9 @@
-use crate::auth::user_id_from_request;
+use crate::auth::UserIdGettable;
+use crate::model::credential::username::Username;
+use crate::model::credential::valid_username::ValidUsername;
+use crate::model::task::contract::task::Task;
+use crate::model::task::user::username_update::UsernameUpdate;
+use crate::model::user::user::User;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -10,17 +15,18 @@ pub struct UpdateUsernameDto {
 
 pub async fn patch(
     state: web::Data<AppState>,
-    req: HttpRequest,
+    request: HttpRequest,
     body: web::Json<UpdateUsernameDto>,
 ) -> impl Responder {
-    let user_id = match user_id_from_request(&req) {
+    let user_id = match request.user_id() {
         Some(id) => id,
         None => return HttpResponse::Unauthorized().finish(),
     };
-
-    match state.users.update_username(user_id, &body.username).await {
-        Ok(true) => HttpResponse::Ok().finish(),
-        Ok(false) => HttpResponse::Conflict().body("Username already taken"),
+    let username = ValidUsername::new(Username::new(body.username.clone()));
+    let user = User::new(user_id);
+    let task = UsernameUpdate::new(state.pool.clone(), user, username);
+    match task.done().await {
+        Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
 }

@@ -1,38 +1,45 @@
 use aws_sdk_s3::Client;
 use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
-use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
+use bytes::Bytes;
+use futures_util::Stream;
 use std::env;
-use std::time::Duration;
+use std::pin::Pin;
+use tokio_util::io::ReaderStream;
 
 const BUCKET: &str = "crm-attachments";
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
+pub type FileStream = Pin<Box<dyn Stream<Item = Result<Bytes, std::io::Error>> + Send>>;
+
 #[derive(Clone)]
 pub struct Storage {
     client: Client,
-    endpoint: String,
-    public_url: String,
 }
 
 impl Storage {
-    pub fn new() -> Self {
+    pub fn new(client: Client) -> Self {
+        Self { client }
+    }
+
+    pub async fn from_env() -> Self {
         let endpoint = env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set");
-        let public_url = env::var("MINIO_PUBLIC_URL").unwrap_or_else(|_| endpoint.clone());
         let access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
         let secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
-
-        let creds = Credentials::new(&access_key, &secret_key, None, None, "minio");
-        let config = Builder::new()
-            .behavior_version(BehaviorVersion::latest())
-            .endpoint_url(&endpoint)
-            .credentials_provider(creds)
-            .region(Region::new("us-east-1"))
-            .force_path_style(true)
-            .build();
-
-        Self { client: Client::from_conf(config), endpoint, public_url }
+        let credentials = Credentials::new(&access_key, &secret_key, None, None, "minio");
+        let client = Client::from_conf(
+            Builder::new()
+                .behavior_version(BehaviorVersion::latest())
+                .endpoint_url(&endpoint)
+                .credentials_provider(credentials)
+                .region(Region::new("us-east-1"))
+                .force_path_style(true)
+                .build(),
+        );
+        let storage = Self::new(client);
+        storage.ensure_bucket().await;
+        storage
     }
 
     pub async fn ensure_bucket(&self) {
@@ -69,17 +76,14 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn presigned_url(&self, key: &str) -> Result<String, BoxError> {
-        let config = PresigningConfig::expires_in(Duration::from_secs(3600))?;
-        let request = self
+    pub async fn get_stream(&self, key: &str) -> Result<FileStream, BoxError> {
+        let output = self
             .client
             .get_object()
             .bucket(BUCKET)
             .key(key)
-            .presigned(config)
+            .send()
             .await?;
-        // Replace internal Docker endpoint with the publicly accessible URL
-        let url = request.uri().to_string().replacen(&self.endpoint, &self.public_url, 1);
-        Ok(url)
+        Ok(Box::pin(ReaderStream::new(output.body.into_async_read())))
     }
 }

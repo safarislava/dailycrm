@@ -1,7 +1,14 @@
-use crate::auth::{create_access_token, create_refresh_token};
-use crate::endpoint::auth::AuthResponse;
+use crate::endpoint::auth::session_response::SessionResponse;
+use crate::model::credential::password::Password;
+use crate::model::credential::username::Username;
+use crate::model::credential::valid_password::ValidPassword;
+use crate::model::credential::valid_username::ValidUsername;
+use crate::model::task::contract::task::Task;
+use crate::model::task::user::tokens_issuance::TokenIssuance;
+use crate::model::user::contract::username_search::UsernameSearch;
+use crate::model::user::protected_user::ProtectedUser;
+use crate::model::user::users::Users;
 use crate::state::AppState;
-use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{HttpResponse, Responder, web};
 use serde::Deserialize;
 
@@ -12,39 +19,19 @@ pub struct LoginDto {
 }
 
 pub async fn post(state: web::Data<AppState>, body: web::Json<LoginDto>) -> impl Responder {
-    let (user_id, stored_hash) = match state.users.find_by_username(&body.username).await {
+    let users = Users::new(state.pool.clone());
+    let username = ValidUsername::new(Username::new(body.username.clone()));
+    let user = match users.found(username).await {
         Ok(Some(u)) => u,
         Ok(None) => return HttpResponse::Unauthorized().body("Invalid credentials"),
         Err(_) => return HttpResponse::InternalServerError().body("Something went wrong"),
     };
-
-    let password = body.password.clone();
-    let valid =
-        match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(password, &stored_hash))
-            .await
-        {
-            Ok(Ok(v)) => v,
-            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-        };
-
-    if !valid {
-        return HttpResponse::Unauthorized().body("Invalid credentials");
+    let password = ValidPassword::new(Password::new(body.password.clone()));
+    let user = ProtectedUser::new(state.pool.clone(), user, password);
+    let task = TokenIssuance::new(state.pool.clone(), Box::new(user));
+    match task.done().await {
+        Ok(Some((access, refresh))) => SessionResponse::new(access, refresh).response().await,
+        Ok(None) => HttpResponse::Unauthorized().body("Invalid credentials"),
+        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }
-
-    let (access_token, refresh_token) =
-        match (create_access_token(user_id), create_refresh_token(user_id)) {
-            (Ok(at), Ok(rt)) => (at, rt),
-            _ => return HttpResponse::InternalServerError().body("Something went wrong"),
-        };
-
-    let cookie = Cookie::build("refresh_token", refresh_token)
-        .http_only(true)
-        .same_site(SameSite::Strict)
-        .path("/api/auth")
-        .max_age(actix_web::cookie::time::Duration::days(7))
-        .finish();
-
-    HttpResponse::Ok()
-        .cookie(cookie)
-        .json(AuthResponse { access_token })
 }

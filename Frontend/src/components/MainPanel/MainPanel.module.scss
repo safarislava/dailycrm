@@ -74,6 +74,8 @@
   transition: opacity v.$transition-fast;
 
   .inlineValue:hover & { opacity: 1; }
+
+  @media (hover: none) { opacity: 0.5; }
 }
 
 .inlineInput {
@@ -180,6 +182,7 @@
   gap: 12px;
   padding: 10px 16px;
   cursor: pointer;
+  touch-action: manipulation;
   transition: background v.$transition-fast;
 
   &:hover {
@@ -215,6 +218,12 @@
     opacity: 1 !important;
     color: #7bc862;
     background: rgba(123, 200, 98, 0.12);
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -271,6 +280,12 @@
     background: v.$danger-light;
     opacity: 1 !important;
   }
+
+  @media (hover: none) {
+    opacity: 1;
+    width: 36px;
+    height: 36px;
+  }
 }
 
 // ── Input row ─────────────────────────────────────────────
@@ -296,6 +311,8 @@
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button { -webkit-appearance: none; }
   -moz-appearance: textfield;
+
+  @media (max-width: 768px) { font-size: 16px; }
 }
 
 .textInput {
@@ -306,6 +323,8 @@
   border-radius: 22px;
   font-size: 15px;
   min-width: 0;
+
+  @media (max-width: 768px) { font-size: 16px; }
 }
 
 .sendBtn {
@@ -396,6 +415,8 @@
 
   &[type='date'] { color-scheme: dark; }
   &[type='number'] { -moz-appearance: textfield; }
+
+  @media (max-width: 768px) { font-size: 16px; }
 }
 
 .completedBadge {
@@ -443,6 +464,7 @@
 }
 
 .attachUploadBtn {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -451,14 +473,25 @@
   color: v.$accent;
   padding: 4px 10px;
   border-radius: v.$radius-sm;
+  cursor: pointer;
   transition: background v.$transition-fast;
 
-  &:hover:not(:disabled) { background: v.$accent-light; }
-  &:disabled { opacity: 0.5; cursor: default; }
+  &:hover { background: v.$accent-light; }
+}
+
+.attachUploadDisabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
 
 .fileInputHidden {
-  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .attachmentsEmpty {
@@ -497,6 +530,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-decoration: none;
+  text-align: left;
 
   &:hover { text-decoration: underline; }
 }
@@ -523,6 +557,12 @@
     color: v.$danger;
     background: v.$danger-light;
     opacity: 1 !important;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+    width: 36px;
+    height: 36px;
   }
 }
 

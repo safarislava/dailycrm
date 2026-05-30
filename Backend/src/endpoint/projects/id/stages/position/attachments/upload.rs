@@ -1,7 +1,10 @@
-use crate::auth::user_id_from_request;
+use crate::model::project::project::Project;
+use crate::model::project::stage::Stage;
+use crate::model::task::contract::task::Task;
+use crate::model::task::project::attachment_upload::AttachmentUpload;
 use crate::state::AppState;
 use actix_multipart::Multipart;
-use actix_web::{HttpRequest, HttpResponse, Responder, web};
+use actix_web::{HttpResponse, Responder, web};
 use futures_util::StreamExt;
 use uuid::Uuid;
 
@@ -33,14 +36,12 @@ async fn collect_bytes(
 
 pub async fn post(
     state: web::Data<AppState>,
-    request: HttpRequest,
     path: web::Path<(Uuid, i32)>,
     mut payload: Multipart,
 ) -> impl Responder {
-    if user_id_from_request(&request).is_none() {
-        return HttpResponse::Unauthorized().finish();
-    }
     let (project_id, stage_position) = path.into_inner();
+    let project = Project::new(project_id);
+    let stage = Stage::new(project, stage_position);
 
     while let Some(item) = payload.next().await {
         let mut field = match item {
@@ -54,26 +55,30 @@ pub async fn post(
             .map(|s| s.to_string())
             .unwrap_or_else(|| "file".to_string());
 
-        let mime_type = field
-            .content_type()
-            .map(|m| m.to_string())
-            .unwrap_or_else(|| "application/octet-stream".to_string());
-
         let data = match collect_bytes(&mut field, MAX_FILE_SIZE).await {
             Ok(bytes) => bytes,
             Err(CollectError::TooLarge) => return HttpResponse::PayloadTooLarge().finish(),
-            Err(CollectError::Read) => return HttpResponse::InternalServerError().body("Upload error"),
+            Err(CollectError::Read) => {
+                return HttpResponse::InternalServerError().body("Upload error");
+            }
         };
 
-        return match state
-            .attachments
-            .upload(project_id, stage_position, filename, mime_type, data)
-            .await
-        {
+        let mime_type = infer::get(&data)
+            .map(|kind| kind.mime_type().to_string())
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+
+        let task = AttachmentUpload::new(
+            state.pool.clone(),
+            state.storage.clone(),
+            stage,
+            filename,
+            mime_type,
+            data,
+        );
+        return match task.done().await {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
             Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
         };
     }
-
     HttpResponse::BadRequest().body("No file provided")
 }

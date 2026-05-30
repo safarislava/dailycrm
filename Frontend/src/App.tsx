@@ -24,7 +24,7 @@ export default function App() {
   if (!accessToken) return <LoginPage />
 
   return (
-    <div className={`${styles.app} ${selectedProjectId ? styles.projectOpen : ''}`}>
+    <div className={`${styles.app} ${(selectedProjectId || userPageOpen) ? styles.projectOpen : ''}`}>
       <div className={styles.sidebarPane}>
         <Sidebar />
       </div>
