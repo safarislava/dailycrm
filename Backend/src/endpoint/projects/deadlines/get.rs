@@ -6,7 +6,7 @@ use actix_web::{HttpResponse, Responder, web};
 use futures_util::future::try_join_all;
 
 pub async fn get(state: web::Data<AppState>) -> impl Responder {
-    let summaries = match Deadlines::new(state.pool.clone(), state.storage.clone())
+    let summaries = match Deadlines::new(state.pool.clone())
         .items()
         .await
     {

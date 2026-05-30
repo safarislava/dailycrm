@@ -2,19 +2,17 @@ use crate::model::project::contract::list::List;
 use crate::model::project::project::Project;
 use crate::model::project::project_stage_summary::ProjectStageSummary;
 use crate::model::project::stage::Stage;
-use crate::storage::Storage;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
 pub struct Deadlines {
     pool: Arc<PgPool>,
-    storage: Arc<Storage>,
 }
 
 impl Deadlines {
-    pub fn new(pool: Arc<PgPool>, storage: Arc<Storage>) -> Self {
-        Self { pool, storage }
+    pub fn new(pool: Arc<PgPool>) -> Self {
+        Self { pool }
     }
 }
 
