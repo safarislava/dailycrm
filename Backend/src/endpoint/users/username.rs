@@ -1,4 +1,4 @@
-use crate::auth::UserIdGettable;
+use crate::endpoint::auth_header::AuthHeader;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::task::contract::task::Task;

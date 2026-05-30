@@ -4,6 +4,7 @@ mod cors;
 mod db;
 mod endpoint;
 mod mail;
+mod middleware;
 mod model;
 mod routes;
 mod state;
@@ -19,25 +20,24 @@ use crate::state::AppState;
 use crate::storage::Storage;
 use actix_web::{App, HttpServer, web};
 use chrono::NaiveTime;
-use std::env;
 use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
-    let allowed_origin =
-        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
     let pool = Arc::new(db::connect().await);
+    let storage = Arc::new(Storage::from_env().await);
     let mailer = Arc::new(Mailer::from_env());
     let state = web::Data::new(AppState {
         pool: pool.clone(),
-        storage: Arc::new(Storage::from_env().await),
+        storage: storage.clone(),
         mailer: mailer.clone(),
     });
-    let timetable = Timetable::new(vec![Schedule::new(
-        Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).expect("valid time"))),
+    let notification_schedule = Schedule::new(
+        Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).unwrap())),
         Arc::new(DeadlineDigestNotification::new(pool, mailer)),
-    )]);
+    );
+    let timetable = Timetable::new(vec![notification_schedule]);
     actix_web::rt::spawn(async move {
         if let Err(error) = timetable.run().await {
             eprintln!("schedule stopped: {error}");
@@ -46,7 +46,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())
-            .wrap(cors::cors(&allowed_origin))
+            .wrap(cors::rules())
             .wrap(cors::security_headers())
             .configure(routes::configure)
     })

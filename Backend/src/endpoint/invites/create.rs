@@ -1,4 +1,4 @@
-use crate::auth::UserIdGettable;
+use crate::endpoint::auth_header::AuthHeader;
 use crate::model::credential::contract::contentable::Contentable;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::invite_creation::InviteCreation;
