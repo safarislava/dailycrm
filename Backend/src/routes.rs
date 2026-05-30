@@ -32,6 +32,7 @@ pub fn configure(config: &mut web::ServiceConfig) {
             .service(
                 web::scope("")
                     .wrap(JwtMiddleware)
+                    .service(web::resource("/admin/digest").post(endpoint::admin::digest::post))
                     .service(web::resource("/invites").post(endpoint::invites::create::post))
                     .service(
                         web::scope("/projects")

@@ -32,6 +32,7 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState {
         pool: pool.clone(),
         storage: Arc::new(Storage::from_env().await),
+        mailer: mailer.clone(),
     });
     let timetable = Timetable::new(vec![Schedule::new(
         Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).expect("valid time"))),

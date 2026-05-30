@@ -1,3 +1,4 @@
+use crate::mail::Mailer;
 use crate::storage::Storage;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -5,4 +6,5 @@ use std::sync::Arc;
 pub struct AppState {
     pub pool: Arc<PgPool>,
     pub storage: Arc<Storage>,
+    pub mailer: Arc<Mailer>,
 }
