@@ -4,7 +4,6 @@ use crate::model::project::stage::Stage;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct Stages {
     pool: Arc<PgPool>,
@@ -24,11 +23,10 @@ impl List for Stages {
     async fn items(&self) -> Result<Vec<Stage>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct StageRow {
-            project_id: Uuid,
             position: i32,
         }
         let rows = sqlx::query_as::<_, StageRow>(
-            "SELECT project_id, position FROM stages WHERE project_id = $1 ORDER BY position",
+            "SELECT position FROM stages WHERE project_id = $1 ORDER BY position",
         )
         .bind(self.project.id())
         .fetch_all(self.pool.as_ref())
