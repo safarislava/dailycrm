@@ -1,7 +1,7 @@
-use chrono::{Duration, TimeDelta};
 use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
 use crate::model::session::contract::token::Token;
+use chrono::{Duration, TimeDelta};
 use uuid::Uuid;
 
 pub const REFRESH_LIFETIME: TimeDelta = Duration::weeks(1);

@@ -1,56 +1,45 @@
-use crate::model::project::contract::deadlines::Deadlines;
-use crate::model::project::stage::{StageSummary, StageSummaryWithProjectTitle};
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use crate::model::project::contract::list::List;
+use crate::model::project::project::Project;
+use crate::model::project::project_stage_summary::ProjectStageSummary;
+use crate::model::project::stage::Stage;
+use crate::storage::Storage;
 use sqlx::PgPool;
+use std::sync::Arc;
 use uuid::Uuid;
 
-pub struct PgDeadlines {
-    pool: PgPool,
+pub struct Deadlines {
+    pool: Arc<PgPool>,
+    storage: Arc<Storage>,
 }
 
-impl PgDeadlines {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+impl Deadlines {
+    pub fn new(pool: Arc<PgPool>, storage: Arc<Storage>) -> Self {
+        Self { pool, storage }
     }
 }
 
-#[async_trait]
-impl Deadlines for PgDeadlines {
-    async fn list(&self) -> Result<Vec<StageSummaryWithProjectTitle>, sqlx::Error> {
+#[async_trait::async_trait]
+impl List for Deadlines {
+    type Output = ProjectStageSummary;
+
+    async fn items(&self) -> Result<Vec<ProjectStageSummary>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
-            project_title: String,
             position: i32,
-            stage_title: String,
-            deadline: DateTime<Utc>,
-            completed: bool,
         }
         let rows = sqlx::query_as::<_, Row>(
-            "SELECT s.project_id, p.title AS project_title, s.position,
-                    s.title AS stage_title, s.deadline, s.completed
-             FROM stages s
-             JOIN projects p ON p.id = s.project_id
-             WHERE s.deadline IS NOT NULL
-             ORDER BY s.deadline",
+            "SELECT project_id, position FROM stages
+             WHERE deadline IS NOT NULL ORDER BY deadline",
         )
-        .fetch_all(&self.pool)
+        .fetch_all(self.pool.as_ref())
         .await?;
-
         Ok(rows
             .into_iter()
             .map(|r| {
-                StageSummaryWithProjectTitle::new(
-                    StageSummary::new(
-                        r.project_id,
-                        r.position,
-                        r.stage_title,
-                        Some(r.deadline),
-                        r.completed,
-                    ),
-                    r.project_title,
-                )
+                let project = Project::new(r.project_id);
+                let stage = Stage::new(project, r.position);
+                ProjectStageSummary::new(self.pool.clone(), stage)
             })
             .collect())
     }

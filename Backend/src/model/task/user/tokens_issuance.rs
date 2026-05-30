@@ -3,22 +3,23 @@ use crate::model::credential::hash_verification::VerificationError;
 use crate::model::session::access_token::AccessToken;
 use crate::model::session::new_token::NewToken;
 use crate::model::session::refresh_token::{REFRESH_LIFETIME, RefreshToken};
+use crate::model::session::token_kind::TokenKind;
+use crate::model::task::contract::task::Task;
 use crate::model::task::session::refresh_token_submission::RefreshTokenSubmission;
-use crate::model::task::task::Task;
 use crate::model::user::contract::protected::Protected;
 use crate::model::user::user::User;
 use chrono::{Duration, Utc};
 use sqlx::PgPool;
+use std::sync::Arc;
 use uuid::Uuid;
-use crate::model::session::token_kind::TokenKind;
 
 pub struct TokenIssuance {
-    pool: PgPool,
+    pool: Arc<PgPool>,
     protected_user: Box<dyn Protected<Output = User>>,
 }
 
 impl TokenIssuance {
-    pub fn new(pool: PgPool, protected_user: Box<dyn Protected<Output = User>>) -> Self {
+    pub fn new(pool: Arc<PgPool>, protected_user: Box<dyn Protected<Output = User>>) -> Self {
         Self {
             pool,
             protected_user,
@@ -30,7 +31,7 @@ impl TokenIssuance {
 impl Task for TokenIssuance {
     type Output = Option<(AccessToken, RefreshToken)>;
 
-    async fn output(&self) -> Result<Self::Output, BoxError> {
+    async fn done(&self) -> Result<Self::Output, BoxError> {
         let user = match self.protected_user.unprotected().await {
             Ok(user) => user,
             Err(VerificationError::WrongPassword) => return Ok(None),
@@ -54,7 +55,7 @@ impl Task for TokenIssuance {
             )),
         );
         RefreshTokenSubmission::new(self.pool.clone(), user.id(), jti, refresh_expires_at)
-            .output()
+            .done()
             .await?;
         Ok(Some((access_token, refresh_token)))
     }

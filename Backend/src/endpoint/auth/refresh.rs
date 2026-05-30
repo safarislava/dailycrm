@@ -1,7 +1,7 @@
 use crate::auth::JwtToken;
 use crate::endpoint::auth::session_response::SessionResponse;
 use crate::model::session::refresh_token::RefreshToken;
-use crate::model::task::task::Task;
+use crate::model::task::contract::task::Task;
 use crate::model::task::user::tokens_issuance::TokenIssuance;
 use crate::model::user::jwt_protected_user::JwtProtectedUser;
 use crate::state::AppState;
@@ -19,7 +19,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
     let refresh_token = RefreshToken::new(jti, Box::new(cookie.value().to_string()));
     let user = JwtProtectedUser::new(state.pool.clone(), refresh_token);
     let task = TokenIssuance::new(state.pool.clone(), Box::new(user));
-    match task.output().await {
+    match task.done().await {
         Ok(Some((access, refresh))) => SessionResponse::new(access, refresh).response().await,
         Ok(None) => HttpResponse::Unauthorized().body("Token revoked or expired"),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),

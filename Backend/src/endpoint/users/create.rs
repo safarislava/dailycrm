@@ -3,7 +3,7 @@ use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::credential::valid_username::ValidUsername;
-use crate::model::task::task::Task;
+use crate::model::task::contract::task::Task;
 use crate::model::task::user::invite_consumption::{InviteConsumption, InviteStatus};
 use crate::model::user::invite::Invite;
 use crate::state::AppState;
@@ -23,7 +23,7 @@ pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) 
     let password = HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
     let invite_consumption =
         InviteConsumption::new(state.pool.clone(), invite, username, Box::new(password));
-    match invite_consumption.output().await {
+    match invite_consumption.done().await {
         Ok(InviteStatus::Ok) => HttpResponse::Created().finish(),
         Ok(InviteStatus::InvalidInvite) => {
             HttpResponse::Forbidden().body("Invalid or expired invite")

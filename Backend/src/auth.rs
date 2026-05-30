@@ -1,9 +1,9 @@
+use crate::model::session::token_kind::TokenKind;
 use actix_web::HttpRequest;
 use actix_web::{
     Error,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
-use crate::model::session::token_kind::TokenKind;
 use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use std::{

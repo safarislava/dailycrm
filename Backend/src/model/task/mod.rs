@@ -1,4 +1,4 @@
-pub mod session;
-pub mod task;
-pub mod user;
+pub mod contract;
 pub mod project;
+pub mod session;
+pub mod user;

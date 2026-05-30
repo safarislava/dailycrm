@@ -8,10 +8,8 @@ mod routes;
 mod state;
 mod storage;
 
-use crate::model::project::deadlines::PgDeadlines;
-use crate::model::project::projects::PgProjects;
-use crate::model::user::users::PgUsers;
 use crate::state::AppState;
+use crate::storage::Storage;
 use actix_web::{App, HttpServer, web};
 use std::env;
 use std::sync::Arc;
@@ -21,17 +19,10 @@ async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
     let allowed_origin =
         env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
-
-    let pool = db::connect().await;
-    let storage = storage::Storage::from_env().await;
-
     let state = web::Data::new(AppState {
-        pool: pool.clone(),
-        users: Arc::new(PgUsers::new(pool.clone())),
-        projects: Arc::new(PgProjects::new(pool.clone(), storage)),
-        deadlines: Arc::new(PgDeadlines::new(pool)),
+        pool: Arc::new(db::connect().await),
+        storage: Arc::new(Storage::from_env().await),
     });
-
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())

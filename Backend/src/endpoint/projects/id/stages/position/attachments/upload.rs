@@ -1,3 +1,7 @@
+use crate::model::project::project::Project;
+use crate::model::project::stage::Stage;
+use crate::model::task::contract::task::Task;
+use crate::model::task::project::attachment_upload::AttachmentUpload;
 use crate::state::AppState;
 use actix_multipart::Multipart;
 use actix_web::{HttpResponse, Responder, web};
@@ -36,6 +40,8 @@ pub async fn post(
     mut payload: Multipart,
 ) -> impl Responder {
     let (project_id, stage_position) = path.into_inner();
+    let project = Project::new(project_id);
+    let stage = Stage::new(project, stage_position);
 
     while let Some(item) = payload.next().await {
         let mut field = match item {
@@ -61,19 +67,18 @@ pub async fn post(
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
-        return match state
-            .projects
-            .project(project_id)
-            .stages()
-            .stage(stage_position)
-            .attachments()
-            .upload(filename, mime_type, data)
-            .await
-        {
+        let task = AttachmentUpload::new(
+            state.pool.clone(),
+            state.storage.clone(),
+            stage,
+            filename,
+            mime_type,
+            data,
+        );
+        return match task.done().await {
             Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
             Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
         };
     }
-
     HttpResponse::BadRequest().body("No file provided")
 }

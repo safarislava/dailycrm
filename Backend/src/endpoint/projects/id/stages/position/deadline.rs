@@ -1,4 +1,7 @@
-use crate::model::project::contract::details::Details;
+use crate::model::project::project::Project;
+use crate::model::project::stage::Stage;
+use crate::model::task::contract::task::Task;
+use crate::model::task::project::deadline_update::DeadlineUpdate;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, Responder, web};
@@ -17,12 +20,11 @@ pub async fn patch(
     body: Json<UpdateDeadlineDto>,
 ) -> impl Responder {
     let (project_id, position) = path.into_inner();
-    let stage = state.projects.project(project_id).stages().stage(position);
-    let result = match stage.details().await {
-        Ok(details) => details.update_deadline(body.deadline).await,
-        Err(error) => Err(error),
-    };
-    match result {
+    let project = Project::new(project_id);
+    let stage = Stage::new(project, position);
+    let deadline = body.deadline;
+    let task = DeadlineUpdate::new(state.pool.clone(), stage, deadline);
+    match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
     }

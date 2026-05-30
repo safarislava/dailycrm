@@ -2,9 +2,10 @@ use crate::auth::UserIdGettable;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
-use crate::model::task::task::Task;
+use crate::model::task::contract::task::Task;
 use crate::model::task::user::password_update::PasswordUpdate;
 use crate::model::user::protected_user::ProtectedUser;
+use crate::model::user::user::User;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -27,13 +28,9 @@ pub async fn patch(
     let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
     let new_password =
         HashedPassword::new(ValidPassword::new(Password::new(body.new_password.clone())));
-    let user = ProtectedUser::new(
-        state.pool.clone(),
-        state.users.user(user_id),
-        current_password,
-    );
+    let user = ProtectedUser::new(state.pool.clone(), User::new(user_id), current_password);
     let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password));
-    match task.output().await {
+    match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::Unauthorized().body("Wrong current password"),
     }

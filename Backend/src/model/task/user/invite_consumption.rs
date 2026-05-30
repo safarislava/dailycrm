@@ -2,12 +2,13 @@ use crate::common::BoxError;
 use crate::model::credential::contract::contentable::Contentable;
 use crate::model::credential::hash::Hash;
 use crate::model::credential::valid_username::ValidUsername;
-use crate::model::task::task::Task;
+use crate::model::task::contract::task::Task;
 use crate::model::user::invite::Invite;
 use sqlx::{PgPool, Postgres, Transaction};
+use std::sync::Arc;
 
 pub struct InviteConsumption {
-    pool: PgPool,
+    pool: Arc<PgPool>,
     invite: Invite,
     username: ValidUsername,
     password: Box<dyn Contentable<Output = Hash>>,
@@ -15,7 +16,7 @@ pub struct InviteConsumption {
 
 impl InviteConsumption {
     pub fn new(
-        pool: PgPool,
+        pool: Arc<PgPool>,
         invite: Invite,
         username: ValidUsername,
         password: Box<dyn Contentable<Output = Hash>>,
@@ -51,7 +52,7 @@ impl InviteConsumption {
 impl Task for InviteConsumption {
     type Output = InviteStatus;
 
-    async fn output(&self) -> Result<Self::Output, BoxError> {
+    async fn done(&self) -> Result<Self::Output, BoxError> {
         let mut transaction = self.pool.begin().await?;
         if !self.invite_exists(&mut transaction).await? {
             transaction.rollback().await?;

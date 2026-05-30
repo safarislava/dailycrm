@@ -4,15 +4,16 @@ use crate::model::credential::valid_password::ValidPassword;
 use crate::model::user::contract::protected::Protected;
 use crate::model::user::user::User;
 use sqlx::PgPool;
+use std::sync::Arc;
 
 pub struct ProtectedUser {
-    pool: PgPool,
+    pool: Arc<PgPool>,
     user: User,
     password: ValidPassword,
 }
 
 impl ProtectedUser {
-    pub fn new(pool: PgPool, user: User, password: ValidPassword) -> Self {
+    pub fn new(pool: Arc<PgPool>, user: User, password: ValidPassword) -> Self {
         Self {
             pool,
             user,
@@ -32,7 +33,7 @@ impl Protected for ProtectedUser {
         }
         let row = sqlx::query_as::<_, Row>("SELECT password_hash FROM users WHERE id = $1")
             .bind(self.user.id())
-            .fetch_optional(&self.pool)
+            .fetch_optional(self.pool.as_ref())
             .await
             .map_err(|_| VerificationError::Internal)?;
 
