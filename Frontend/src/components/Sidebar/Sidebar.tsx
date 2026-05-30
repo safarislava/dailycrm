@@ -36,7 +36,11 @@ const avatarColor = (title: string) =>
   AVATAR_COLORS[title.charCodeAt(0) % AVATAR_COLORS.length]
 
 function deadlineDiffDays(iso: string) {
-  return Math.floor((new Date(iso).getTime() - Date.now()) / 86_400_000)
+  const d = new Date(iso)
+  const deadline = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((deadline.getTime() - today.getTime()) / 86_400_000)
 }
 
 function formatDeadlineDate(iso: string): string {
