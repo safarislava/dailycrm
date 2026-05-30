@@ -41,6 +41,16 @@ impl Contentable for DetailedStage {
         .bind(self.stage.position())
         .fetch_one(self.pool.as_ref())
         .await?;
-        Ok(serde_json::to_value(row)?)
+        Ok(serde_json::json!({
+            "stage": {
+                "project_id": row.project_id,
+                "position": row.position,
+                "title": row.title,
+                "deadline": row.deadline,
+                "completed": row.completed,
+            },
+            "description": row.description,
+            "cost": row.cost,
+        }))
     }
 }
