@@ -1,4 +1,4 @@
-use crate::auth::UserIdGettable;
+use crate::endpoint::auth_header::AuthHeader;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::email_update::EmailUpdate;
 use crate::model::user::user::User;

@@ -1,8 +1,11 @@
 use actix_cors::Cors;
 use actix_web::http;
 use actix_web::middleware::DefaultHeaders;
+use std::env;
 
-pub fn cors(allowed_origin: &str) -> Cors {
+pub fn rules() -> Cors {
+    let allowed_origin =
+        &env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".to_string());
     Cors::default()
         .allowed_origin(allowed_origin)
         .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])

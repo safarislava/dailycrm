@@ -1,17 +1,15 @@
-use crate::auth::JwtMiddleware;
 use crate::endpoint;
-use actix_governor::governor::clock::QuantaInstant;
-use actix_governor::governor::middleware::NoOpMiddleware;
-use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
+use crate::middleware::jwt_middleware::JwtMiddleware;
+use actix_governor::Governor;
 use actix_web::web;
+use crate::middleware::login_governor::login_governor;
 
 pub fn configure(config: &mut web::ServiceConfig) {
-    let governor = login_governor();
     config.service(
         web::scope("/api")
             .service(
                 web::resource("/auth/login")
-                    .wrap(Governor::new(&governor))
+                    .wrap(Governor::new(&login_governor()))
                     .post(endpoint::auth::login::post),
             )
             .service(web::resource("/auth/refresh").post(endpoint::auth::refresh::post))
@@ -97,12 +95,4 @@ pub fn configure(config: &mut web::ServiceConfig) {
                     ),
             ),
     );
-}
-
-fn login_governor() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware<QuantaInstant>> {
-    GovernorConfigBuilder::default()
-        .seconds_per_request(1)
-        .burst_size(5)
-        .finish()
-        .unwrap()
 }

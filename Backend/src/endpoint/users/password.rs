@@ -1,4 +1,4 @@
-use crate::auth::UserIdGettable;
+use crate::endpoint::auth_header::AuthHeader;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;

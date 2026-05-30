@@ -19,8 +19,13 @@ impl Schedule {
 impl Scheduled for Schedule {
     async fn run(&self) -> Result<(), BoxError> {
         loop {
-            self.event.fired().await?;
-            self.task.done().await?;
+            if let Err(error) = self.event.fired().await {
+                eprintln!("schedule event error: {error}");
+                continue;
+            }
+            if let Err(error) = self.task.done().await {
+                eprintln!("schedule task error: {error}");
+            }
         }
     }
 }
