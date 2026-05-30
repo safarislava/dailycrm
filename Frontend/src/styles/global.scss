@@ -43,6 +43,12 @@ input, textarea, select {
   &::placeholder { color: v.$text-secondary; }
 }
 
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
 ::-webkit-scrollbar        { width: 4px; }
 ::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  {
