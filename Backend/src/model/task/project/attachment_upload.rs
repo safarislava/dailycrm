@@ -50,18 +50,18 @@ impl Task for AttachmentUpload {
                 &self.filename,
             )
             .await?;
-        let row: (Uuid,) = sqlx::query_as(
-            "INSERT INTO attachments(project_id, stage_position, filename, mime_type, size_bytes)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING id",
+        sqlx::query(
+            "INSERT INTO attachments(id, project_id, stage_position, filename, mime_type, size_bytes)
+             VALUES ($1, $2, $3, $4, $5, $6)",
         )
+        .bind(id)
         .bind(self.stage.project().id())
         .bind(self.stage.position())
         .bind(&self.filename)
         .bind(&self.mime_type)
         .bind(size_bytes)
-        .fetch_one(self.pool.as_ref())
+        .execute(self.pool.as_ref())
         .await?;
-        Ok(row.0)
+        Ok(id)
     }
 }
