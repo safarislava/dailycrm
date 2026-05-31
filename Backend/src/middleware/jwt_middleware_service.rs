@@ -1,6 +1,8 @@
-use crate::auth::JwtToken;
-use actix_web::Error;
+use crate::model::session::access_token_decoder::AccessTokenDecoder;
+use crate::model::session::contract::access_token_decodable::AccessTokenDecodable;
+use crate::model::user::user::User;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, forward_ready};
+use actix_web::{Error, HttpMessage};
 use std::pin::Pin;
 use std::rc::Rc;
 
@@ -22,20 +24,19 @@ where
     fn call(&self, request: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
 
-        let authorized = request
+        let user_id = request
             .headers()
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .map(|token| JwtToken::new(token).access_user_id().is_some())
-            .unwrap_or(false);
+            .and_then(|token| AccessTokenDecoder::new(token.to_string()).user_id());
 
-        Box::pin(async move {
-            if authorized {
-                svc.call(request).await
-            } else {
-                Err(actix_web::error::ErrorUnauthorized("Unauthorized"))
+        match user_id {
+            Some(id) => {
+                request.extensions_mut().insert(User::new(id));
+                Box::pin(svc.call(request))
             }
-        })
+            None => Box::pin(async { Err(actix_web::error::ErrorUnauthorized("Unauthorized")) }),
+        }
     }
 }

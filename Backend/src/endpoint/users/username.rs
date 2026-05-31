@@ -1,9 +1,8 @@
-use crate::endpoint::auth_header::AuthHeader;
+use crate::endpoint::auth_header::UserHeader;
 use crate::model::credential::username::Username;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::username_update::UsernameUpdate;
-use crate::model::user::user::User;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -18,12 +17,11 @@ pub async fn patch(
     request: HttpRequest,
     body: web::Json<UpdateUsernameDto>,
 ) -> impl Responder {
-    let user_id = match request.user_id() {
-        Some(id) => id,
+    let user = match request.user() {
+        Some(u) => u,
         None => return HttpResponse::Unauthorized().finish(),
     };
     let username = ValidUsername::new(Username::new(body.username.clone()));
-    let user = User::new(user_id);
     let task = UsernameUpdate::new(state.pool.clone(), user, username);
     match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),

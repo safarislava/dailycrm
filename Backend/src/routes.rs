@@ -1,8 +1,8 @@
 use crate::endpoint;
 use crate::middleware::jwt_middleware::JwtMiddleware;
+use crate::middleware::login_governor::login_governor;
 use actix_governor::Governor;
 use actix_web::web;
-use crate::middleware::login_governor::login_governor;
 
 pub fn configure(config: &mut web::ServiceConfig) {
     config.service(

@@ -1,7 +1,6 @@
-use crate::endpoint::auth_header::AuthHeader;
+use crate::endpoint::auth_header::UserHeader;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::notifications_update::NotificationsUpdate;
-use crate::model::user::user::User;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Deserialize;
@@ -16,11 +15,11 @@ pub async fn patch(
     request: HttpRequest,
     body: web::Json<UpdateNotificationsBody>,
 ) -> impl Responder {
-    let user_id = match request.user_id() {
-        Some(id) => id,
+    let user = match request.user() {
+        Some(u) => u,
         None => return HttpResponse::Unauthorized().finish(),
     };
-    let task = NotificationsUpdate::new(state.pool.clone(), User::new(user_id), body.enabled);
+    let task = NotificationsUpdate::new(state.pool.clone(), user, body.enabled);
     match task.done().await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
