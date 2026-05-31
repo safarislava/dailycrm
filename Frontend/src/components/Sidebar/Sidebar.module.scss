@@ -253,6 +253,10 @@
   flex: 1;
   font-size: 14px;
   min-width: 0;
+
+  @supports (-webkit-touch-callout: none) {
+    font-size: 16px;
+  }
 }
 
 .clearBtn {
@@ -304,6 +308,10 @@
   border-radius: v.$radius-sm;
   font-size: 14px;
   min-width: 0;
+
+  @supports (-webkit-touch-callout: none) {
+    font-size: 16px;
+  }
 }
 
 .createBtn {

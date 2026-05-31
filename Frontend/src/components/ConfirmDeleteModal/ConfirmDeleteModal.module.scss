@@ -47,6 +47,10 @@
   border-radius: v.$radius-md;
   font-size: 15px;
   font-family: monospace;
+
+  @supports (-webkit-touch-callout: none) {
+    font-size: 16px;
+  }
   color: v.$text-primary;
   outline: none;
   border: 1px solid transparent;

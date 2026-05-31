@@ -312,7 +312,7 @@
   &::-webkit-outer-spin-button { -webkit-appearance: none; }
   -moz-appearance: textfield;
 
-  @media (max-width: 768px) { font-size: 16px; }
+  @supports (-webkit-touch-callout: none) { font-size: 16px; }
 }
 
 .textInput {
@@ -324,7 +324,7 @@
   font-size: 15px;
   min-width: 0;
 
-  @media (max-width: 768px) { font-size: 16px; }
+  @supports (-webkit-touch-callout: none) { font-size: 16px; }
 }
 
 .sendBtn {
@@ -416,7 +416,7 @@
   &[type='date'] { color-scheme: dark; }
   &[type='number'] { -moz-appearance: textfield; }
 
-  @media (max-width: 768px) { font-size: 16px; }
+  @supports (-webkit-touch-callout: none) { font-size: 16px; }
 }
 
 .completedBadge {
