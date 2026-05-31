@@ -1,8 +1,8 @@
-mod auth;
 mod common;
 mod cors;
 mod db;
 mod endpoint;
+mod jwt;
 mod mail;
 mod middleware;
 mod model;
@@ -12,8 +12,8 @@ mod storage;
 
 use crate::mail::Mailer;
 use crate::model::schedule::contract::scheduled::Scheduled;
-use crate::model::schedule::schedule::Schedule;
 use crate::model::schedule::poll_interval::PollInterval;
+use crate::model::schedule::schedule::Schedule;
 use crate::model::schedule::time_of_day::TimeOfDay;
 use crate::model::schedule::timetable::Timetable;
 use crate::model::task::notification::deadline_digest_notification::DeadlineDigestNotification;
@@ -38,7 +38,10 @@ async fn main() -> std::io::Result<()> {
     });
     let deadline_schedule = Schedule::new(
         Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).unwrap())),
-        Arc::new(DeadlineDigestNotification::new(pool.clone(), mailer.clone())),
+        Arc::new(DeadlineDigestNotification::new(
+            pool.clone(),
+            mailer.clone(),
+        )),
     );
     let dispatch_schedule = Schedule::new(
         Arc::new(PollInterval::new(Duration::from_mins(5))),

@@ -11,9 +11,13 @@ pub async fn delete(
     path: web::Path<(Uuid, i32, Uuid)>,
 ) -> Result<HttpResponse, ApiError> {
     let (_, _, act_id) = path.into_inner();
-    AttachmentRemoval::new(state.pool.clone(), state.storage.clone(), Attachment::new(act_id))
-        .done()
-        .await
-        .map_err(|_| ApiError::NotFound("Act not found".to_string()))?;
+    AttachmentRemoval::new(
+        state.pool.clone(),
+        state.storage.clone(),
+        Attachment::new(act_id),
+    )
+    .done()
+    .await
+    .map_err(|_| ApiError::NotFound("Act not found".to_string()))?;
     Ok(HttpResponse::Ok().finish())
 }

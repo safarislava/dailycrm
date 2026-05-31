@@ -13,13 +13,22 @@ pub async fn get(
         .user()
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     let user = DetailedUser::new(state.pool.clone(), user);
-    let username = user.username().await.map_err(|e| ApiError::Internal(e.to_string()))?;
-    let email = user.email().await.map_err(|e| ApiError::Internal(e.to_string()))?;
+    let username = user
+        .username()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
+    let email = user
+        .email()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
     let notifications_enabled = user
         .notifications_enabled()
         .await
         .map_err(|e| ApiError::Internal(e.to_string()))?;
-    let roles = user.roles().await.map_err(|e| ApiError::Internal(e.to_string()))?;
+    let roles = user
+        .roles()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
 
     match (username, email, notifications_enabled) {
         (Some(username), Some(email), Some(notifications_enabled)) => {

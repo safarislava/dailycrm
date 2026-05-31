@@ -11,7 +11,10 @@ use uuid::Uuid;
 
 const MAX_FILE_SIZE: usize = 50 * 1_048_576;
 
-async fn collect_bytes(field: &mut actix_multipart::Field, limit: usize) -> Result<Vec<u8>, ApiError> {
+async fn collect_bytes(
+    field: &mut actix_multipart::Field,
+    limit: usize,
+) -> Result<Vec<u8>, ApiError> {
     let mut data = Vec::new();
     while let Some(chunk) = field.next().await {
         match chunk {
@@ -47,10 +50,17 @@ pub async fn post(
         let mime_type = infer::get(&data)
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
-        ActUpload::new(state.pool.clone(), state.storage.clone(), stage, filename, mime_type, data)
-            .done()
-            .await
-            .map_err(|e| ApiError::Internal(e.to_string()))?;
+        ActUpload::new(
+            state.pool.clone(),
+            state.storage.clone(),
+            stage,
+            filename,
+            mime_type,
+            data,
+        )
+        .done()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
         return Ok(HttpResponse::Created().finish());
     }
     Err(ApiError::BadRequest("No file provided".to_string()))

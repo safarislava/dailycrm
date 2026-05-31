@@ -15,7 +15,11 @@ pub struct NotificationSend {
 
 impl NotificationSend {
     pub fn new(pool: Arc<PgPool>, mailer: Arc<Mailer>, notification: QueuedNotification) -> Self {
-        Self { pool, mailer, notification }
+        Self {
+            pool,
+            mailer,
+            notification,
+        }
     }
 }
 

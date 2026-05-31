@@ -25,7 +25,14 @@ impl ActUpload {
         mime_type: String,
         data: Vec<u8>,
     ) -> Self {
-        Self { pool, storage, stage, filename, mime_type, data }
+        Self {
+            pool,
+            storage,
+            stage,
+            filename,
+            mime_type,
+            data,
+        }
     }
 }
 

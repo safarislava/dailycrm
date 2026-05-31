@@ -12,7 +12,11 @@ pub struct NotificationEnqueue {
 
 impl NotificationEnqueue {
     pub fn new(pool: Arc<PgPool>, stage: Stage, notification_type: impl Into<String>) -> Self {
-        Self { pool, stage, notification_type: notification_type.into() }
+        Self {
+            pool,
+            stage,
+            notification_type: notification_type.into(),
+        }
     }
 }
 

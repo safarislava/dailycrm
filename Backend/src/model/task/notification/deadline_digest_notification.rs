@@ -1,9 +1,9 @@
 use crate::common::BoxError;
 use crate::mail::Mailer;
+use crate::model::credential::contract::contentable::Contentable;
 use crate::model::notification::burning_deadlines::BurningDeadlines;
 use crate::model::notification::deadline_digest::DeadlineDigest;
 use crate::model::notification::role_recipients::RoleRecipients;
-use crate::model::credential::contract::contentable::Contentable;
 use crate::model::project::contract::list::List;
 use crate::model::task::contract::task::Task;
 use crate::model::user::role::Role;
@@ -33,7 +33,10 @@ impl Task for DeadlineDigestNotification {
             return Ok(());
         }
         let body = digest.content().await?;
-        for email in RoleRecipients::new(self.pool.clone(), Role::Gip).items().await? {
+        for email in RoleRecipients::new(self.pool.clone(), Role::Gip)
+            .items()
+            .await?
+        {
             self.mailer.send(&email, SUBJECT, body.clone()).await?;
         }
         Ok(())

@@ -26,7 +26,15 @@ impl AttachmentUpload {
         data: Vec<u8>,
         is_act: bool,
     ) -> Self {
-        Self { pool, storage, stage, filename, mime_type, data, is_act }
+        Self {
+            pool,
+            storage,
+            stage,
+            filename,
+            mime_type,
+            data,
+            is_act,
+        }
     }
 }
 

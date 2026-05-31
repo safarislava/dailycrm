@@ -11,11 +11,14 @@ pub async fn get(
     path: web::Path<(Uuid, i32, Uuid)>,
 ) -> Result<HttpResponse, ApiError> {
     let (_, _, act_id) = path.into_inner();
-    let (stream, content_length, content_type, content_disposition) =
-        AttachmentDownload::new(state.pool.clone(), state.storage.clone(), Attachment::new(act_id))
-            .done()
-            .await
-            .map_err(|_| ApiError::NotFound("Act not found".to_string()))?;
+    let (stream, content_length, content_type, content_disposition) = AttachmentDownload::new(
+        state.pool.clone(),
+        state.storage.clone(),
+        Attachment::new(act_id),
+    )
+    .done()
+    .await
+    .map_err(|_| ApiError::NotFound("Act not found".to_string()))?;
     Ok(HttpResponse::Ok()
         .content_type(content_type)
         .insert_header(("Content-Disposition", content_disposition))
