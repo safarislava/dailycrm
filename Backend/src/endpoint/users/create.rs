@@ -1,3 +1,4 @@
+use crate::endpoint::api_error::ApiError;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::username::Username;
@@ -7,7 +8,7 @@ use crate::model::task::contract::task::Task;
 use crate::model::task::user::invite_consumption::{InviteConsumption, InviteStatus};
 use crate::model::user::invite::Invite;
 use crate::state::AppState;
-use actix_web::{HttpResponse, Responder, web};
+use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -18,23 +19,28 @@ pub struct CreateUserDto {
     email: String,
 }
 
-pub async fn create(state: web::Data<AppState>, body: web::Json<CreateUserDto>) -> impl Responder {
+pub async fn create(
+    state: web::Data<AppState>,
+    body: web::Json<CreateUserDto>,
+) -> Result<HttpResponse, ApiError> {
     let invite = Invite::new(body.invite_token);
     let username = ValidUsername::new(Username::new(body.username.clone()));
     let password = HashedPassword::new(ValidPassword::new(Password::new(body.password.clone())));
-    let invite_consumption = InviteConsumption::new(
+    let result = InviteConsumption::new(
         state.pool.clone(),
         invite,
         username,
         Box::new(password),
         body.email.clone(),
-    );
-    match invite_consumption.done().await {
-        Ok(InviteStatus::Ok) => HttpResponse::Created().finish(),
-        Ok(InviteStatus::InvalidInvite) => {
-            HttpResponse::Forbidden().body("Invalid or expired invite")
+    )
+    .done()
+    .await
+    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    match result {
+        InviteStatus::Ok => Ok(HttpResponse::Created().finish()),
+        InviteStatus::InvalidInvite => {
+            Err(ApiError::Forbidden("Invalid or expired invite".to_string()))
         }
-        Ok(InviteStatus::UserExists) => HttpResponse::Conflict().body("User already exists"),
-        Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
+        InviteStatus::UserExists => Err(ApiError::Conflict("User already exists".to_string())),
     }
 }
