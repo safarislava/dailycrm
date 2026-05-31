@@ -1,17 +1,12 @@
-use crate::auth::JwtToken;
-use actix_web::HttpRequest;
-use uuid::Uuid;
+use crate::model::user::user::User;
+use actix_web::{HttpMessage, HttpRequest};
 
-pub trait AuthHeader {
-    fn user_id(&self) -> Option<Uuid>;
+pub trait UserHeader {
+    fn user(&self) -> Option<User>;
 }
 
-impl AuthHeader for HttpRequest {
-    fn user_id(&self) -> Option<Uuid> {
-        self.headers()
-            .get("Authorization")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.strip_prefix("Bearer "))
-            .and_then(|token| JwtToken::new(token).access_user_id())
+impl UserHeader for HttpRequest {
+    fn user(&self) -> Option<User> {
+        self.extensions().get::<User>().map(|user| user.clone())
     }
 }

@@ -1,13 +1,13 @@
-use crate::endpoint::auth_header::AuthHeader;
+use crate::endpoint::api_error::ApiError;
+use crate::endpoint::auth_header::UserHeader;
 use crate::model::credential::hashed_password::HashedPassword;
 use crate::model::credential::password::Password;
 use crate::model::credential::valid_password::ValidPassword;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::password_update::PasswordUpdate;
 use crate::model::user::protected_user::ProtectedUser;
-use crate::model::user::user::User;
 use crate::state::AppState;
-use actix_web::{HttpRequest, HttpResponse, Responder, web};
+use actix_web::{HttpRequest, HttpResponse, web};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -20,18 +20,20 @@ pub async fn patch(
     state: web::Data<AppState>,
     request: HttpRequest,
     body: web::Json<UpdatePasswordDto>,
-) -> impl Responder {
-    let user_id = match request.user_id() {
-        Some(id) => id,
-        None => return HttpResponse::Unauthorized().finish(),
-    };
+) -> Result<HttpResponse, ApiError> {
+    let user = request
+        .user()
+        .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     let current_password = ValidPassword::new(Password::new(body.current_password.clone()));
     let new_password =
         HashedPassword::new(ValidPassword::new(Password::new(body.new_password.clone())));
-    let user = ProtectedUser::new(state.pool.clone(), User::new(user_id), current_password);
-    let task = PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password));
-    match task.done().await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::Unauthorized().body("Wrong current password"),
-    }
+    let user = ProtectedUser::new(state.pool.clone(), user, current_password);
+    PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password))
+        .done()
+        .await
+        .map_err(|e| match e.to_string().as_str() {
+            "Wrong password" => ApiError::Unauthorized("Wrong current password".to_string()),
+            _ => ApiError::Internal(e.to_string()),
+        })?;
+    Ok(HttpResponse::Ok().finish())
 }

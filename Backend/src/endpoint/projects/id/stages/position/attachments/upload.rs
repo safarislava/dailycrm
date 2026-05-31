@@ -1,34 +1,30 @@
+use crate::endpoint::api_error::ApiError;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
 use crate::state::AppState;
 use actix_multipart::Multipart;
-use actix_web::{HttpResponse, Responder, web};
+use actix_web::{HttpResponse, web};
 use futures_util::StreamExt;
 use uuid::Uuid;
 
-const MAX_FILE_SIZE: usize = 50 * 1_048_576; // 50 MB
-
-enum CollectError {
-    TooLarge,
-    Read,
-}
+const MAX_FILE_SIZE: usize = 50 * 1_048_576;
 
 async fn collect_bytes(
     field: &mut actix_multipart::Field,
     limit: usize,
-) -> Result<Vec<u8>, CollectError> {
+) -> Result<Vec<u8>, ApiError> {
     let mut data = Vec::new();
     while let Some(chunk) = field.next().await {
         match chunk {
             Ok(bytes) => {
                 data.extend_from_slice(&bytes);
                 if data.len() > limit {
-                    return Err(CollectError::TooLarge);
+                    return Err(ApiError::PayloadTooLarge);
                 }
             }
-            Err(_) => return Err(CollectError::Read),
+            Err(_) => return Err(ApiError::Internal("Failed to read upload".to_string())),
         }
     }
     Ok(data)
@@ -38,47 +34,34 @@ pub async fn post(
     state: web::Data<AppState>,
     path: web::Path<(Uuid, i32)>,
     mut payload: Multipart,
-) -> impl Responder {
+) -> Result<HttpResponse, ApiError> {
     let (project_id, stage_position) = path.into_inner();
-    let project = Project::new(project_id);
-    let stage = Stage::new(project, stage_position);
+    let stage = Stage::new(Project::new(project_id), stage_position);
 
     while let Some(item) = payload.next().await {
-        let mut field = match item {
-            Ok(f) => f,
-            Err(_) => return HttpResponse::BadRequest().body("Invalid multipart data"),
-        };
-
+        let mut field =
+            item.map_err(|_| ApiError::BadRequest("Invalid multipart data".to_string()))?;
         let filename = field
             .content_disposition()
             .and_then(|cd| cd.get_filename())
             .map(|s| s.to_string())
             .unwrap_or_else(|| "file".to_string());
-
-        let data = match collect_bytes(&mut field, MAX_FILE_SIZE).await {
-            Ok(bytes) => bytes,
-            Err(CollectError::TooLarge) => return HttpResponse::PayloadTooLarge().finish(),
-            Err(CollectError::Read) => {
-                return HttpResponse::InternalServerError().body("Upload error");
-            }
-        };
-
+        let data = collect_bytes(&mut field, MAX_FILE_SIZE).await?;
         let mime_type = infer::get(&data)
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
-
-        let task = AttachmentUpload::new(
+        let id = AttachmentUpload::new(
             state.pool.clone(),
             state.storage.clone(),
             stage,
             filename,
             mime_type,
             data,
-        );
-        return match task.done().await {
-            Ok(id) => HttpResponse::Created().json(serde_json::json!({ "id": id })),
-            Err(_) => HttpResponse::InternalServerError().body("Something went wrong"),
-        };
+        )
+        .done()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
+        return Ok(HttpResponse::Created().json(serde_json::json!({ "id": id })));
     }
-    HttpResponse::BadRequest().body("No file provided")
+    Err(ApiError::BadRequest("No file provided".to_string()))
 }

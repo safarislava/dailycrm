@@ -58,20 +58,28 @@ export default function MainPanel() {
   )
   const [uploadAttachment, { isLoading: uploading }] = useUploadAttachmentMutation()
   const [deleteAttachment] = useDeleteAttachmentMutation()
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const original = e.target.files?.[0]
       if (!original || !projectId || stagePos === null) return
+      setUploadError(null)
       const buffer = await readFile(original)
       const file = new File(
         [buffer],
         original.name || 'file',
         { type: original.type || 'application/octet-stream' },
       )
-      await uploadAttachment({ projectId, position: Number(stagePos), file })
+      const result = await uploadAttachment({ projectId, position: Number(stagePos), file })
       if (fileInputRef.current) fileInputRef.current.value = ''
+      if ('error' in result) {
+        const status = (result.error as { status?: number })?.status
+        if (status === 413) setUploadError('Файл слишком большой (макс. 50 МБ)')
+        else if (status === 400) setUploadError('Неверный формат запроса')
+        else setUploadError('Не удалось загрузить файл')
+      }
     },
     [projectId, stagePos, uploadAttachment],
   )
@@ -258,6 +266,7 @@ export default function MainPanel() {
                     />
                   </label>
                 </div>
+                {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
                 {attachments.length === 0 && !uploading && (
                   <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>
                 )}

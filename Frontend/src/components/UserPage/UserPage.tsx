@@ -55,7 +55,9 @@ export default function UserPage() {
     setEmailSuccess(false)
     const result = await updateEmail({ email: email.trim() })
     if ('error' in result) {
-      setEmailError('Что-то пошло не так')
+      const status = (result.error as { status?: number })?.status
+      if (status === 409) setEmailError('Этот email уже используется')
+      else setEmailError('Что-то пошло не так')
     } else {
       setEmailSuccess(true)
       setEmail('')
