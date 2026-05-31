@@ -1,10 +1,12 @@
+pub mod act_upload;
+pub mod notification_enqueue;
 pub mod attachment_download;
 pub mod attachment_removal;
 pub mod attachment_upload;
-pub mod completion_update;
 pub mod cost_update;
 pub mod deadline_update;
-pub mod description_update;
+pub mod gip_confirmation;
+pub mod payment_confirmation;
 pub mod project_registration;
 pub mod project_removal;
 pub mod project_rename;

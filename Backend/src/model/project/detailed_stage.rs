@@ -30,27 +30,24 @@ impl Contentable for DetailedStage {
             title: String,
             deadline: Option<DateTime<Utc>>,
             completed: bool,
-            description: Option<String>,
             cost: Option<i32>,
+            gip_confirmed: bool,
+            payment_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT project_id, position, title, deadline, completed, description, cost
+            "SELECT project_id, position, title, deadline,
+                    (gip_confirmed AND payment_confirmed AND EXISTS(
+                        SELECT 1 FROM attachments a
+                        WHERE a.project_id = stages.project_id
+                        AND a.stage_position = stages.position AND a.is_act = TRUE
+                    )) AS completed,
+                    cost, gip_confirmed, payment_confirmed
              FROM stages WHERE project_id = $1 AND position = $2",
         )
         .bind(self.stage.project().id())
         .bind(self.stage.position())
         .fetch_one(self.pool.as_ref())
         .await?;
-        Ok(serde_json::json!({
-            "stage": {
-                "project_id": row.project_id,
-                "position": row.position,
-                "title": row.title,
-                "deadline": row.deadline,
-                "completed": row.completed,
-            },
-            "description": row.description,
-            "cost": row.cost,
-        }))
+        Ok(serde_json::to_value(row)?)
     }
 }

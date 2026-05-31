@@ -13,14 +13,17 @@ mod storage;
 use crate::mail::Mailer;
 use crate::model::schedule::contract::scheduled::Scheduled;
 use crate::model::schedule::schedule::Schedule;
+use crate::model::schedule::poll_interval::PollInterval;
 use crate::model::schedule::time_of_day::TimeOfDay;
 use crate::model::schedule::timetable::Timetable;
 use crate::model::task::notification::deadline_digest_notification::DeadlineDigestNotification;
+use crate::model::task::notification::notification_dispatch::NotificationDispatch;
 use crate::state::AppState;
 use crate::storage::Storage;
 use actix_web::{App, HttpServer, web};
 use chrono::NaiveTime;
 use std::sync::Arc;
+use std::time::Duration;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -33,11 +36,15 @@ async fn main() -> std::io::Result<()> {
         storage: storage.clone(),
         mailer: mailer.clone(),
     });
-    let notification_schedule = Schedule::new(
+    let deadline_schedule = Schedule::new(
         Arc::new(TimeOfDay::new(NaiveTime::from_hms_opt(12, 0, 0).unwrap())),
-        Arc::new(DeadlineDigestNotification::new(pool, mailer)),
+        Arc::new(DeadlineDigestNotification::new(pool.clone(), mailer.clone())),
     );
-    let timetable = Timetable::new(vec![notification_schedule]);
+    let dispatch_schedule = Schedule::new(
+        Arc::new(PollInterval::new(Duration::from_mins(5))),
+        Arc::new(NotificationDispatch::new(pool, mailer)),
+    );
+    let timetable = Timetable::new(vec![deadline_schedule, dispatch_schedule]);
     actix_web::rt::spawn(async move {
         if let Err(error) = timetable.run().await {
             eprintln!("schedule stopped: {error}");

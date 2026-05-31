@@ -13,9 +13,12 @@ import {
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
-  useUpdateStageDescriptionMutation,
   useUpdateStageCostMutation,
-  useUpdateStageCompletedMutation,
+  useUpdateGipConfirmedMutation,
+  useUpdatePaymentConfirmedMutation,
+  useListActsQuery,
+  useUploadActMutation,
+  useDeleteActMutation,
   useRenameProjectMutation,
   useListAttachmentsQuery,
   useUploadAttachmentMutation,
@@ -45,12 +48,39 @@ export default function MainPanel() {
   const [deleteStage]   = useDeleteStageMutation()
   const [deleteProject] = useDeleteProjectMutation()
 
-  const [updateTitle]       = useUpdateStageTitleMutation()
-  const [updateDeadline]    = useUpdateStageDeadlineMutation()
-  const [updateDescription] = useUpdateStageDescriptionMutation()
-  const [updateCost]        = useUpdateStageCostMutation()
-  const [updateCompleted]   = useUpdateStageCompletedMutation()
+  const [updateTitle]    = useUpdateStageTitleMutation()
+  const [updateDeadline] = useUpdateStageDeadlineMutation()
+  const [updateCost]     = useUpdateStageCostMutation()
+  const [updateGipConfirmed]    = useUpdateGipConfirmedMutation()
+  const [updatePaymentConfirmed] = useUpdatePaymentConfirmedMutation()
+  const { data: acts = [] } = useListActsQuery(
+    { projectId: projectId!, position: Number(stagePos) },
+    { skip: !projectId || stagePos === null },
+  )
+  const [uploadAct, { isLoading: uploadingAct }] = useUploadActMutation()
+  const [deleteAct] = useDeleteActMutation()
   const [renameProject]     = useRenameProjectMutation()
+
+  const actFileInputRef = useRef<HTMLInputElement>(null)
+  const [actUploadError, setActUploadError] = useState<string | null>(null)
+
+  const handleActFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const original = e.target.files?.[0]
+      if (!original || !projectId || stagePos === null) return
+      setActUploadError(null)
+      const buffer = await readFile(original)
+      const file = new File([buffer], original.name || 'act', { type: original.type || 'application/octet-stream' })
+      const result = await uploadAct({ projectId, position: Number(stagePos), file })
+      if (actFileInputRef.current) actFileInputRef.current.value = ''
+      if ('error' in result) {
+        const status = (result.error as { status?: number })?.status
+        if (status === 413) setActUploadError('Файл слишком большой (макс. 50 МБ)')
+        else setActUploadError('Не удалось загрузить акт')
+      }
+    },
+    [projectId, stagePos, uploadAct],
+  )
 
   const { data: attachments = [] } = useListAttachmentsQuery(
     { projectId: projectId!, position: Number(stagePos) },
@@ -168,7 +198,7 @@ export default function MainPanel() {
           </div>
           <button
             className={styles.dangerBtn}
-            onClick={() => detail && handleDeleteStage(Number(stagePos), detail.stage.title)}
+            onClick={() => detail && handleDeleteStage(Number(stagePos), detail.title)}
             title="Удалить этап"
           >
             <TrashIcon />
@@ -180,37 +210,22 @@ export default function MainPanel() {
           {!detailLoading && detail && (
             <div className={styles.detailCard}>
               <div className={styles.fields}>
-                <Field label="Позиция" value={String(detail.stage.position)} />
-                <div className={`${styles.field} ${styles.fieldEditable}`}
-                  onClick={() => updateCompleted({
-                    projectId: projectId!,
-                    position: Number(stagePos),
-                    completed: !detail.stage.completed,
-                  })}
-                >
-                  <span className={styles.fieldLabel}>Выполнен</span>
-                  <span className={styles.fieldValue}>
-                    <span className={detail.stage.completed ? styles.completedBadge : styles.pendingBadge}>
-                      {detail.stage.completed ? 'Да' : 'Нет'}
-                    </span>
-                  </span>
-                </div>
                 <EditableField
                   label="Название"
-                  displayValue={detail.stage.title}
-                  rawValue={detail.stage.title}
+                  displayValue={detail.title}
+                  rawValue={detail.title}
                   onSave={async (v) => {
                     if (v.trim()) await updateTitle({ projectId: projectId!, position: Number(stagePos), title: v.trim() })
                   }}
                 />
                 <EditableField
-                  label="Дедлайн"
-                  displayValue={detail.stage.deadline
-                    ? new Date(detail.stage.deadline).toLocaleDateString('en-GB', {
-                        day: '2-digit', month: 'short', year: 'numeric',
+                  label="Срок выполнения"
+                  displayValue={detail.deadline
+                    ? new Date(detail.deadline).toLocaleDateString('ru-RU', {
+                        day: '2-digit', month: 'long', year: 'numeric',
                       })
                     : '—'}
-                  rawValue={detail.stage.deadline?.slice(0, 10) ?? ''}
+                  rawValue={detail.deadline?.slice(0, 10) ?? ''}
                   type="date"
                   onSave={async (v) => {
                     await updateDeadline({
@@ -220,32 +235,94 @@ export default function MainPanel() {
                     })
                   }}
                 />
-                <EditableField
-                  label="Описание"
-                  displayValue={detail.description ?? '—'}
-                  rawValue={detail.description ?? ''}
-                  multiline
-                  onSave={async (v) => {
-                    await updateDescription({
+                <div className={`${styles.field} ${styles.fieldEditable}`}
+                  onClick={() => updateGipConfirmed({
+                    projectId: projectId!,
+                    position: Number(stagePos),
+                    confirmed: !detail.gip_confirmed,
+                  })}
+                >
+                  <span className={styles.fieldLabel}>Выполнение ГИП</span>
+                  <span className={styles.fieldValue}>
+                    <span className={detail.gip_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                      {detail.gip_confirmed ? 'Выполнено' : 'Не выполнено'}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.attachmentsSection}>
+                <div className={styles.attachmentsHeader}>
+                  <span className={styles.attachmentsSectionLabel}>Акты</span>
+                  <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
+                    {uploadingAct ? <SpinnerIcon /> : <PaperclipIcon />}
+                    {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
+                    <input
+                      ref={actFileInputRef}
+                      type="file"
+                      className={styles.fileInputHidden}
+                      onChange={handleActFileChange}
+                      disabled={uploadingAct}
+                    />
+                  </label>
+                </div>
+                {actUploadError && <p className={styles.uploadError}>{actUploadError}</p>}
+                {acts.length === 0 && !uploadingAct && (
+                  <p className={styles.attachmentsEmpty}>Нет актов</p>
+                )}
+                {acts.map((act) => (
+                  <div key={act.id} className={styles.attachItem}>
+                    <FileIcon mime={act.mime_type} />
+                    <div className={styles.attachInfo}>
+                      <button
+                        className={styles.attachName}
+                        onClick={() => downloadFile(act.download_url, act.filename)}
+                      >
+                        {act.filename}
+                      </button>
+                      <span className={styles.attachMeta}>{formatBytes(act.size_bytes)}</span>
+                    </div>
+                    <button
+                      className={styles.attachDeleteBtn}
+                      title="Удалить акт"
+                      onClick={() => deleteAct({ projectId: projectId!, position: Number(stagePos), actId: act.id })}
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.fields}>
+                <div className={styles.splitRow}>
+                  <EditableField
+                    label="Стоимость"
+                    displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
+                    rawValue={detail.cost?.toString() ?? ''}
+                    type="number"
+                    onSave={async (v) => {
+                      await updateCost({
+                        projectId: projectId!,
+                        position: Number(stagePos),
+                        cost: v ? parseInt(v, 10) : null,
+                      })
+                    }}
+                  />
+                  <div className={`${styles.field} ${styles.fieldEditable}`}
+                    onClick={() => updatePaymentConfirmed({
                       projectId: projectId!,
                       position: Number(stagePos),
-                      description: v.trim() || null,
-                    })
-                  }}
-                />
-                <EditableField
-                  label="Стоимость"
-                  displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
-                  rawValue={detail.cost?.toString() ?? ''}
-                  type="number"
-                  onSave={async (v) => {
-                    await updateCost({
-                      projectId: projectId!,
-                      position: Number(stagePos),
-                      cost: v ? parseInt(v, 10) : null,
-                    })
-                  }}
-                />
+                      confirmed: !detail.payment_confirmed,
+                    })}
+                  >
+                    <span className={styles.fieldLabel}>Подтверждение оплаты</span>
+                    <span className={styles.fieldValue}>
+                      <span className={detail.payment_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                        {detail.payment_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className={styles.attachmentsSection}>
@@ -358,16 +435,12 @@ export default function MainPanel() {
             className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''}`}
             onClick={() => dispatch(selectStage(String(stage.position)))}
           >
-            <button
+            <span
               className={styles.stageCheck}
-              onClick={(e) => {
-                e.stopPropagation()
-                updateCompleted({ projectId: projectId!, position: stage.position, completed: !stage.completed })
-              }}
-              title={stage.completed ? 'Отметить незавершённым' : 'Отметить завершённым'}
+              title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}
             >
               {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
-            </button>
+            </span>
             <div className={styles.stageInfo}>
               <span className={styles.stageTitle}>{stage.title}</span>
               {stage.deadline && (
@@ -469,16 +542,6 @@ function InlineEdit({
       {value}
       <PencilIcon />
     </span>
-  )
-}
-
-// ── Sub-components ─────────────────────────────────────
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={styles.field}>
-      <span className={styles.fieldLabel}>{label}</span>
-      <span className={styles.fieldValue}>{value}</span>
-    </div>
   )
 }
 

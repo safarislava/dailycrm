@@ -1,41 +1,38 @@
-use crate::model::project::attachment::Attachment;
+use crate::model::project::act::Act;
 use crate::model::project::contract::list::List;
 use crate::model::project::stage::Stage;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub struct Attachments {
+pub struct Acts {
     pool: Arc<PgPool>,
     stage: Stage,
 }
 
-impl Attachments {
+impl Acts {
     pub fn new(pool: Arc<PgPool>, stage: Stage) -> Self {
         Self { pool, stage }
     }
 }
 
 #[async_trait::async_trait]
-impl List for Attachments {
-    type Output = Attachment;
+impl List for Acts {
+    type Output = Act;
 
-    async fn items(&self) -> Result<Vec<Attachment>, sqlx::Error> {
+    async fn items(&self) -> Result<Vec<Act>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
-        struct AttachmentRow {
+        struct Row {
             id: Uuid,
         }
-        let rows = sqlx::query_as::<_, AttachmentRow>(
+        let rows = sqlx::query_as::<_, Row>(
             "SELECT id FROM attachments \
-            WHERE project_id = $1 AND stage_position = $2 AND is_act = FALSE ORDER BY created_at",
+             WHERE project_id = $1 AND stage_position = $2 AND is_act = TRUE ORDER BY created_at",
         )
         .bind(self.stage.project().id())
         .bind(self.stage.position())
         .fetch_all(self.pool.as_ref())
         .await?;
-        Ok(rows
-            .into_iter()
-            .map(|row| Attachment::new(row.id))
-            .collect())
+        Ok(rows.into_iter().map(|row| Act::new(row.id)).collect())
     }
 }

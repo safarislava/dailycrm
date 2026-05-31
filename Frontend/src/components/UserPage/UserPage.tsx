@@ -8,7 +8,9 @@ import {
   useUpdatePasswordMutation,
   useUpdateEmailMutation,
   useUpdateNotificationsMutation,
+  useUpdateRolesMutation,
 } from '../../store/crmApi'
+import type { Role } from '../../types'
 import styles from './UserPage.module.scss'
 
 export default function UserPage() {
@@ -29,10 +31,22 @@ export default function UserPage() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [emailSuccess, setEmailSuccess] = useState(false)
 
+  const [rolesSuccess, setRolesSuccess] = useState(false)
+
   const [updateUsername, { isLoading: savingUsername }] = useUpdateUsernameMutation()
   const [updatePassword, { isLoading: savingPassword }] = useUpdatePasswordMutation()
   const [updateEmail, { isLoading: savingEmail }] = useUpdateEmailMutation()
   const [updateNotifications, { isLoading: savingNotifications }] = useUpdateNotificationsMutation()
+  const [updateRoles, { isLoading: savingRoles }] = useUpdateRolesMutation()
+
+  const handleRoleToggle = async (role: Role) => {
+    if (!me) return
+    setRolesSuccess(false)
+    const current = me.roles ?? []
+    const next = current.includes(role) ? current.filter(r => r !== role) : [...current, role]
+    const result = await updateRoles({ roles: next })
+    if (!('error' in result)) setRolesSuccess(true)
+  }
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,6 +150,36 @@ export default function UserPage() {
               {savingEmail ? '…' : 'Сохранить'}
             </button>
           </form>
+        </section>
+
+        <div className={styles.divider} />
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Роли</h2>
+          <p className={styles.current}>Выберите одну или несколько ролей</p>
+          {me && (
+            <div className={styles.roles}>
+              {(['gip', 'lawyer', 'accountant'] as Role[]).map(role => {
+                const labels: Record<Role, string> = {
+                  gip: 'ГИП',
+                  lawyer: 'Юрист',
+                  accountant: 'Бухгалтер',
+                }
+                const active = (me.roles ?? []).includes(role)
+                return (
+                  <button
+                    key={role}
+                    className={`${styles.roleBtn} ${active ? styles.roleBtnActive : ''}`}
+                    onClick={() => handleRoleToggle(role)}
+                    disabled={savingRoles}
+                  >
+                    {labels[role]}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {rolesSuccess && <p className={styles.success}>Роли обновлены</p>}
         </section>
 
         <div className={styles.divider} />

@@ -13,16 +13,14 @@ pub async fn get(
         .user()
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     let user = DetailedUser::new(state.pool.clone(), user);
-    let (username, email, notifications_enabled) = match (
-        user.username().await,
-        user.email().await,
-        user.notifications_enabled().await,
-    ) {
-        (Ok(u), Ok(e), Ok(n)) => (u, e, n),
-        (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
-            return Err(ApiError::Internal(e.to_string()));
-        }
-    };
+    let username = user.username().await.map_err(|e| ApiError::Internal(e.to_string()))?;
+    let email = user.email().await.map_err(|e| ApiError::Internal(e.to_string()))?;
+    let notifications_enabled = user
+        .notifications_enabled()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
+    let roles = user.roles().await.map_err(|e| ApiError::Internal(e.to_string()))?;
+
     match (username, email, notifications_enabled) {
         (Some(username), Some(email), Some(notifications_enabled)) => {
             let username = username
@@ -33,6 +31,7 @@ pub async fn get(
                 "username": username,
                 "email": email,
                 "notifications_enabled": notifications_enabled,
+                "roles": roles,
             })))
         }
         _ => Err(ApiError::NotFound("User not found".to_string())),

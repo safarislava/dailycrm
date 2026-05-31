@@ -1,5 +1,8 @@
+pub mod act;
+pub mod acts;
 pub mod attachment;
 pub mod attachments;
+pub mod detailed_act;
 pub mod contract;
 pub mod deadlines;
 pub mod detailed_attachment;

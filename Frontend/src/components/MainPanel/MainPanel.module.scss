@@ -357,6 +357,9 @@
 .detailCard {
   max-width: 560px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .detailName {
@@ -401,6 +404,12 @@
   &:hover { background: v.$bg-item-hover; }
 }
 
+.splitRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .fieldInput {
   font-size: 15px;
   color: v.$text-primary;
@@ -441,7 +450,6 @@
 
 // ── Attachments ───────────────────────────────────────
 .attachmentsSection {
-  margin-top: 20px;
   background: v.$bg-secondary;
   border-radius: v.$radius-md;
   overflow: hidden;
@@ -575,4 +583,55 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.actUploadBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$accent;
+  padding: 3px 10px;
+  border-radius: v.$radius-sm;
+  cursor: pointer;
+  border: 1px solid v.$accent;
+  transition: background v.$transition-fast;
+
+  &:hover { background: v.$accent-light; }
+}
+
+.actUploadDisabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.actLink {
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$accent;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.actRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actDeleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: v.$text-secondary;
+  border-radius: 4px;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover { color: #e53e3e; background: rgba(229, 62, 62, 0.08); }
+
+  svg { width: 12px; height: 12px; }
 }

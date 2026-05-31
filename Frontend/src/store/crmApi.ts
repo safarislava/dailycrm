@@ -5,7 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
-import type { Project, Stage, DetailedStage, StageWithProjectTitle, Attachment } from '../types'
+import type { Project, Role, Stage, DetailedStage, StageWithProjectTitle, Attachment, Act } from '../types'
 import { setAccessToken, setInitialized, logout } from './authSlice'
 
 const baseQuery = fetchBaseQuery({
@@ -44,7 +44,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const crmApi = createApi({
   reducerPath: 'crmApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment'],
+  tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment', 'Act'],
   endpoints: (builder) => ({
 
     register: builder.mutation<void, { username: string; password: string; invite_token: string; email: string }>({
@@ -54,7 +54,7 @@ export const crmApi = createApi({
       query: () => ({ url: '/invites', method: 'POST' }),
     }),
 
-    getMe: builder.query<{ username: string; email: string; notifications_enabled: boolean }, void>({
+    getMe: builder.query<{ username: string; email: string; notifications_enabled: boolean; roles: Role[] }, void>({
       query: () => '/users/me',
       providesTags: ['Me'],
     }),
@@ -183,18 +183,6 @@ export const crmApi = createApi({
       ],
     }),
 
-    updateStageDescription: builder.mutation<void, { projectId: string; position: number; description: string | null }>({
-      query: ({ projectId, position, description }) => ({
-        url: `/projects/${projectId}/stages/${position}/description`,
-        method: 'PATCH',
-        body: { description },
-      }),
-      invalidatesTags: (_r, _e, { projectId, position }) => [
-        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
-        'Project',
-      ],
-    }),
-
     updateStageCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
       query: ({ projectId, position, cost }) => ({
         url: `/projects/${projectId}/stages/${position}/cost`,
@@ -233,11 +221,11 @@ export const crmApi = createApi({
       ],
     }),
 
-    updateStageCompleted: builder.mutation<void, { projectId: string; position: number; completed: boolean }>({
-      query: ({ projectId, position, completed }) => ({
-        url: `/projects/${projectId}/stages/${position}/completed`,
+    updateGipConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
+      query: ({ projectId, position, confirmed }) => ({
+        url: `/projects/${projectId}/stages/${position}/gip-confirmed`,
         method: 'PATCH',
-        body: { completed },
+        body: { confirmed },
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
@@ -247,10 +235,63 @@ export const crmApi = createApi({
       ],
     }),
 
+    updatePaymentConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
+      query: ({ projectId, position, confirmed }) => ({
+        url: `/projects/${projectId}/stages/${position}/payment-confirmed`,
+        method: 'PATCH',
+        body: { confirmed },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+        'Project',
+      ],
+    }),
+
+    listActs: builder.query<Act[], { projectId: string; position: number }>({
+      query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}/act`,
+      providesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Act' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+
+    uploadAct: builder.mutation<void, { projectId: string; position: number; file: File }>({
+      query: ({ projectId, position, file }) => {
+        const body = new FormData()
+        body.append('file', file)
+        return { url: `/projects/${projectId}/stages/${position}/act`, method: 'POST', body }
+      },
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Act' as const, id: `${projectId}-${position}` },
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+        'Project',
+      ],
+    }),
+
+    deleteAct: builder.mutation<void, { projectId: string; position: number; actId: string }>({
+      query: ({ projectId, position, actId }) => ({
+        url: `/projects/${projectId}/stages/${position}/act/${actId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Act' as const, id: `${projectId}-${position}` },
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+        'Project',
+      ],
+    }),
+
+    updateRoles: builder.mutation<void, { roles: Role[] }>({
+      query: (body) => ({ url: '/users/me/roles', method: 'PATCH', body }),
+      invalidatesTags: ['Me'],
+    }),
+
   }),
 })
 
 export const {
+  useListActsQuery,
   useListAttachmentsQuery,
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation,
@@ -262,6 +303,7 @@ export const {
   useUpdatePasswordMutation,
   useUpdateEmailMutation,
   useUpdateNotificationsMutation,
+  useUpdateRolesMutation,
   useRefreshMutation,
   useLogoutApiMutation,
   useGetDeadlinesQuery,
@@ -275,8 +317,10 @@ export const {
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
-  useUpdateStageDescriptionMutation,
   useUpdateStageCostMutation,
-  useUpdateStageCompletedMutation,
+  useUpdateGipConfirmedMutation,
+  useUpdatePaymentConfirmedMutation,
+  useUploadActMutation,
+  useDeleteActMutation,
   useRenameProjectMutation,
 } = crmApi

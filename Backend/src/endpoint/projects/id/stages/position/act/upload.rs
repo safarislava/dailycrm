@@ -2,7 +2,7 @@ use crate::endpoint::api_error::ApiError;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::project::attachment_upload::AttachmentUpload;
+use crate::model::task::project::act_upload::ActUpload;
 use crate::state::AppState;
 use actix_multipart::Multipart;
 use actix_web::{HttpResponse, web};
@@ -11,10 +11,7 @@ use uuid::Uuid;
 
 const MAX_FILE_SIZE: usize = 50 * 1_048_576;
 
-async fn collect_bytes(
-    field: &mut actix_multipart::Field,
-    limit: usize,
-) -> Result<Vec<u8>, ApiError> {
+async fn collect_bytes(field: &mut actix_multipart::Field, limit: usize) -> Result<Vec<u8>, ApiError> {
     let mut data = Vec::new();
     while let Some(chunk) = field.next().await {
         match chunk {
@@ -45,24 +42,16 @@ pub async fn post(
             .content_disposition()
             .and_then(|cd| cd.get_filename())
             .map(|s| s.to_string())
-            .unwrap_or_else(|| "file".to_string());
+            .unwrap_or_else(|| "act".to_string());
         let data = collect_bytes(&mut field, MAX_FILE_SIZE).await?;
         let mime_type = infer::get(&data)
             .map(|kind| kind.mime_type().to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
-        let id = AttachmentUpload::new(
-            state.pool.clone(),
-            state.storage.clone(),
-            stage,
-            filename,
-            mime_type,
-            data,
-            false,
-        )
-        .done()
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
-        return Ok(HttpResponse::Created().json(serde_json::json!({ "id": id })));
+        ActUpload::new(state.pool.clone(), state.storage.clone(), stage, filename, mime_type, data)
+            .done()
+            .await
+            .map_err(|e| ApiError::Internal(e.to_string()))?;
+        return Ok(HttpResponse::Created().finish());
     }
     Err(ApiError::BadRequest("No file provided".to_string()))
 }

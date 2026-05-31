@@ -132,3 +132,43 @@
   background: v.$divider;
   margin: 24px 0;
 }
+
+.btnDanger {
+  background: #e53e3e;
+  &:hover:not(:disabled) { background: #c53030; }
+}
+
+.roles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.roleBtn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: v.$radius-sm;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1.5px solid v.$divider;
+  background: transparent;
+  color: v.$text-secondary;
+  transition: all v.$transition-fast;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: v.$accent;
+    color: v.$accent;
+  }
+
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.roleBtnActive {
+  background: v.$accent;
+  border-color: v.$accent;
+  color: #fff;
+
+  &:hover:not(:disabled) { background: v.$accent-hover; border-color: v.$accent-hover; }
+}
