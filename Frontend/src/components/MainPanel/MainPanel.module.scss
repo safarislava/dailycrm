@@ -501,6 +501,13 @@
   text-align: center;
 }
 
+.uploadError {
+  margin: 0;
+  padding: 4px 16px 8px;
+  font-size: 13px;
+  color: #fc8181;
+}
+
 .attachItem {
   display: flex;
   align-items: center;
