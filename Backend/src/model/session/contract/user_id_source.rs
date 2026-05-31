@@ -1,5 +1,5 @@
 use uuid::Uuid;
 
-pub trait AccessTokenDecodable {
+pub trait UserIdSource {
     fn user_id(&self) -> Option<Uuid>;
 }

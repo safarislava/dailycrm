@@ -1,5 +1,5 @@
-use crate::model::session::access_token_decoder::AccessTokenDecoder;
-use crate::model::session::contract::access_token_decodable::AccessTokenDecodable;
+use crate::model::session::contract::user_id_source::UserIdSource;
+use crate::model::session::signed_access_token::SignedAccessToken;
 use crate::model::user::user::User;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, forward_ready};
 use actix_web::{Error, HttpMessage};
@@ -29,7 +29,7 @@ where
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "))
-            .and_then(|token| AccessTokenDecoder::new(token.to_string()).user_id());
+            .and_then(|token| SignedAccessToken::new(token.to_string()).user_id());
 
         match user_id {
             Some(id) => {

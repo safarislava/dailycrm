@@ -1,7 +1,7 @@
 use crate::endpoint::auth::session_response::SessionResponse;
-use crate::model::session::contract::refresh_token_decodable::RefreshTokenDecodable;
+use crate::model::session::contract::jti_source::JtiSource;
 use crate::model::session::refresh_token::RefreshToken;
-use crate::model::session::refresh_token_decoder::RefreshTokenDecoder;
+use crate::model::session::signed_refresh_token::SignedRefreshToken;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::tokens_issuance::TokenIssuance;
 use crate::model::user::jwt_protected_user::JwtProtectedUser;
@@ -13,7 +13,7 @@ pub async fn post(state: web::Data<AppState>, request: HttpRequest) -> impl Resp
         Some(c) => c,
         None => return HttpResponse::Unauthorized().body("No refresh token"),
     };
-    let jti = match RefreshTokenDecoder::new(cookie.value().to_string()).jti() {
+    let jti = match SignedRefreshToken::new(cookie.value().to_string()).jti() {
         Some(jti) => jti,
         None => return HttpResponse::Unauthorized().body("Invalid refresh token"),
     };
