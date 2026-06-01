@@ -342,6 +342,15 @@ export default function UserPage() {
             Выйти из аккаунта
           </button>
         </section>
+
+        <div className={styles.divider} />
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Техническая поддержка</h2>
+          <a className={styles.support} href="mailto:safarislava@gmail.com">
+            safarislava@gmail.com
+          </a>
+        </section>
       </div>
     </div>
   )

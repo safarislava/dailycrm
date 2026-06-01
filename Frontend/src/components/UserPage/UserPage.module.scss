@@ -213,6 +213,14 @@
   }
 }
 
+.support {
+  font-size: 14px;
+  color: v.$text-secondary;
+  text-decoration: none;
+
+  &:hover { color: v.$accent; }
+}
+
 .themeSwitch {
   display: flex;
   align-items: center;
