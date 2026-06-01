@@ -55,9 +55,13 @@ export default function UserPage() {
     if ('data' in result && result.data) setInviteToken(result.data.token)
   }
 
+  const inviteLink = inviteToken
+    ? `${window.location.origin}/?invite=${inviteToken}`
+    : null
+
   const handleCopy = () => {
-    if (!inviteToken) return
-    navigator.clipboard.writeText(inviteToken)
+    if (!inviteLink) return
+    navigator.clipboard.writeText(inviteLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -321,9 +325,9 @@ export default function UserPage() {
           >
             {creatingInvite ? '…' : 'Создать приглашение'}
           </button>
-          {inviteToken && (
+          {inviteLink && (
             <div className={styles.tokenBox}>
-              <span className={styles.tokenText}>{inviteToken}</span>
+              <span className={styles.tokenText}>{inviteLink}</span>
               <button className={styles.copyBtn} onClick={handleCopy}>
                 {copied ? <CheckIcon /> : <CopyIcon />}
               </button>
