@@ -1,6 +1,6 @@
 use crate::common::BoxError;
 use crate::model::schedule::contract::event::Event;
-use chrono::{Duration, NaiveTime, Utc};
+use chrono::{Duration, Local, NaiveTime};
 
 pub struct TimeOfDay {
     time: NaiveTime,
@@ -15,8 +15,12 @@ impl TimeOfDay {
 #[async_trait::async_trait]
 impl Event for TimeOfDay {
     async fn fired(&self) -> Result<(), BoxError> {
-        let now = Utc::now();
-        let today = now.date_naive().and_time(self.time).and_utc();
+        let now = Local::now();
+        let today = now
+            .date_naive()
+            .and_time(self.time)
+            .and_local_timezone(Local)
+            .unwrap();
         let target = if today > now {
             today
         } else {
