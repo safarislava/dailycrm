@@ -7,8 +7,6 @@ import {
   useCreateProjectMutation,
   useDeleteProjectMutation,
   useGetDeadlinesQuery,
-  useLogoutApiMutation,
-  useCreateInviteMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './Sidebar.module.scss'
@@ -68,16 +66,12 @@ export default function Sidebar() {
   const [composing, setComposing] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [deadlinesOpen, setDeadlinesOpen] = useState(false)
-  const [inviteToken, setInviteToken] = useState<string | null>(null)
   const bellRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const inviteRef = useRef<HTMLDivElement>(null)
 
   const { data: projects = [], isLoading } = useGetProjectsQuery()
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
   const [deleteProject] = useDeleteProjectMutation()
-  const [logoutApi] = useLogoutApiMutation()
-  const [createInvite, { isLoading: creatingInvite }] = useCreateInviteMutation()
 
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
@@ -105,20 +99,6 @@ export default function Sidebar() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [deadlinesOpen])
-
-  useEffect(() => {
-    if (!inviteToken) return
-    const handler = (e: MouseEvent) => {
-      if (!inviteRef.current?.contains(e.target as Node)) setInviteToken(null)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [inviteToken])
-
-  const handleGenerateInvite = async () => {
-    const result = await createInvite()
-    if ('data' in result && result.data) setInviteToken(result.data.token)
-  }
 
   const filtered = useMemo(
     () => projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase())),
@@ -176,45 +156,13 @@ export default function Sidebar() {
           </button>
           <button
             className={styles.composeBtn}
-            onClick={handleGenerateInvite}
-            disabled={creatingInvite}
-            title="Пригласить пользователя"
-          >
-            <InviteIcon />
-          </button>
-          <button
-            className={styles.composeBtn}
             onClick={() => dispatch(setUserPageOpen(true))}
             title="Профиль"
           >
             <ProfileIcon />
           </button>
-          <button
-            className={styles.composeBtn}
-            onClick={() => logoutApi()}
-            title="Выйти"
-          >
-            <LogoutIcon />
-          </button>
         </div>
       </header>
-
-      {inviteToken && (
-        <div ref={inviteRef} className={styles.invitePopup}>
-          <div className={styles.inviteLabel}>Инвайт-токен (действует 7 дней)</div>
-          <div className={styles.inviteRow}>
-            <span className={styles.inviteToken}>{inviteToken}</span>
-            <button
-              className={styles.inviteCopy}
-              onClick={() => navigator.clipboard.writeText(inviteToken)}
-              title="Скопировать"
-            >
-              <CopyIcon />
-            </button>
-          </div>
-          <div className={styles.inviteHint}>Отправьте токен пользователю — он вводит его при регистрации</div>
-        </div>
-      )}
 
       {deadlinesOpen && (
         <div ref={dropdownRef} className={styles.deadlineDropdown}>
@@ -366,16 +314,6 @@ function CloseIcon({ size = 14 }: { size?: number }) {
   )
 }
 
-function LogoutIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
 function BellIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -394,22 +332,3 @@ function ProfileIcon() {
   )
 }
 
-function InviteIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-      <line x1="19" y1="8" x2="19" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="22" y1="11" x2="16" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
-function CopyIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  )
-}

@@ -179,6 +179,42 @@
   &:hover:not(:disabled) { background: v.$accent-hover; border-color: v.$accent-hover; }
 }
 
+.tokenBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: v.$bg-input;
+  border-radius: v.$radius-sm;
+  padding: 8px 10px 8px 14px;
+}
+
+.tokenText {
+  flex: 1;
+  font-size: 12px;
+  font-family: monospace;
+  color: v.$text-primary;
+  word-break: break-all;
+  user-select: all;
+  line-height: 1.5;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
 .themeSwitch {
   display: flex;
   align-items: center;
