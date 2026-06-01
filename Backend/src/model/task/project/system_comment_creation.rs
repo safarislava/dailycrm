@@ -1,32 +1,36 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::user::user::User;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct PaymentConfirmation {
+pub struct SystemCommentCreation {
     pool: Arc<PgPool>,
     stage: Stage,
-    confirmed: bool,
+    author: User,
+    text: String,
 }
 
-impl PaymentConfirmation {
-    pub fn new(pool: Arc<PgPool>, stage: Stage, confirmed: bool) -> Self {
-        Self { pool, stage, confirmed }
+impl SystemCommentCreation {
+    pub fn new(pool: Arc<PgPool>, stage: Stage, author: User, text: String) -> Self {
+        Self { pool, stage, author, text }
     }
 }
 
 #[async_trait::async_trait]
-impl Task for PaymentConfirmation {
+impl Task for SystemCommentCreation {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
-            "UPDATE stages SET payment_confirmed = $3 WHERE project_id = $1 AND position = $2",
+            "INSERT INTO stage_comments(project_id, stage_position, author_id, text, is_system) \
+             VALUES ($1, $2, $3, $4, TRUE)",
         )
         .bind(self.stage.project().id())
         .bind(self.stage.position())
-        .bind(self.confirmed)
+        .bind(self.author.id())
+        .bind(&self.text)
         .execute(self.pool.as_ref())
         .await?;
         Ok(())

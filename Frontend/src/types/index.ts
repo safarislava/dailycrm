@@ -45,5 +45,6 @@ export interface Comment {
   id: string
   text: string
   author: string
+  is_system: boolean
   created_at: string
 }

@@ -393,7 +393,20 @@ export default function MainPanel() {
                 {comments.length === 0 && (
                   <p className={styles.attachmentsEmpty}>Нет комментариев</p>
                 )}
-                {comments.map((c) => (
+                {comments.map((c) => c.is_system ? (
+                  <div key={c.id} className={styles.systemComment}>
+                    <span className={styles.systemCommentText}>
+                      <span className={styles.systemCommentAuthor}>{c.author}</span>
+                      {' · '}{c.text}
+                    </span>
+                    <span className={styles.systemCommentDate}>
+                      {new Date(c.created_at).toLocaleString('ru-RU', {
+                        day: '2-digit', month: 'short',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ) : (
                   <div key={c.id} className={styles.commentBubble}>
                     <div className={styles.commentBubbleHeader}>
                       <span className={styles.commentAuthor}>{c.author}</span>

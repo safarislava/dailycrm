@@ -28,10 +28,11 @@ impl Contentable for DetailedComment {
             id: Uuid,
             text: String,
             author: String,
+            is_system: bool,
             created_at: DateTime<Utc>,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT c.id, c.text, u.username AS author, c.created_at \
+            "SELECT c.id, c.text, u.username AS author, c.is_system, c.created_at \
              FROM stage_comments c \
              JOIN users u ON u.id = c.author_id \
              WHERE c.id = $1",
