@@ -172,3 +172,34 @@
 
   &:hover:not(:disabled) { background: v.$accent-hover; border-color: v.$accent-hover; }
 }
+
+.themeSwitch {
+  display: flex;
+  align-items: center;
+  background: v.$bg-input;
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.themeBtn {
+  flex: 1;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: v.$text-secondary;
+  transition: background v.$transition-fast, color v.$transition-fast;
+  white-space: nowrap;
+
+  &:hover { color: v.$text-primary; }
+}
+
+.themeBtnActive {
+  background: v.$bg-secondary;
+  color: v.$text-primary;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}

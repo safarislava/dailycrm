@@ -13,11 +13,19 @@ export default function App() {
   const { accessToken, initialized } = useSelector((s: RootState) => s.auth)
   const selectedProjectId = useSelector((s: RootState) => s.ui.selectedProjectId)
   const userPageOpen = useSelector((s: RootState) => s.ui.userPageOpen)
+  const theme = useSelector((s: RootState) => s.ui.theme)
   const [refresh] = useRefreshMutation()
 
+  useEffect(() => { refresh() }, [])
+
   useEffect(() => {
-    refresh()
-  }, [])
+    const root = document.documentElement
+    if (theme === 'auto') {
+      root.removeAttribute('data-theme')
+    } else {
+      root.setAttribute('data-theme', theme)
+    }
+  }, [theme])
 
   if (!initialized) return null
 
