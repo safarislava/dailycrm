@@ -2,7 +2,7 @@ use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
-use crate::model::task::project::notification_enqueue::NotificationEnqueue;
+use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
 use crate::storage::Storage;
 use sqlx::PgPool;
 use std::sync::Arc;
