@@ -22,6 +22,7 @@ pub fn configure(config: &mut web::ServiceConfig) {
                     .service(web::resource("/username").patch(endpoint::users::username::patch))
                     .service(web::resource("/password").patch(endpoint::users::password::patch))
                     .service(web::resource("/email").patch(endpoint::users::email::patch))
+                    .service(web::resource("/roles").patch(endpoint::users::roles::patch))
                     .service(
                         web::resource("/notifications")
                             .patch(endpoint::users::notifications::patch),
@@ -68,16 +69,29 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::deadline::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/description")
-                                    .patch(endpoint::projects::id::stages::position::description::patch),
-                            )
-                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/cost")
                                     .patch(endpoint::projects::id::stages::position::cost::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/completed")
-                                    .patch(endpoint::projects::id::stages::position::completed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/gip-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/payment-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::payment_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/act")
+                                    .get(endpoint::projects::id::stages::position::act::list::get)
+                                    .post(endpoint::projects::id::stages::position::act::upload::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/act/{act_id}")
+                                    .delete(endpoint::projects::id::stages::position::act::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/act/{act_id}/download")
+                                    .get(endpoint::projects::id::stages::position::act::download::get),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/attachments")
@@ -91,6 +105,15 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}")
                                     .delete(endpoint::projects::id::stages::position::attachments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments")
+                                    .get(endpoint::projects::id::stages::position::comments::list::get)
+                                    .post(endpoint::projects::id::stages::position::comments::create::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments/{comment_id}")
+                                    .delete(endpoint::projects::id::stages::position::comments::delete::delete),
                             ),
                     ),
             ),

@@ -1,4 +1,5 @@
 pub mod access_token;
+pub mod claims;
 pub mod contract;
 pub mod cookie_token;
 pub mod new_token;

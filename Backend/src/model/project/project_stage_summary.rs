@@ -33,7 +33,12 @@ impl Contentable for ProjectStageSummary {
             project_title: String,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT s.project_id, s.position, s.title, s.deadline, s.completed,
+            "SELECT s.project_id, s.position, s.title, s.deadline,
+                    (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
+                        SELECT 1 FROM attachments a
+                        WHERE a.project_id = s.project_id
+                        AND a.stage_position = s.position AND a.is_act = TRUE
+                    )) AS completed,
                     p.title AS project_title
              FROM stages s
              JOIN projects p ON p.id = s.project_id

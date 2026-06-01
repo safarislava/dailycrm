@@ -32,7 +32,12 @@ impl Contentable for StageSummary {
             completed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT project_id, position, title, deadline, completed
+            "SELECT project_id, position, title, deadline,
+                    (gip_confirmed AND payment_confirmed AND EXISTS(
+                        SELECT 1 FROM attachments a
+                        WHERE a.project_id = stages.project_id
+                        AND a.stage_position = stages.position AND a.is_act = TRUE
+                    )) AS completed
              FROM stages WHERE project_id = $1 AND position = $2",
         )
         .bind(self.stage.project().id())

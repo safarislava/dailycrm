@@ -1,3 +1,5 @@
+export type Role = 'gip' | 'lawyer' | 'accountant'
+
 export interface Project {
   id: string
   title: string
@@ -13,10 +15,17 @@ export interface Stage {
 }
 
 export interface DetailedStage {
-  stage: Stage
-  description: string | null
+  project_id: string
+  position: number
+  title: string
+  deadline: string | null
+  completed: boolean
   cost: number | null
+  gip_confirmed: boolean
+  payment_confirmed: boolean
 }
+
+export type Act = Attachment
 
 export interface StageWithProjectTitle {
   stage: Stage
@@ -30,4 +39,12 @@ export interface Attachment {
   size_bytes: number
   created_at: string
   download_url: string
+}
+
+export interface Comment {
+  id: string
+  text: string
+  author: string
+  is_system: boolean
+  created_at: string
 }

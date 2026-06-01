@@ -7,6 +7,8 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: crm
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -30,36 +32,6 @@ services:
     restart: always
     ports:
       - "8025:8025"
-
-  backend:
-    build: ./Backend
-    container_name: crm_backend
-    restart: always
-    depends_on:
-      - postgres
-      - minio
-      - mailpit
-    environment:
-      DATABASE_URL: postgres://admin:admin@postgres:5432/crm
-      JWT_SECRET: change-me-in-production
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_PUBLIC_URL: http://localhost:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      SMTP_HOST: mailpit
-      SMTP_PORT: 1025
-      SMTP_USERNAME: test
-      SMTP_PASSWORD: test
-      MAIL_FROM: CRM <noreply@crm.local>
-
-  frontend:
-    build: ./Frontend
-    container_name: crm_frontend
-    restart: always
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
 
 volumes:
   pgdata:

@@ -1,4 +1,5 @@
 use crate::model::credential::username::Username;
+use crate::model::user::role::Role;
 use crate::model::user::user::User;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -47,5 +48,17 @@ impl DetailedUser {
             .fetch_optional(self.pool.as_ref())
             .await?;
         Ok(row.map(|r| r.notifications_enabled))
+    }
+
+    pub async fn roles(&self) -> Result<Vec<Role>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            role: Role,
+        }
+        let rows = sqlx::query_as::<_, Row>("SELECT role FROM user_roles WHERE user_id = $1")
+            .bind(self.user.id())
+            .fetch_all(self.pool.as_ref())
+            .await?;
+        Ok(rows.into_iter().map(|r| r.role).collect())
     }
 }

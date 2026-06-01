@@ -27,15 +27,29 @@ impl Task for StageInsertion {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
+        #[derive(sqlx::FromRow)]
+        struct Row {
+            position: i32,
+        }
         let mut transaction = self.pool.begin().await?;
-        sqlx::query(
-            "UPDATE stages SET position = position + 1
-             WHERE project_id = $1 AND position >= $2",
+        let rows = sqlx::query_as::<_, Row>(
+            "SELECT position FROM stages \
+             WHERE project_id = $1 AND position >= $2 ORDER BY position DESC",
         )
         .bind(self.project.id())
         .bind(self.position)
-        .execute(&mut *transaction)
+        .fetch_all(&mut *transaction)
         .await?;
+        for row in rows {
+            sqlx::query(
+                "UPDATE stages SET position = position + 1 \
+                 WHERE project_id = $1 AND position = $2",
+            )
+            .bind(self.project.id())
+            .bind(row.position)
+            .execute(&mut *transaction)
+            .await?;
+        }
         sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
             .bind(self.project.id())
             .bind(self.position)

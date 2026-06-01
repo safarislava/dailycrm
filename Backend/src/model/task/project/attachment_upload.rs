@@ -13,6 +13,7 @@ pub struct AttachmentUpload {
     filename: String,
     mime_type: String,
     data: Vec<u8>,
+    is_act: bool,
 }
 
 impl AttachmentUpload {
@@ -23,15 +24,9 @@ impl AttachmentUpload {
         filename: String,
         mime_type: String,
         data: Vec<u8>,
+        is_act: bool,
     ) -> Self {
-        Self {
-            pool,
-            storage,
-            stage,
-            filename,
-            mime_type,
-            data,
-        }
+        Self { pool, storage, stage, filename, mime_type, data, is_act }
     }
 }
 
@@ -43,16 +38,11 @@ impl Task for AttachmentUpload {
         let size_bytes = self.data.len() as i64;
         let id = Uuid::new_v4();
         self.storage
-            .upload(
-                &id.to_string(),
-                self.data.clone(),
-                &self.mime_type,
-                &self.filename,
-            )
+            .upload(&id.to_string(), self.data.clone(), &self.mime_type, &self.filename)
             .await?;
         sqlx::query(
-            "INSERT INTO attachments(id, project_id, stage_position, filename, mime_type, size_bytes)
-             VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO attachments(id, project_id, stage_position, filename, mime_type, size_bytes, is_act)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)",
         )
         .bind(id)
         .bind(self.stage.project().id())
@@ -60,6 +50,7 @@ impl Task for AttachmentUpload {
         .bind(&self.filename)
         .bind(&self.mime_type)
         .bind(size_bytes)
+        .bind(self.is_act)
         .execute(self.pool.as_ref())
         .await?;
         Ok(id)

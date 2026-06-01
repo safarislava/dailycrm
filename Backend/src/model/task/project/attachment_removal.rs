@@ -13,11 +13,7 @@ pub struct AttachmentRemoval {
 
 impl AttachmentRemoval {
     pub fn new(pool: Arc<PgPool>, storage: Arc<Storage>, attachment: Attachment) -> Self {
-        Self {
-            pool,
-            storage,
-            attachment,
-        }
+        Self { pool, storage, attachment }
     }
 }
 

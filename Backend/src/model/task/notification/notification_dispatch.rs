@@ -1,0 +1,32 @@
+use crate::common::BoxError;
+use crate::mail::Mailer;
+use crate::model::task::contract::task::Task;
+use crate::model::task::notification::notification_dequeue::NotificationDequeue;
+use crate::model::task::notification::notification_send::NotificationSend;
+use sqlx::PgPool;
+use std::sync::Arc;
+
+pub struct NotificationDispatch {
+    pool: Arc<PgPool>,
+    mailer: Arc<Mailer>,
+}
+
+impl NotificationDispatch {
+    pub fn new(pool: Arc<PgPool>, mailer: Arc<Mailer>) -> Self {
+        Self { pool, mailer }
+    }
+}
+
+#[async_trait::async_trait]
+impl Task for NotificationDispatch {
+    type Output = ();
+
+    async fn done(&self) -> Result<Self::Output, BoxError> {
+        for notification in NotificationDequeue::new(self.pool.clone()).done().await? {
+            NotificationSend::new(self.pool.clone(), self.mailer.clone(), notification)
+                .done()
+                .await?;
+        }
+        Ok(())
+    }
+}
