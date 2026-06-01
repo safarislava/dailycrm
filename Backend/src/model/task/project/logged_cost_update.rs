@@ -33,6 +33,9 @@ impl Task for LoggedCostUpdate {
             .done()
             .await?;
         if let Some(old_cost) = old {
+            if self.cost == Some(old_cost) {
+                return Ok(());
+            }
             let text = match self.cost {
                 Some(new_cost) => format!(
                     "Стоимость изменена: {} ₽ → {} ₽",
