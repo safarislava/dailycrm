@@ -57,12 +57,29 @@
   gap: 12px;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .sectionTitle {
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: v.$text-secondary;
+}
+
+.editBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$accent;
+  padding: 4px 10px;
+  border-radius: v.$radius-sm;
+  transition: background v.$transition-fast;
+
+  &:hover { background: v.$accent-light; }
 }
 
 .current {
@@ -75,13 +92,8 @@
   }
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.input {
+// Input used inside FormModal children
+.modalInput {
   height: 40px;
   padding: 0 14px;
   background: v.$bg-input;
@@ -91,17 +103,12 @@
   font-size: 14px;
   outline: none;
   transition: border-color v.$transition-fast;
+  width: 100%;
 
   &::placeholder { color: v.$text-secondary; }
   &:focus { border-color: v.$accent; }
 
   @supports (-webkit-touch-callout: none) { font-size: 16px; height: 44px; }
-}
-
-.error {
-  margin: 0;
-  font-size: 13px;
-  color: #fc8181;
 }
 
 .success {
@@ -142,7 +149,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
 }
 
 .roleBtn {
@@ -171,4 +177,71 @@
   color: #fff;
 
   &:hover:not(:disabled) { background: v.$accent-hover; border-color: v.$accent-hover; }
+}
+
+.tokenBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: v.$bg-input;
+  border-radius: v.$radius-sm;
+  padding: 8px 10px 8px 14px;
+}
+
+.tokenText {
+  flex: 1;
+  font-size: 12px;
+  font-family: monospace;
+  color: v.$text-primary;
+  word-break: break-all;
+  user-select: all;
+  line-height: 1.5;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: v.$radius-sm;
+  color: v.$text-secondary;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
+.themeSwitch {
+  display: flex;
+  align-items: center;
+  background: v.$bg-input;
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.themeBtn {
+  flex: 1;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: v.$text-secondary;
+  transition: background v.$transition-fast, color v.$transition-fast;
+  white-space: nowrap;
+
+  &:hover { color: v.$text-primary; }
+}
+
+.themeBtnActive {
+  background: v.$bg-secondary;
+  color: v.$text-primary;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }

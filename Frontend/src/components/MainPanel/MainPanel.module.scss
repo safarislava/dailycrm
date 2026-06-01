@@ -422,7 +422,6 @@
   resize: none;
   font-family: inherit;
 
-  &[type='date'] { color-scheme: dark; }
   &[type='number'] { -moz-appearance: textfield; }
 
   @supports (-webkit-touch-callout: none) { font-size: 16px; }

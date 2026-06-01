@@ -1,34 +1,37 @@
-// Telegram dark theme
-$bg-primary:           #0e1621;
-$bg-secondary:         #17212b;
-$bg-item-hover:        #1c2733;
-$bg-item-active:       #2b5278;
-$bg-bubble:            #2b5278;
-$bg-bubble-hover:      #3a6490;
-$bg-input:             #242f3d;
+// Theme-aware color tokens — values come from CSS custom properties
+$bg-primary:      var(--bg-primary);
+$bg-secondary:    var(--bg-secondary);
+$bg-item-hover:   var(--bg-item-hover);
+$bg-item-active:  var(--bg-item-active);
+$bg-bubble:       var(--bg-bubble);
+$bg-bubble-hover: var(--bg-bubble-hover);
+$bg-input:        var(--bg-input);
 
-$text-primary:         #ffffff;
-$text-secondary:       #708499;
+$text-primary:    var(--text-primary);
+$text-secondary:  var(--text-secondary);
 
-$accent:               #5288c1;
-$accent-hover:         #4a7ab8;
-$accent-light:         rgba(82, 136, 193, 0.12);
+$accent:          var(--accent);
+$accent-hover:    var(--accent-hover);
+$accent-light:    var(--accent-light);
 
-$danger:               #e53935;
-$danger-light:         rgba(229, 57, 53, 0.15);
+$danger:          var(--danger);
+$danger-light:    var(--danger-light);
 
-$divider:              rgba(255, 255, 255, 0.05);
+$divider:         var(--divider);
+$shadow-popup:    var(--shadow-popup);
+$shadow-modal:    var(--shadow-modal);
 
-$sidebar-width:        340px;
-$header-height:        56px;
+// Static layout / radius / motion
+$sidebar-width:      340px;
+$header-height:      56px;
 
-$radius-sm:            4px;
-$radius-md:            12px;
-$radius-lg:            18px;
-$radius-bubble-out:    18px 18px 4px 18px;
+$radius-sm:          4px;
+$radius-md:          12px;
+$radius-lg:          18px;
+$radius-bubble-out:  18px 18px 4px 18px;
 
-$transition-fast:      0.15s ease;
-$transition-normal:    0.25s ease;
-$transition-slide:     0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast:    0.15s ease;
+$transition-normal:  0.25s ease;
+$transition-slide:   0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
 $avatar-colors: #e17076, #7bc862, #65aadd, #a695e7, #ee7aae, #faa774, #6ec9cb;

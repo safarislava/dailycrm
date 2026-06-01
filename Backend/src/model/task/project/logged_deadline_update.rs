@@ -34,6 +34,9 @@ impl Task for LoggedDeadlineUpdate {
             .done()
             .await?;
         if let Some(old_date) = old {
+            if self.deadline == Some(old_date) {
+                return Ok(());
+            }
             let text = match self.deadline {
                 Some(new_date) => format!(
                     "Дедлайн изменён: {} → {}",

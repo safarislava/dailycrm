@@ -16,53 +16,37 @@
   border-radius: v.$radius-lg;
   padding: 28px 28px 24px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   margin: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 24px 64px v.$shadow-modal;
 }
 
 .heading {
   font-size: 18px;
   font-weight: 700;
-}
-
-.warning {
-  font-size: 14px;
-  color: v.$text-secondary;
-  line-height: 1.5;
-
-  strong {
-    color: v.$text-primary;
-    font-family: monospace;
-  }
-}
-
-.input {
-  height: 44px;
-  padding: 0 14px;
-  background: v.$bg-input;
-  border-radius: v.$radius-md;
-  font-size: 15px;
-  font-family: monospace;
-
-  @supports (-webkit-touch-callout: none) {
-    font-size: 16px;
-  }
   color: v.$text-primary;
-  outline: none;
-  border: 1px solid transparent;
-  transition: border-color v.$transition-fast;
+}
 
-  &:focus { border-color: v.$accent; }
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #e53935;
 }
 
 .actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .cancelBtn {
@@ -80,20 +64,16 @@
   }
 }
 
-.deleteBtn {
+.submitBtn {
   height: 40px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: v.$radius-md;
   font-size: 14px;
   font-weight: 600;
-  background: v.$danger;
+  background: v.$accent;
   color: #fff;
   transition: background v.$transition-fast;
 
-  &:hover:not(:disabled) { background: #c62828; }
-  &:disabled {
-    background: v.$bg-input;
-    color: v.$text-secondary;
-    cursor: default;
-  }
+  &:hover:not(:disabled) { background: v.$accent-hover; }
+  &:disabled { opacity: 0.5; cursor: default; }
 }

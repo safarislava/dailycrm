@@ -1,5 +1,73 @@
 @use './variables' as v;
 
+// ── Theme tokens ──────────────────────────────────────────
+@mixin dark-tokens {
+  --bg-primary:      #0e1621;
+  --bg-secondary:    #17212b;
+  --bg-item-hover:   #1c2733;
+  --bg-item-active:  #2b5278;
+  --bg-bubble:       #2b5278;
+  --bg-bubble-hover: #3a6490;
+  --bg-input:        #242f3d;
+
+  --text-primary:    #ffffff;
+  --text-secondary:  #708499;
+
+  --accent:          #5288c1;
+  --accent-hover:    #4a7ab8;
+  --accent-light:    rgba(82, 136, 193, 0.12);
+
+  --danger:          #e53935;
+  --danger-light:    rgba(229, 57, 53, 0.15);
+
+  --divider:         rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --shadow-popup:    rgba(0, 0, 0, 0.4);
+  --shadow-modal:    rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+@mixin light-tokens {
+  --bg-primary:      #eef2f5;
+  --bg-secondary:    #ffffff;
+  --bg-item-hover:   #e3e8ee;
+  --bg-item-active:  #d0e8fb;
+  --bg-bubble:       #d0e8fb;
+  --bg-bubble-hover: #bcdaf7;
+  --bg-input:        #e3e8ee;
+
+  --text-primary:    #1a2634;
+  --text-secondary:  #8a9bae;
+
+  --accent:          #3a7abf;
+  --accent-hover:    #2e69ab;
+  --accent-light:    rgba(58, 122, 191, 0.1);
+
+  --danger:          #e53935;
+  --danger-light:    rgba(229, 57, 53, 0.1);
+
+  --divider:         rgba(0, 0, 0, 0.08);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --shadow-popup:    rgba(0, 0, 0, 0.12);
+  --shadow-modal:    rgba(0, 0, 0, 0.18);
+
+  color-scheme: light;
+}
+
+// dark by default
+:root { @include dark-tokens; }
+
+// auto: follow OS preference
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) { @include light-tokens; }
+}
+
+// explicit overrides
+:root[data-theme="dark"]  { @include dark-tokens; }
+:root[data-theme="light"] { @include light-tokens; }
+
+// ── Reset ─────────────────────────────────────────────────
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -52,6 +120,6 @@ input, textarea, select {
 ::-webkit-scrollbar        { width: 4px; }
 ::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
