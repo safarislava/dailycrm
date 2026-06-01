@@ -209,7 +209,7 @@
 // ── Footer ───────────────────────────────────────────────
 .footer {
   border-top: 1px solid v.$divider;
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 
 .newProjectBtn {
@@ -217,7 +217,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 40px;
+  height: 44px;
   padding: 0 14px;
   border-radius: v.$radius-sm;
   color: v.$text-secondary;
@@ -232,17 +232,17 @@
 
 .createRow {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   align-items: center;
 }
 
 .createInput {
   flex: 1;
-  height: 36px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 18px;
   background: v.$bg-input;
-  border-radius: v.$radius-sm;
-  font-size: 14px;
+  border-radius: 22px;
+  font-size: 15px;
   min-width: 0;
 
   @supports (-webkit-touch-callout: none) {
@@ -251,34 +251,22 @@
 }
 
 .createBtn {
-  height: 36px;
-  padding: 0 14px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
   background: v.$accent;
   color: #fff;
-  border-radius: v.$radius-sm;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background v.$transition-fast;
-
-  &:hover:not(:disabled) { background: v.$accent-hover; }
-  &:disabled { opacity: 0.45; cursor: default; }
-}
-
-.createCancelBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: v.$radius-sm;
-  color: v.$text-secondary;
-  transition: color v.$transition-fast, background v.$transition-fast;
+  transition: background v.$transition-fast;
 
-  &:hover {
-    color: v.$text-primary;
-    background: v.$bg-item-hover;
+  &:hover:not(:disabled) { background: v.$accent-hover; }
+  &:disabled {
+    background: v.$bg-input;
+    color: v.$text-secondary;
+    cursor: default;
   }
 }
 
