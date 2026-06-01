@@ -57,12 +57,29 @@
   gap: 12px;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .sectionTitle {
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: v.$text-secondary;
+}
+
+.editBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$accent;
+  padding: 4px 10px;
+  border-radius: v.$radius-sm;
+  transition: background v.$transition-fast;
+
+  &:hover { background: v.$accent-light; }
 }
 
 .current {
@@ -75,13 +92,8 @@
   }
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.input {
+// Input used inside FormModal children
+.modalInput {
   height: 40px;
   padding: 0 14px;
   background: v.$bg-input;
@@ -91,17 +103,12 @@
   font-size: 14px;
   outline: none;
   transition: border-color v.$transition-fast;
+  width: 100%;
 
   &::placeholder { color: v.$text-secondary; }
   &:focus { border-color: v.$accent; }
 
   @supports (-webkit-touch-callout: none) { font-size: 16px; height: 44px; }
-}
-
-.error {
-  margin: 0;
-  font-size: 13px;
-  color: #fc8181;
 }
 
 .success {
@@ -142,7 +149,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
 }
 
 .roleBtn {

@@ -1,0 +1,79 @@
+@use '../../styles/variables' as v;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: v.$bg-secondary;
+  border-radius: v.$radius-lg;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 400px;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 24px 64px v.$shadow-modal;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: v.$text-primary;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #e53935;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  transition: background v.$transition-fast, color v.$transition-fast;
+
+  &:hover {
+    background: v.$bg-input;
+    color: v.$text-primary;
+  }
+}
+
+.submitBtn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 600;
+  background: v.$accent;
+  color: #fff;
+  transition: background v.$transition-fast;
+
+  &:hover:not(:disabled) { background: v.$accent-hover; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}

@@ -11,26 +11,28 @@ import {
   useUpdateRolesMutation,
 } from '../../store/crmApi'
 import type { Role } from '../../types'
+import FormModal from '../FormModal/FormModal'
 import styles from './UserPage.module.scss'
+
+type ModalKind = 'username' | 'email' | 'password'
 
 export default function UserPage() {
   const dispatch = useDispatch<AppDispatch>()
   const { data: me } = useGetMeQuery()
   const theme = useSelector((s: RootState) => s.ui.theme)
 
+  const [modal, setModal] = useState<ModalKind | null>(null)
+
   const [username, setUsername] = useState('')
   const [usernameError, setUsernameError] = useState<string | null>(null)
-  const [usernameSuccess, setUsernameSuccess] = useState(false)
+
+  const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
-
-  const [email, setEmail] = useState('')
-  const [emailError, setEmailError] = useState<string | null>(null)
-  const [emailSuccess, setEmailSuccess] = useState(false)
 
   const [rolesSuccess, setRolesSuccess] = useState(false)
 
@@ -39,6 +41,13 @@ export default function UserPage() {
   const [updateEmail, { isLoading: savingEmail }] = useUpdateEmailMutation()
   const [updateNotifications, { isLoading: savingNotifications }] = useUpdateNotificationsMutation()
   const [updateRoles, { isLoading: savingRoles }] = useUpdateRolesMutation()
+
+  const closeModal = () => {
+    setModal(null)
+    setUsernameError(null)
+    setEmailError(null)
+    setPasswordError(null)
+  }
 
   const handleRoleToggle = async (role: Role) => {
     if (!me) return
@@ -52,37 +61,32 @@ export default function UserPage() {
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setUsernameError(null)
-    setUsernameSuccess(false)
     const result = await updateUsername({ username: username.trim() })
     if ('error' in result) {
       const status = (result.error as { status?: number })?.status
-      if (status === 409) setUsernameError('Имя пользователя уже занято')
-      else setUsernameError('Что-то пошло не так')
+      setUsernameError(status === 409 ? 'Имя пользователя уже занято' : 'Что-то пошло не так')
     } else {
-      setUsernameSuccess(true)
       setUsername('')
+      closeModal()
     }
   }
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setEmailError(null)
-    setEmailSuccess(false)
     const result = await updateEmail({ email: email.trim() })
     if ('error' in result) {
       const status = (result.error as { status?: number })?.status
-      if (status === 409) setEmailError('Этот email уже используется')
-      else setEmailError('Что-то пошло не так')
+      setEmailError(status === 409 ? 'Этот email уже используется' : 'Что-то пошло не так')
     } else {
-      setEmailSuccess(true)
       setEmail('')
+      closeModal()
     }
   }
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError(null)
-    setPasswordSuccess(false)
     if (newPassword !== confirmPassword) {
       setPasswordError('Пароли не совпадают')
       return
@@ -90,18 +94,100 @@ export default function UserPage() {
     const result = await updatePassword({ current_password: currentPassword, new_password: newPassword })
     if ('error' in result) {
       const status = (result.error as { status?: number })?.status
-      if (status === 401) setPasswordError('Неверный текущий пароль')
-      else setPasswordError('Что-то пошло не так')
+      setPasswordError(status === 401 ? 'Неверный текущий пароль' : 'Что-то пошло не так')
     } else {
-      setPasswordSuccess(true)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
+      closeModal()
     }
   }
 
   return (
     <div className={styles.page}>
+      {modal === 'username' && (
+        <FormModal
+          heading="Изменить имя пользователя"
+          onClose={closeModal}
+          onSubmit={handleUsernameSubmit}
+          loading={savingUsername}
+          error={usernameError}
+          submitLabel="Сохранить"
+        >
+          <input
+            className={styles.modalInput}
+            placeholder="Новое имя пользователя"
+            value={username}
+            onChange={(e) => { setUsername(e.target.value); setUsernameError(null) }}
+            autoComplete="username"
+            autoFocus
+            required
+          />
+        </FormModal>
+      )}
+
+      {modal === 'email' && (
+        <FormModal
+          heading="Изменить email"
+          onClose={closeModal}
+          onSubmit={handleEmailSubmit}
+          loading={savingEmail}
+          error={emailError}
+          submitLabel="Сохранить"
+        >
+          <input
+            className={styles.modalInput}
+            type="email"
+            placeholder="Новый email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setEmailError(null) }}
+            autoComplete="email"
+            autoFocus
+            required
+          />
+        </FormModal>
+      )}
+
+      {modal === 'password' && (
+        <FormModal
+          heading="Изменить пароль"
+          onClose={closeModal}
+          onSubmit={handlePasswordSubmit}
+          loading={savingPassword}
+          error={passwordError}
+          submitLabel="Изменить"
+        >
+          <input
+            className={styles.modalInput}
+            type="password"
+            placeholder="Текущий пароль"
+            value={currentPassword}
+            onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null) }}
+            autoComplete="current-password"
+            autoFocus
+            required
+          />
+          <input
+            className={styles.modalInput}
+            type="password"
+            placeholder="Новый пароль"
+            value={newPassword}
+            onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null) }}
+            autoComplete="new-password"
+            required
+          />
+          <input
+            className={styles.modalInput}
+            type="password"
+            placeholder="Повторите новый пароль"
+            value={confirmPassword}
+            onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(null) }}
+            autoComplete="new-password"
+            required
+          />
+        </FormModal>
+      )}
+
       <header className={styles.header}>
         <button className={styles.back} onClick={() => dispatch(setUserPageOpen(false))}>
           <BackIcon />
@@ -111,46 +197,21 @@ export default function UserPage() {
 
       <div className={styles.content}>
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Имя пользователя</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Имя пользователя</h2>
+            <button className={styles.editBtn} onClick={() => setModal('username')}>Изменить</button>
+          </div>
           {me && <p className={styles.current}>Текущее: <strong>{me.username}</strong></p>}
-          <form className={styles.form} onSubmit={handleUsernameSubmit}>
-            <input
-              className={styles.input}
-              placeholder="Новое имя пользователя"
-              value={username}
-              onChange={(e) => { setUsername(e.target.value); setUsernameSuccess(false) }}
-              autoComplete="username"
-              required
-            />
-            {usernameError && <p className={styles.error}>{usernameError}</p>}
-            {usernameSuccess && <p className={styles.success}>Имя изменено</p>}
-            <button className={styles.btn} type="submit" disabled={savingUsername || !username.trim()}>
-              {savingUsername ? '…' : 'Сохранить'}
-            </button>
-          </form>
         </section>
 
         <div className={styles.divider} />
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Email</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Email</h2>
+            <button className={styles.editBtn} onClick={() => setModal('email')}>Изменить</button>
+          </div>
           {me && <p className={styles.current}>Текущий: <strong>{me.email}</strong></p>}
-          <form className={styles.form} onSubmit={handleEmailSubmit}>
-            <input
-              className={styles.input}
-              type="email"
-              placeholder="Новый email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setEmailSuccess(false) }}
-              autoComplete="email"
-              required
-            />
-            {emailError && <p className={styles.error}>{emailError}</p>}
-            {emailSuccess && <p className={styles.success}>Email изменён</p>}
-            <button className={styles.btn} type="submit" disabled={savingEmail || !email.trim()}>
-              {savingEmail ? '…' : 'Сохранить'}
-            </button>
-          </form>
         </section>
 
         <div className={styles.divider} />
@@ -222,41 +283,10 @@ export default function UserPage() {
         <div className={styles.divider} />
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Пароль</h2>
-          <form className={styles.form} onSubmit={handlePasswordSubmit}>
-            <input
-              className={styles.input}
-              type="password"
-              placeholder="Текущий пароль"
-              value={currentPassword}
-              onChange={(e) => { setCurrentPassword(e.target.value); setPasswordSuccess(false) }}
-              autoComplete="current-password"
-              required
-            />
-            <input
-              className={styles.input}
-              type="password"
-              placeholder="Новый пароль"
-              value={newPassword}
-              onChange={(e) => { setNewPassword(e.target.value); setPasswordSuccess(false) }}
-              autoComplete="new-password"
-              required
-            />
-            <input
-              className={styles.input}
-              type="password"
-              placeholder="Повторите новый пароль"
-              value={confirmPassword}
-              onChange={(e) => { setConfirmPassword(e.target.value); setPasswordSuccess(false) }}
-              autoComplete="new-password"
-              required
-            />
-            {passwordError && <p className={styles.error}>{passwordError}</p>}
-            {passwordSuccess && <p className={styles.success}>Пароль изменён</p>}
-            <button className={styles.btn} type="submit" disabled={savingPassword}>
-              {savingPassword ? '…' : 'Изменить пароль'}
-            </button>
-          </form>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Пароль</h2>
+            <button className={styles.editBtn} onClick={() => setModal('password')}>Изменить</button>
+          </div>
         </section>
       </div>
     </div>
