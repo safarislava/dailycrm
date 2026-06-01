@@ -256,20 +256,16 @@ export default function Sidebar() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={handleCreateKey}
+              onBlur={() => { setComposing(false); setNewTitle('') }}
               autoFocus
             />
             <button
               className={styles.createBtn}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={submitCreate}
               disabled={!newTitle.trim() || creating}
             >
-              Создать
-            </button>
-            <button
-              className={styles.createCancelBtn}
-              onClick={() => { setComposing(false); setNewTitle('') }}
-            >
-              <CloseIcon size={14} />
+              <SendIcon />
             </button>
           </div>
         ) : (
@@ -328,6 +324,15 @@ function ProfileIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function SendIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     </svg>
   )
 }

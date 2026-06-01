@@ -21,6 +21,7 @@ const uiSlice = createSlice({
     selectProject(state, action: PayloadAction<string | null>) {
       state.selectedProjectId = action.payload
       state.selectedStageId = null
+      state.userPageOpen = false
     },
     selectStage(state, action: PayloadAction<string | null>) {
       state.selectedStageId = action.payload

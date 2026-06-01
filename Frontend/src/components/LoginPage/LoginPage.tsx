@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../../store'
 import { setAccessToken } from '../../store/authSlice'
@@ -16,6 +16,16 @@ export default function LoginPage() {
 
   const [login, { isLoading: loggingIn }] = useLoginMutation()
   const [register, { isLoading: registering }] = useRegisterMutation()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('invite')
+    if (token) {
+      setInviteToken(token)
+      setMode('register')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const loading = loggingIn || registering
 
