@@ -105,6 +105,15 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}")
                                     .delete(endpoint::projects::id::stages::position::attachments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments")
+                                    .get(endpoint::projects::id::stages::position::comments::list::get)
+                                    .post(endpoint::projects::id::stages::position::comments::create::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments/{comment_id}")
+                                    .delete(endpoint::projects::id::stages::position::comments::delete::delete),
                             ),
                     ),
             ),

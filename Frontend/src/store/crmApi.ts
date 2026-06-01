@@ -5,7 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
-import type { Project, Role, Stage, DetailedStage, StageWithProjectTitle, Attachment, Act } from '../types'
+import type { Project, Role, Stage, DetailedStage, StageWithProjectTitle, Attachment, Act, Comment } from '../types'
 import { setAccessToken, setInitialized, logout } from './authSlice'
 
 const baseQuery = fetchBaseQuery({
@@ -44,7 +44,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const crmApi = createApi({
   reducerPath: 'crmApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment', 'Act'],
+  tagTypes: ['Project', 'Stage', 'Deadline', 'Me', 'Attachment', 'Act', 'Comment'],
   endpoints: (builder) => ({
 
     register: builder.mutation<void, { username: string; password: string; invite_token: string; email: string }>({
@@ -287,6 +287,32 @@ export const crmApi = createApi({
       invalidatesTags: ['Me'],
     }),
 
+    listComments: builder.query<Comment[], { projectId: string; position: number }>({
+      query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}/comments`,
+      providesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+    addComment: builder.mutation<void, { projectId: string; position: number; text: string }>({
+      query: ({ projectId, position, text }) => ({
+        url: `/projects/${projectId}/stages/${position}/comments`,
+        method: 'POST',
+        body: { text },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+    deleteComment: builder.mutation<void, { projectId: string; position: number; commentId: string }>({
+      query: ({ projectId, position, commentId }) => ({
+        url: `/projects/${projectId}/stages/${position}/comments/${commentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+
   }),
 })
 
@@ -323,4 +349,7 @@ export const {
   useUploadActMutation,
   useDeleteActMutation,
   useRenameProjectMutation,
+  useListCommentsQuery,
+  useAddCommentMutation,
+  useDeleteCommentMutation,
 } = crmApi

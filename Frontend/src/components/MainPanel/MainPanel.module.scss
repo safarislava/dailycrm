@@ -585,6 +585,89 @@
   to { transform: rotate(360deg); }
 }
 
+// ── Comments ──────────────────────────────────────────
+.commentBubble {
+  padding: 8px 16px 10px;
+  border-top: 1px solid v.$divider;
+
+  &:hover .commentDeleteBtn { opacity: 1; }
+}
+
+.commentBubbleHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.commentAuthor {
+  font-size: 13px;
+  font-weight: 600;
+  color: v.$accent;
+  flex-shrink: 0;
+}
+
+.commentDate {
+  font-size: 11px;
+  color: v.$text-secondary;
+  flex: 1;
+}
+
+.commentDeleteBtn {
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$text-secondary;
+  transition: opacity v.$transition-fast, color v.$transition-fast,
+    background v.$transition-fast;
+
+  &:hover {
+    color: v.$danger;
+    background: v.$danger-light;
+    opacity: 1 !important;
+  }
+
+  @media (hover: none) { opacity: 1; }
+}
+
+.commentText {
+  font-size: 14px;
+  color: v.$text-primary;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.commentInputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid v.$divider;
+}
+
+.commentInput {
+  flex: 1;
+  padding: 10px 14px;
+  background: v.$bg-input;
+  border-radius: 22px;
+  font-size: 14px;
+  color: v.$text-primary;
+  resize: none;
+  font-family: inherit;
+  outline: none;
+  line-height: 1.45;
+  max-height: 120px;
+  overflow-y: auto;
+
+  @supports (-webkit-touch-callout: none) { font-size: 16px; }
+}
+
 .actUploadBtn {
   position: relative;
   display: inline-flex;

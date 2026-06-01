@@ -40,3 +40,10 @@ export interface Attachment {
   created_at: string
   download_url: string
 }
+
+export interface Comment {
+  id: string
+  text: string
+  author: string
+  created_at: string
+}

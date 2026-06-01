@@ -1,5 +1,6 @@
 pub mod act;
 pub mod attachments;
+pub mod comments;
 pub mod cost;
 pub mod create;
 pub mod deadline;

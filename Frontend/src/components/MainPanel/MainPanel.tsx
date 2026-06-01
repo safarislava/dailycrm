@@ -23,6 +23,9 @@ import {
   useListAttachmentsQuery,
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation,
+  useListCommentsQuery,
+  useAddCommentMutation,
+  useDeleteCommentMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
@@ -89,6 +92,14 @@ export default function MainPanel() {
   const [uploadAttachment, { isLoading: uploading }] = useUploadAttachmentMutation()
   const [deleteAttachment] = useDeleteAttachmentMutation()
   const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const { data: comments = [] } = useListCommentsQuery(
+    { projectId: projectId!, position: Number(stagePos) },
+    { skip: !projectId || stagePos === null },
+  )
+  const [addComment, { isLoading: addingComment }] = useAddCommentMutation()
+  const [deleteComment] = useDeleteCommentMutation()
+  const [commentText, setCommentText] = useState('')
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const handleFileChange = useCallback(
@@ -374,6 +385,65 @@ export default function MainPanel() {
                     </button>
                   </div>
                 ))}
+              </div>
+              <div className={styles.attachmentsSection}>
+                <div className={styles.attachmentsHeader}>
+                  <span className={styles.attachmentsSectionLabel}>Комментарии</span>
+                </div>
+                {comments.length === 0 && (
+                  <p className={styles.attachmentsEmpty}>Нет комментариев</p>
+                )}
+                {comments.map((c) => (
+                  <div key={c.id} className={styles.commentBubble}>
+                    <div className={styles.commentBubbleHeader}>
+                      <span className={styles.commentAuthor}>{c.author}</span>
+                      <span className={styles.commentDate}>
+                        {new Date(c.created_at).toLocaleString('ru-RU', {
+                          day: '2-digit', month: 'short',
+                          hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                      <button
+                        className={styles.commentDeleteBtn}
+                        title="Удалить"
+                        onClick={() => deleteComment({ projectId: projectId!, position: Number(stagePos), commentId: c.id })}
+                      >
+                        <CloseIcon />
+                      </button>
+                    </div>
+                    <p className={styles.commentText}>{c.text}</p>
+                  </div>
+                ))}
+                <div className={styles.commentInputRow}>
+                  <textarea
+                    className={styles.commentInput}
+                    placeholder="Написать комментарий…"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        if (commentText.trim() && !addingComment) {
+                          addComment({ projectId: projectId!, position: Number(stagePos), text: commentText.trim() })
+                          setCommentText('')
+                        }
+                      }
+                    }}
+                    rows={1}
+                  />
+                  <button
+                    className={styles.sendBtn}
+                    disabled={!commentText.trim() || addingComment}
+                    onClick={() => {
+                      if (commentText.trim() && !addingComment) {
+                        addComment({ projectId: projectId!, position: Number(stagePos), text: commentText.trim() })
+                        setCommentText('')
+                      }
+                    }}
+                  >
+                    <SendIcon />
+                  </button>
+                </div>
               </div>
             </div>
           )}

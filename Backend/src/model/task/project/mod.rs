@@ -2,6 +2,8 @@ pub mod act_upload;
 pub mod attachment_download;
 pub mod attachment_removal;
 pub mod attachment_upload;
+pub mod comment_creation;
+pub mod comment_removal;
 pub mod cost_update;
 pub mod deadline_update;
 pub mod gip_confirmation;
