@@ -90,6 +90,20 @@
   text-align: center;
 }
 
+.support {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: v.$text-secondary;
+  text-align: center;
+
+  a {
+    color: v.$text-secondary;
+    text-decoration: none;
+
+    &:hover { color: v.$accent; }
+  }
+}
+
 .submit {
   margin-top: 6px;
   padding: 12px;

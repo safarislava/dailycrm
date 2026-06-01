@@ -126,6 +126,10 @@ export default function LoginPage() {
         <button className={styles.submit} type="submit" disabled={loading}>
           {loading ? '…' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
         </button>
+        <p className={styles.support}>
+          Техподдержка:{' '}
+          <a href="mailto:safarislava@gmail.com">safarislava@gmail.com</a>
+        </p>
       </form>
     </div>
   )
