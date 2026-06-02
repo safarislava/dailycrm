@@ -1,7 +1,9 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::project::gip_confirmation::GipConfirmation;
+use crate::model::task::project::comment_text::CommentText;
+use crate::model::task::project::gip_confirmation_text::GipConfirmationText;
+use crate::model::task::project::notified_gip_confirmation::NotifiedGipConfirmation;
 use crate::model::task::project::stage_gip_confirmed_receipt::StageGipConfirmedReceipt;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
 use crate::model::user::user::User;
@@ -34,15 +36,11 @@ impl Task for LoggedGipConfirmation {
         let old = StageGipConfirmedReceipt::new(self.pool.clone(), self.stage.clone())
             .done()
             .await?;
-        GipConfirmation::new(self.pool.clone(), self.stage.clone(), self.confirmed)
+        NotifiedGipConfirmation::new(self.pool.clone(), self.stage.clone(), self.confirmed)
             .done()
             .await?;
         if old != Some(self.confirmed) {
-            let text = if self.confirmed {
-                "ГИП подтвердил выполнение".to_string()
-            } else {
-                "ГИП снял подтверждение выполнения".to_string()
-            };
+            let text = GipConfirmationText::new(self.confirmed).text();
             let _ = SystemCommentCreation::new(
                 self.pool.clone(),
                 self.stage.clone(),

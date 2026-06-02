@@ -3,6 +3,8 @@ use crate::model::project::attachment::Attachment;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_receipt::AttachmentReceipt;
 use crate::model::task::project::attachment_removal::AttachmentRemoval;
+use crate::model::task::project::attachment_removal_text::AttachmentRemovalText;
+use crate::model::task::project::comment_text::CommentText;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
 use crate::model::user::user::User;
 use crate::storage::Storage;
@@ -48,11 +50,7 @@ impl Task for LoggedAttachmentRemoval {
         .done()
         .await?;
         if let Some((filename, stage, is_act)) = info {
-            let text = if is_act {
-                format!("Удалён акт: {}", filename)
-            } else {
-                format!("Удалён файл: {}", filename)
-            };
+            let text = AttachmentRemovalText::new(filename, is_act).text();
             let _ = SystemCommentCreation::new(self.pool.clone(), stage, self.user.clone(), text)
                 .done()
                 .await;

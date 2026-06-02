@@ -1,7 +1,6 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
 use crate::storage::Storage;
 use sqlx::PgPool;
@@ -52,8 +51,6 @@ impl Task for ActUpload {
         )
         .done()
         .await?;
-        NotificationEnqueue::new(self.pool.clone(), self.stage.clone(), "act_uploaded")
-            .done()
-            .await
+        Ok(())
     }
 }

@@ -4,7 +4,7 @@ use crate::model::credential::contract::username::Username;
 use crate::model::task::contract::task::Task;
 use crate::model::user::contract::invite::Invite;
 use crate::model::user::invite::InviteCode;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::PgPool;
 use std::sync::Arc;
 
 pub struct InviteConsumption {
@@ -33,30 +33,22 @@ impl InviteConsumption {
     }
 }
 
-impl InviteConsumption {
-    async fn invite_exists(
-        &self,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<bool, BoxError> {
-        Ok(sqlx::query(
-            "UPDATE invites SET used_at = NOW() \
-             WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()",
-        )
-        .bind(self.invite.token())
-        .execute(&mut **transaction)
-        .await?
-        .rows_affected()
-            > 0)
-    }
-}
-
 #[async_trait::async_trait]
 impl Task for InviteConsumption {
     type Output = InviteStatus;
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         let mut transaction = self.pool.begin().await?;
-        if !self.invite_exists(&mut transaction).await? {
+        let invite_used = sqlx::query(
+            "UPDATE invites SET used_at = NOW() \
+             WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()",
+        )
+        .bind(self.invite.token())
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected()
+            > 0;
+        if !invite_used {
             transaction.rollback().await?;
             return Ok(InviteStatus::InvalidInvite);
         }

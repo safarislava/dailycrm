@@ -1,6 +1,8 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::task::project::comment_text::CommentText;
+use crate::model::task::project::deadline_change_text::DeadlineChangeText;
 use crate::model::task::project::deadline_update::DeadlineUpdate;
 use crate::model::task::project::stage_deadline_receipt::StageDeadlineReceipt;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
@@ -44,25 +46,17 @@ impl Task for LoggedDeadlineUpdate {
             .done()
             .await?;
         if let Some(old_date) = old {
-            if self.deadline == Some(old_date) {
-                return Ok(());
+            if self.deadline != Some(old_date) {
+                let text = DeadlineChangeText::new(old_date, self.deadline).text();
+                let _ = SystemCommentCreation::new(
+                    self.pool.clone(),
+                    self.stage.clone(),
+                    self.user.clone(),
+                    text,
+                )
+                .done()
+                .await;
             }
-            let text = match self.deadline {
-                Some(new_date) => format!(
-                    "Дедлайн изменён: {} → {}",
-                    old_date.format("%d.%m.%Y"),
-                    new_date.format("%d.%m.%Y"),
-                ),
-                None => format!("Дедлайн удалён: {}", old_date.format("%d.%m.%Y")),
-            };
-            let _ = SystemCommentCreation::new(
-                self.pool.clone(),
-                self.stage.clone(),
-                self.user.clone(),
-                text,
-            )
-            .done()
-            .await;
         }
         Ok(())
     }

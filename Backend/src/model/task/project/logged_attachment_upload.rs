@@ -2,6 +2,8 @@ use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
+use crate::model::task::project::attachment_upload_text::AttachmentUploadText;
+use crate::model::task::project::comment_text::CommentText;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
 use crate::model::user::user::User;
 use crate::storage::Storage;
@@ -57,7 +59,7 @@ impl Task for LoggedAttachmentUpload {
         )
         .done()
         .await?;
-        let text = format!("Загружен файл: {}", self.filename);
+        let text = AttachmentUploadText::new(self.filename.clone()).text();
         let _ = SystemCommentCreation::new(
             self.pool.clone(),
             self.stage.clone(),

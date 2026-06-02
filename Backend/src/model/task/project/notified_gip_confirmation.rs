@@ -1,16 +1,18 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
+use crate::model::task::project::gip_confirmation::GipConfirmation;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct GipConfirmation {
+pub struct NotifiedGipConfirmation {
     pool: Arc<PgPool>,
     stage: Stage,
     confirmed: bool,
 }
 
-impl GipConfirmation {
+impl NotifiedGipConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, confirmed: bool) -> Self {
         Self {
             pool,
@@ -21,16 +23,18 @@ impl GipConfirmation {
 }
 
 #[async_trait::async_trait]
-impl Task for GipConfirmation {
+impl Task for NotifiedGipConfirmation {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        sqlx::query("UPDATE stages SET gip_confirmed = $3 WHERE project_id = $1 AND position = $2")
-            .bind(self.stage.project().id())
-            .bind(self.stage.position())
-            .bind(self.confirmed)
-            .execute(self.pool.as_ref())
+        GipConfirmation::new(self.pool.clone(), self.stage.clone(), self.confirmed)
+            .done()
             .await?;
+        if self.confirmed {
+            NotificationEnqueue::new(self.pool.clone(), self.stage.clone(), "work_complete")
+                .done()
+                .await?;
+        }
         Ok(())
     }
 }

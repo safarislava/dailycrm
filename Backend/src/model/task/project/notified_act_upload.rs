@@ -1,31 +1,26 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::project::act_upload_text::ActUploadText;
-use crate::model::task::project::comment_text::CommentText;
-use crate::model::task::project::notified_act_upload::NotifiedActUpload;
-use crate::model::task::project::system_comment_creation::SystemCommentCreation;
-use crate::model::user::user::User;
+use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
+use crate::model::task::project::act_upload::ActUpload;
 use crate::storage::Storage;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct LoggedActUpload {
+pub struct NotifiedActUpload {
     pool: Arc<PgPool>,
     storage: Arc<Storage>,
     stage: Stage,
-    user: User,
     filename: String,
     mime_type: String,
     data: Vec<u8>,
 }
 
-impl LoggedActUpload {
+impl NotifiedActUpload {
     pub fn new(
         pool: Arc<PgPool>,
         storage: Arc<Storage>,
         stage: Stage,
-        user: User,
         filename: String,
         mime_type: String,
         data: Vec<u8>,
@@ -34,7 +29,6 @@ impl LoggedActUpload {
             pool,
             storage,
             stage,
-            user,
             filename,
             mime_type,
             data,
@@ -43,11 +37,11 @@ impl LoggedActUpload {
 }
 
 #[async_trait::async_trait]
-impl Task for LoggedActUpload {
+impl Task for NotifiedActUpload {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        NotifiedActUpload::new(
+        ActUpload::new(
             self.pool.clone(),
             self.storage.clone(),
             self.stage.clone(),
@@ -57,15 +51,8 @@ impl Task for LoggedActUpload {
         )
         .done()
         .await?;
-        let text = ActUploadText::new(self.filename.clone()).text();
-        let _ = SystemCommentCreation::new(
-            self.pool.clone(),
-            self.stage.clone(),
-            self.user.clone(),
-            text,
-        )
-        .done()
-        .await;
-        Ok(())
+        NotificationEnqueue::new(self.pool.clone(), self.stage.clone(), "act_uploaded")
+            .done()
+            .await
     }
 }
