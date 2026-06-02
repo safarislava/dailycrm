@@ -1,4 +1,5 @@
 use crate::common::BoxError;
+use crate::model::project::file_content::FileContent;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
@@ -11,9 +12,7 @@ pub struct NotifiedActUpload {
     pool: Arc<PgPool>,
     storage: Arc<Storage>,
     stage: Stage,
-    filename: String,
-    mime_type: String,
-    data: Vec<u8>,
+    file: FileContent,
 }
 
 impl NotifiedActUpload {
@@ -21,17 +20,13 @@ impl NotifiedActUpload {
         pool: Arc<PgPool>,
         storage: Arc<Storage>,
         stage: Stage,
-        filename: String,
-        mime_type: String,
-        data: Vec<u8>,
+        file: FileContent,
     ) -> Self {
         Self {
             pool,
             storage,
             stage,
-            filename,
-            mime_type,
-            data,
+            file,
         }
     }
 }
@@ -45,9 +40,7 @@ impl Task for NotifiedActUpload {
             self.pool.clone(),
             self.storage.clone(),
             self.stage.clone(),
-            self.filename.clone(),
-            self.mime_type.clone(),
-            self.data.clone(),
+            self.file.clone(),
         )
         .done()
         .await?;

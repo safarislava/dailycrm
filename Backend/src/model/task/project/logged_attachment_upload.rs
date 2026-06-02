@@ -1,4 +1,6 @@
 use crate::common::BoxError;
+use crate::model::project::contract::file::File;
+use crate::model::project::file_content::FileContent;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
@@ -16,9 +18,7 @@ pub struct LoggedAttachmentUpload {
     storage: Arc<Storage>,
     stage: Stage,
     user: User,
-    filename: String,
-    mime_type: String,
-    data: Vec<u8>,
+    file: FileContent,
 }
 
 impl LoggedAttachmentUpload {
@@ -27,18 +27,14 @@ impl LoggedAttachmentUpload {
         storage: Arc<Storage>,
         stage: Stage,
         user: User,
-        filename: String,
-        mime_type: String,
-        data: Vec<u8>,
+        file: FileContent,
     ) -> Self {
         Self {
             pool,
             storage,
             stage,
             user,
-            filename,
-            mime_type,
-            data,
+            file,
         }
     }
 }
@@ -52,14 +48,11 @@ impl Task for LoggedAttachmentUpload {
             self.pool.clone(),
             self.storage.clone(),
             self.stage.clone(),
-            self.filename.clone(),
-            self.mime_type.clone(),
-            self.data.clone(),
-            false,
+            self.file.clone(),
         )
         .done()
         .await?;
-        let text = AttachmentUploadText::new(self.filename.clone()).text();
+        let text = AttachmentUploadText::new(self.file.name().to_string()).text();
         let _ = SystemCommentCreation::new(
             self.pool.clone(),
             self.stage.clone(),

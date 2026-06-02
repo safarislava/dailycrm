@@ -1,5 +1,6 @@
 use crate::endpoint::api_error::ApiError;
 use crate::endpoint::auth_header::UserHeader;
+use crate::model::project::file_content::FileContent;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
@@ -57,17 +58,10 @@ pub async fn post(
     let mime_type = infer::get(&data)
         .map(|kind| kind.mime_type().to_string())
         .unwrap_or_else(|| "application/octet-stream".to_string());
-    let id = LoggedAttachmentUpload::new(
-        state.pool.clone(),
-        state.storage.clone(),
-        stage,
-        user,
-        filename,
-        mime_type,
-        data,
-    )
-    .done()
-    .await
-    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    let file = FileContent::new(filename, mime_type, data);
+    let id = LoggedAttachmentUpload::new(state.pool.clone(), state.storage.clone(), stage, user, file)
+        .done()
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
     Ok(HttpResponse::Created().json(serde_json::json!({ "id": id })))
 }

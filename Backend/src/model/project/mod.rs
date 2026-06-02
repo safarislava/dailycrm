@@ -1,5 +1,6 @@
 pub mod act;
 pub mod acts;
+pub mod file_content;
 pub mod attachment;
 pub mod attachments;
 pub mod comment;
