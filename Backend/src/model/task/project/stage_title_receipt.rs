@@ -21,7 +21,9 @@ impl Task for StageTitleReceipt {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         #[derive(sqlx::FromRow)]
-        struct Row { title: String }
+        struct Row {
+            title: String,
+        }
         let row = sqlx::query_as::<_, Row>(
             "SELECT title FROM stages WHERE project_id = $1 AND position = $2",
         )

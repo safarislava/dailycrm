@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::project::contract::json::Json;
 use crate::model::project::act::Act;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -18,10 +18,9 @@ impl DetailedAct {
 }
 
 #[async_trait::async_trait]
-impl Contentable for DetailedAct {
-    type Output = serde_json::Value;
+impl Json for DetailedAct {
 
-    async fn content(&self) -> Result<Self::Output, BoxError> {
+    async fn json(&self) -> Result<serde_json::Value, BoxError> {
         #[derive(sqlx::FromRow)]
         struct Row {
             id: Uuid,

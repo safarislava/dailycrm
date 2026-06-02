@@ -1,5 +1,4 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
 use crate::model::session::contract::token::Token;
 use chrono::{Duration, TimeDelta};
 use uuid::Uuid;
@@ -22,12 +21,8 @@ impl RefreshToken {
 }
 
 #[async_trait::async_trait]
-impl Contentable for RefreshToken {
-    type Output = String;
-
-    async fn content(&self) -> Result<Self::Output, BoxError> {
-        Ok(self.token.content().await?)
+impl Token for RefreshToken {
+    async fn value(&self) -> Result<String, BoxError> {
+        self.token.value().await
     }
 }
-
-impl Token for RefreshToken {}

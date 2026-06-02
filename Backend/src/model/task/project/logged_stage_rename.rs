@@ -17,7 +17,12 @@ pub struct LoggedStageRename {
 
 impl LoggedStageRename {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, title: String) -> Self {
-        Self { pool, stage, user, title }
+        Self {
+            pool,
+            stage,
+            user,
+            title,
+        }
     }
 }
 
@@ -36,7 +41,10 @@ impl Task for LoggedStageRename {
             if old_title != self.title {
                 let text = format!("Название изменено: «{}» → «{}»", old_title, self.title);
                 let _ = SystemCommentCreation::new(
-                    self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                    self.pool.clone(),
+                    self.stage.clone(),
+                    self.user.clone(),
+                    text,
                 )
                 .done()
                 .await;

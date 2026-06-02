@@ -1,33 +1,33 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
-use crate::model::credential::hash::Hash;
-use crate::model::credential::valid_username::ValidUsername;
+use crate::model::credential::contract::hash::Hash;
+use crate::model::credential::contract::username::Username;
 use crate::model::task::contract::task::Task;
-use crate::model::user::invite::Invite;
+use crate::model::user::contract::invite::Invite;
+use crate::model::user::invite::InviteCode;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::sync::Arc;
 
 pub struct InviteConsumption {
     pool: Arc<PgPool>,
-    invite: Invite,
-    username: ValidUsername,
-    password: Box<dyn Contentable<Output = Hash>>,
+    invite: InviteCode,
+    username: Box<dyn Username>,
+    password: Box<dyn Hash>,
     email: String,
 }
 
 impl InviteConsumption {
     pub fn new(
         pool: Arc<PgPool>,
-        invite: Invite,
-        username: ValidUsername,
-        password: Box<dyn Contentable<Output = Hash>>,
+        invite: InviteCode,
+        username: impl Username,
+        password: impl Hash,
         email: String,
     ) -> Self {
         Self {
             pool,
             invite,
-            username,
-            password,
+            username: Box::new(username),
+            password: Box::new(password),
             email,
         }
     }
@@ -38,12 +38,11 @@ impl InviteConsumption {
         &self,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<bool, BoxError> {
-        let token = self.invite.content().await?;
         Ok(sqlx::query(
             "UPDATE invites SET used_at = NOW() \
              WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()",
         )
-        .bind(token)
+        .bind(self.invite.token())
         .execute(&mut **transaction)
         .await?
         .rows_affected()
@@ -61,11 +60,10 @@ impl Task for InviteConsumption {
             transaction.rollback().await?;
             return Ok(InviteStatus::InvalidInvite);
         }
-        let hash = self.password.content().await?;
         let result =
             sqlx::query("INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3)")
-                .bind(self.username.content().await?)
-                .bind(hash.content().await?)
+                .bind(self.username.value()?)
+                .bind(self.password.value().await?)
                 .bind(&self.email)
                 .execute(&mut *transaction)
                 .await;

@@ -1,25 +1,21 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
-use crate::model::credential::hash::Hash;
-use crate::model::credential::valid_password::ValidPassword;
+use crate::model::credential::contract::hash::Hash;
+use crate::model::credential::contract::password::Password;
 
-pub struct HashedPassword(ValidPassword);
+pub struct HashedPassword(Box<dyn Password>);
 
 impl HashedPassword {
-    pub fn new(password: ValidPassword) -> Self {
-        Self(password)
+    pub fn new(password: impl Password) -> Self {
+        Self(Box::new(password))
     }
 }
 
 #[async_trait::async_trait]
-impl Contentable for HashedPassword {
-    type Output = Hash;
-
-    async fn content(&self) -> Result<Self::Output, BoxError> {
-        let raw = self.0.content().await?;
+impl Hash for HashedPassword {
+    async fn value(&self) -> Result<String, BoxError> {
+        let raw = self.0.value()?;
         actix_web::rt::task::spawn_blocking(move || {
             bcrypt::hash(&raw, bcrypt::DEFAULT_COST)
-                .map(Hash::new)
                 .map_err(|_| Box::new(HashError::Bcrypt) as BoxError)
         })
         .await

@@ -17,8 +17,18 @@ pub struct LoggedDeadlineUpdate {
 }
 
 impl LoggedDeadlineUpdate {
-    pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, deadline: Option<DateTime<Utc>>) -> Self {
-        Self { pool, stage, user, deadline }
+    pub fn new(
+        pool: Arc<PgPool>,
+        stage: Stage,
+        user: User,
+        deadline: Option<DateTime<Utc>>,
+    ) -> Self {
+        Self {
+            pool,
+            stage,
+            user,
+            deadline,
+        }
     }
 }
 
@@ -46,7 +56,10 @@ impl Task for LoggedDeadlineUpdate {
                 None => format!("Дедлайн удалён: {}", old_date.format("%d.%m.%Y")),
             };
             let _ = SystemCommentCreation::new(
-                self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                self.pool.clone(),
+                self.stage.clone(),
+                self.user.clone(),
+                text,
             )
             .done()
             .await;

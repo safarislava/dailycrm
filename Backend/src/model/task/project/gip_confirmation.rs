@@ -13,7 +13,11 @@ pub struct GipConfirmation {
 
 impl GipConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, confirmed: bool) -> Self {
-        Self { pool, stage, confirmed }
+        Self {
+            pool,
+            stage,
+            confirmed,
+        }
     }
 }
 

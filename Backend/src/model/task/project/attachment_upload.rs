@@ -26,7 +26,15 @@ impl AttachmentUpload {
         data: Vec<u8>,
         is_act: bool,
     ) -> Self {
-        Self { pool, storage, stage, filename, mime_type, data, is_act }
+        Self {
+            pool,
+            storage,
+            stage,
+            filename,
+            mime_type,
+            data,
+            is_act,
+        }
     }
 }
 
@@ -38,7 +46,12 @@ impl Task for AttachmentUpload {
         let size_bytes = self.data.len() as i64;
         let id = Uuid::new_v4();
         self.storage
-            .upload(&id.to_string(), self.data.clone(), &self.mime_type, &self.filename)
+            .upload(
+                &id.to_string(),
+                self.data.clone(),
+                &self.mime_type,
+                &self.filename,
+            )
             .await?;
         sqlx::query(
             "INSERT INTO attachments(id, project_id, stage_position, filename, mime_type, size_bytes, is_act)

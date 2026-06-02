@@ -17,8 +17,18 @@ pub struct LoggedAttachmentRemoval {
 }
 
 impl LoggedAttachmentRemoval {
-    pub fn new(pool: Arc<PgPool>, storage: Arc<Storage>, attachment: Attachment, user: User) -> Self {
-        Self { pool, storage, attachment, user }
+    pub fn new(
+        pool: Arc<PgPool>,
+        storage: Arc<Storage>,
+        attachment: Attachment,
+        user: User,
+    ) -> Self {
+        Self {
+            pool,
+            storage,
+            attachment,
+            user,
+        }
     }
 }
 
@@ -30,20 +40,22 @@ impl Task for LoggedAttachmentRemoval {
         let info = AttachmentReceipt::new(self.pool.clone(), self.attachment.clone())
             .done()
             .await?;
-        AttachmentRemoval::new(self.pool.clone(), self.storage.clone(), self.attachment.clone())
-            .done()
-            .await?;
+        AttachmentRemoval::new(
+            self.pool.clone(),
+            self.storage.clone(),
+            self.attachment.clone(),
+        )
+        .done()
+        .await?;
         if let Some((filename, stage, is_act)) = info {
             let text = if is_act {
                 format!("Удалён акт: {}", filename)
             } else {
                 format!("Удалён файл: {}", filename)
             };
-            let _ = SystemCommentCreation::new(
-                self.pool.clone(), stage, self.user.clone(), text,
-            )
-            .done()
-            .await;
+            let _ = SystemCommentCreation::new(self.pool.clone(), stage, self.user.clone(), text)
+                .done()
+                .await;
         }
         Ok(())
     }

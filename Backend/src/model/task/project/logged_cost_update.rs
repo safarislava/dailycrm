@@ -17,7 +17,12 @@ pub struct LoggedCostUpdate {
 
 impl LoggedCostUpdate {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, cost: Option<i32>) -> Self {
-        Self { pool, stage, user, cost }
+        Self {
+            pool,
+            stage,
+            user,
+            cost,
+        }
     }
 }
 
@@ -45,7 +50,10 @@ impl Task for LoggedCostUpdate {
                 None => format!("Стоимость удалена: {} ₽", format_cost(old_cost)),
             };
             let _ = SystemCommentCreation::new(
-                self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                self.pool.clone(),
+                self.stage.clone(),
+                self.user.clone(),
+                text,
             )
             .done()
             .await;

@@ -17,7 +17,12 @@ pub struct LoggedPaymentConfirmation {
 
 impl LoggedPaymentConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, confirmed: bool) -> Self {
-        Self { pool, stage, user, confirmed }
+        Self {
+            pool,
+            stage,
+            user,
+            confirmed,
+        }
     }
 }
 
@@ -39,7 +44,10 @@ impl Task for LoggedPaymentConfirmation {
                 "Подтверждение оплаты снято".to_string()
             };
             let _ = SystemCommentCreation::new(
-                self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                self.pool.clone(),
+                self.stage.clone(),
+                self.user.clone(),
+                text,
             )
             .done()
             .await;

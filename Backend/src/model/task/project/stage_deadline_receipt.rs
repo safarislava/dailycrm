@@ -22,7 +22,9 @@ impl Task for StageDeadlineReceipt {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         #[derive(sqlx::FromRow)]
-        struct Row { deadline: Option<DateTime<Utc>> }
+        struct Row {
+            deadline: Option<DateTime<Utc>>,
+        }
         let row = sqlx::query_as::<_, Row>(
             "SELECT deadline FROM stages WHERE project_id = $1 AND position = $2",
         )

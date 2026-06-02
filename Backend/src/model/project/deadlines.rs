@@ -1,7 +1,5 @@
 use crate::model::project::contract::list::List;
-use crate::model::project::project::Project;
-use crate::model::project::project_stage_summary::ProjectStageSummary;
-use crate::model::project::stage::Stage;
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -18,26 +16,46 @@ impl Deadlines {
 
 #[async_trait::async_trait]
 impl List for Deadlines {
-    type Output = ProjectStageSummary;
+    type Output = serde_json::Value;
 
-    async fn items(&self) -> Result<Vec<ProjectStageSummary>, sqlx::Error> {
+    async fn items(&self) -> Result<Vec<serde_json::Value>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
             position: i32,
+            title: String,
+            deadline: Option<DateTime<Utc>>,
+            completed: bool,
+            project_title: String,
         }
         let rows = sqlx::query_as::<_, Row>(
-            "SELECT project_id, position FROM stages
-             WHERE deadline IS NOT NULL ORDER BY deadline",
+            "SELECT s.project_id, s.position, s.title, s.deadline,
+                    (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
+                        SELECT 1 FROM attachments a
+                        WHERE a.project_id = s.project_id
+                        AND a.stage_position = s.position AND a.is_act = TRUE
+                    )) AS completed,
+                    p.title AS project_title
+             FROM stages s
+             JOIN projects p ON p.id = s.project_id
+             WHERE s.deadline IS NOT NULL
+             ORDER BY s.deadline",
         )
         .fetch_all(self.pool.as_ref())
         .await?;
         Ok(rows
             .into_iter()
             .map(|r| {
-                let project = Project::new(r.project_id);
-                let stage = Stage::new(project, r.position);
-                ProjectStageSummary::new(self.pool.clone(), stage)
+                serde_json::json!({
+                    "stage": {
+                        "project_id": r.project_id,
+                        "position": r.position,
+                        "title": r.title,
+                        "deadline": r.deadline,
+                        "completed": r.completed,
+                    },
+                    "project_title": r.project_title,
+                })
             })
             .collect())
     }

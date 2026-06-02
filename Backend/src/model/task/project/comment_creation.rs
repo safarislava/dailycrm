@@ -14,7 +14,12 @@ pub struct CommentCreation {
 
 impl CommentCreation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, author: User, text: String) -> Self {
-        Self { pool, stage, author, text }
+        Self {
+            pool,
+            stage,
+            author,
+            text,
+        }
     }
 }
 

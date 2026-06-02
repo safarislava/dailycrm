@@ -1,5 +1,5 @@
 use crate::endpoint::api_error::ApiError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::project::contract::json::Json;
 use crate::model::project::contract::list::List;
 use crate::model::project::project::Project;
 use crate::model::project::stage_summary::StageSummary;
@@ -19,7 +19,7 @@ pub async fn get(
         .map_err(|e| ApiError::Internal(e.to_string()))?;
     let futures = stages.into_iter().map(|stage| {
         let detailed = StageSummary::new(state.pool.clone(), stage);
-        async move { detailed.content().await }
+        async move { detailed.json().await }
     });
     let data = try_join_all(futures)
         .await

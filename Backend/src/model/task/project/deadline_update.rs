@@ -13,7 +13,11 @@ pub struct DeadlineUpdate {
 
 impl DeadlineUpdate {
     pub fn new(pool: Arc<PgPool>, stage: Stage, deadline: Option<DateTime<Utc>>) -> Self {
-        Self { pool, stage, deadline }
+        Self {
+            pool,
+            stage,
+            deadline,
+        }
     }
 }
 

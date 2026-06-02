@@ -29,7 +29,15 @@ impl LoggedAttachmentUpload {
         mime_type: String,
         data: Vec<u8>,
     ) -> Self {
-        Self { pool, storage, stage, user, filename, mime_type, data }
+        Self {
+            pool,
+            storage,
+            stage,
+            user,
+            filename,
+            mime_type,
+            data,
+        }
     }
 }
 
@@ -51,7 +59,10 @@ impl Task for LoggedAttachmentUpload {
         .await?;
         let text = format!("Загружен файл: {}", self.filename);
         let _ = SystemCommentCreation::new(
-            self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+            self.pool.clone(),
+            self.stage.clone(),
+            self.user.clone(),
+            text,
         )
         .done()
         .await;

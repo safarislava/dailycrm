@@ -1,5 +1,5 @@
 use crate::endpoint::api_error::ApiError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::project::contract::json::Json;
 use crate::model::project::detailed_stage::DetailedStage;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
@@ -17,7 +17,7 @@ pub async fn get(
         Stage::new(Project::new(project_id), position),
     );
     let data = stage
-        .content()
+        .json()
         .await
         .map_err(|e| ApiError::Internal(e.to_string()))?;
     Ok(HttpResponse::Ok().json(data))

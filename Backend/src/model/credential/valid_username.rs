@@ -1,26 +1,23 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
-use crate::model::credential::username::Username;
+use crate::model::credential::contract::username::Username;
 
-pub struct ValidUsername(Username);
+pub struct ValidUsername(Box<dyn Username>);
 
 impl ValidUsername {
-    pub fn new(username: Username) -> ValidUsername {
-        Self(username)
+    pub fn new(username: impl Username) -> Self {
+        Self(Box::new(username))
     }
 }
 
-#[async_trait::async_trait]
-impl Contentable for ValidUsername {
-    type Output = String;
-    async fn content(&self) -> Result<String, BoxError> {
-        let content = self.0.content().await?;
+impl Username for ValidUsername {
+    fn value(&self) -> Result<String, BoxError> {
+        let content = self.0.value()?;
         let len = content.chars().count();
         if len < 3 {
-            return Err(Box::new(&UsernameError::TooShort));
+            return Err(Box::new(UsernameError::TooShort));
         }
         if len > 50 {
-            return Err(Box::new(&UsernameError::TooLong));
+            return Err(Box::new(UsernameError::TooLong));
         }
         if !content.chars().all(|c| {
             c.is_ascii_alphanumeric()
@@ -29,7 +26,7 @@ impl Contentable for ValidUsername {
                 || c == ' '
                 || ('\u{0400}'..='\u{04FF}').contains(&c)
         }) {
-            return Err(Box::new(&UsernameError::InvalidChars));
+            return Err(Box::new(UsernameError::InvalidChars));
         }
         Ok(content)
     }

@@ -21,7 +21,9 @@ impl Task for StageCostReceipt {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         #[derive(sqlx::FromRow)]
-        struct Row { cost: Option<i32> }
+        struct Row {
+            cost: Option<i32>,
+        }
         let row = sqlx::query_as::<_, Row>(
             "SELECT cost FROM stages WHERE project_id = $1 AND position = $2",
         )

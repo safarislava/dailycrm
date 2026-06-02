@@ -33,7 +33,7 @@ impl Task for AttachmentDownload {
                 .await?;
         let stream = self
             .storage
-            .get_stream(&self.attachment.id().to_string())
+            .stream(&self.attachment.id().to_string())
             .await?;
         let encoded: String = filename
             .bytes()

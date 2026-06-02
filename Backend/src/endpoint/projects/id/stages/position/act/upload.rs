@@ -43,31 +43,31 @@ pub async fn post(
     let (project_id, stage_position) = path.into_inner();
     let stage = Stage::new(Project::new(project_id), stage_position);
 
-    while let Some(item) = payload.next().await {
-        let mut field =
-            item.map_err(|_| ApiError::BadRequest("Invalid multipart data".to_string()))?;
-        let filename = field
-            .content_disposition()
-            .and_then(|cd| cd.get_filename())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "act".to_string());
-        let data = collect_bytes(&mut field, MAX_FILE_SIZE).await?;
-        let mime_type = infer::get(&data)
-            .map(|kind| kind.mime_type().to_string())
-            .unwrap_or_else(|| "application/octet-stream".to_string());
-        LoggedActUpload::new(
-            state.pool.clone(),
-            state.storage.clone(),
-            stage,
-            user,
-            filename,
-            mime_type,
-            data,
-        )
-        .done()
+    let mut field = payload
+        .next()
         .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
-        return Ok(HttpResponse::Created().finish());
-    }
-    Err(ApiError::BadRequest("No file provided".to_string()))
+        .ok_or(ApiError::BadRequest("No file provided".to_string()))?
+        .map_err(|_| ApiError::BadRequest("Invalid multipart data".to_string()))?;
+    let filename = field
+        .content_disposition()
+        .and_then(|cd| cd.get_filename())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "act".to_string());
+    let data = collect_bytes(&mut field, MAX_FILE_SIZE).await?;
+    let mime_type = infer::get(&data)
+        .map(|kind| kind.mime_type().to_string())
+        .unwrap_or_else(|| "application/octet-stream".to_string());
+    LoggedActUpload::new(
+        state.pool.clone(),
+        state.storage.clone(),
+        stage,
+        user,
+        filename,
+        mime_type,
+        data,
+    )
+    .done()
+    .await
+    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    Ok(HttpResponse::Created().finish())
 }

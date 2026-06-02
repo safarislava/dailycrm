@@ -28,7 +28,15 @@ impl LoggedActUpload {
         mime_type: String,
         data: Vec<u8>,
     ) -> Self {
-        Self { pool, storage, stage, user, filename, mime_type, data }
+        Self {
+            pool,
+            storage,
+            stage,
+            user,
+            filename,
+            mime_type,
+            data,
+        }
     }
 }
 
@@ -49,7 +57,10 @@ impl Task for LoggedActUpload {
         .await?;
         let text = format!("Загружен акт: {}", self.filename);
         let _ = SystemCommentCreation::new(
-            self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+            self.pool.clone(),
+            self.stage.clone(),
+            self.user.clone(),
+            text,
         )
         .done()
         .await;
