@@ -1,7 +1,9 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::task::project::comment_text::CommentText;
 use crate::model::task::project::payment_confirmation::PaymentConfirmation;
+use crate::model::task::project::payment_confirmation_text::PaymentConfirmationText;
 use crate::model::task::project::stage_payment_confirmed_receipt::StagePaymentConfirmedReceipt;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
 use crate::model::user::user::User;
@@ -17,7 +19,12 @@ pub struct LoggedPaymentConfirmation {
 
 impl LoggedPaymentConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, confirmed: bool) -> Self {
-        Self { pool, stage, user, confirmed }
+        Self {
+            pool,
+            stage,
+            user,
+            confirmed,
+        }
     }
 }
 
@@ -33,13 +40,12 @@ impl Task for LoggedPaymentConfirmation {
             .done()
             .await?;
         if old != Some(self.confirmed) {
-            let text = if self.confirmed {
-                "Оплата подтверждена".to_string()
-            } else {
-                "Подтверждение оплаты снято".to_string()
-            };
+            let text = PaymentConfirmationText::new(self.confirmed).text();
             let _ = SystemCommentCreation::new(
-                self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                self.pool.clone(),
+                self.stage.clone(),
+                self.user.clone(),
+                text,
             )
             .done()
             .await;

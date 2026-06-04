@@ -1,6 +1,5 @@
 use crate::common::BoxError;
 use crate::jwt::jwt_secret;
-use crate::model::credential::contract::contentable::Contentable;
 use crate::model::session::claims::Claims;
 use crate::model::session::contract::token::Token;
 use crate::model::session::token_kind::TokenKind;
@@ -17,20 +16,13 @@ pub struct NewToken {
 
 impl NewToken {
     pub fn new(user_id: Uuid, jti: Uuid, kind: TokenKind, expires_at: DateTime<Utc>) -> Self {
-        Self {
-            user_id,
-            jti,
-            kind,
-            expires_at,
-        }
+        Self { user_id, jti, kind, expires_at }
     }
 }
 
 #[async_trait::async_trait]
-impl Contentable for NewToken {
-    type Output = String;
-
-    async fn content(&self) -> Result<Self::Output, BoxError> {
+impl Token for NewToken {
+    async fn value(&self) -> Result<String, BoxError> {
         encode(
             &Header::default(),
             &Claims::new(
@@ -44,5 +36,3 @@ impl Contentable for NewToken {
         .map_err(BoxError::from)
     }
 }
-
-impl Token for NewToken {}

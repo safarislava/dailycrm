@@ -27,9 +27,10 @@ impl List for Attachments {
         }
         let rows = sqlx::query_as::<_, AttachmentRow>(
             "SELECT id FROM attachments \
-            WHERE project_id = $1 AND stage_position = $2 AND is_act = FALSE ORDER BY created_at",
+            WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND is_act = FALSE ORDER BY created_at",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .fetch_all(self.pool.as_ref())
         .await?;

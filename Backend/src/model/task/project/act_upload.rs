@@ -1,31 +1,28 @@
 use crate::common::BoxError;
+use crate::model::project::contract::file::File;
+use crate::model::project::file_content::FileContent;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::notification::notification_enqueue::NotificationEnqueue;
-use crate::model::task::project::attachment_upload::AttachmentUpload;
 use crate::storage::Storage;
 use sqlx::PgPool;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub struct ActUpload {
     pool: Arc<PgPool>,
     storage: Arc<Storage>,
     stage: Stage,
-    filename: String,
-    mime_type: String,
-    data: Vec<u8>,
+    file: FileContent,
 }
 
 impl ActUpload {
-    pub fn new(
-        pool: Arc<PgPool>,
-        storage: Arc<Storage>,
-        stage: Stage,
-        filename: String,
-        mime_type: String,
-        data: Vec<u8>,
-    ) -> Self {
-        Self { pool, storage, stage, filename, mime_type, data }
+    pub fn new(pool: Arc<PgPool>, storage: Arc<Storage>, stage: Stage, file: FileContent) -> Self {
+        Self {
+            pool,
+            storage,
+            stage,
+            file,
+        }
     }
 }
 
@@ -34,19 +31,23 @@ impl Task for ActUpload {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        AttachmentUpload::new(
-            self.pool.clone(),
-            self.storage.clone(),
-            self.stage.clone(),
-            self.filename.clone(),
-            self.mime_type.clone(),
-            self.data.clone(),
-            true,
+        let id = Uuid::new_v4();
+        self.file
+            .upload_to(self.storage.as_ref(), &id.to_string())
+            .await?;
+        sqlx::query(
+            "INSERT INTO attachments(id, project_id, parent_position, stage_position, filename, mime_type, size_bytes, is_act)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, true)",
         )
-        .done()
+        .bind(id)
+        .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
+        .bind(self.stage.position())
+        .bind(self.file.name())
+        .bind(self.file.media_type())
+        .bind(self.file.size_bytes())
+        .execute(self.pool.as_ref())
         .await?;
-        NotificationEnqueue::new(self.pool.clone(), self.stage.clone(), "act_uploaded")
-            .done()
-            .await
+        Ok(())
     }
 }

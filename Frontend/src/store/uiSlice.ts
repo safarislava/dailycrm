@@ -2,9 +2,14 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 export type Theme = 'dark' | 'auto' | 'light'
 
+export interface SelectedStage {
+  parentPosition: number
+  position: number
+}
+
 interface UiState {
   selectedProjectId: string | null
-  selectedStageId: string | null
+  selectedStage: SelectedStage | null
   userPageOpen: boolean
   theme: Theme
 }
@@ -13,18 +18,18 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState: {
     selectedProjectId: null,
-    selectedStageId: null,
+    selectedStage: null,
     userPageOpen: false,
     theme: (localStorage.getItem('theme') as Theme | null) ?? 'auto',
   } as UiState,
   reducers: {
     selectProject(state, action: PayloadAction<string | null>) {
       state.selectedProjectId = action.payload
-      state.selectedStageId = null
+      state.selectedStage = null
       state.userPageOpen = false
     },
-    selectStage(state, action: PayloadAction<string | null>) {
-      state.selectedStageId = action.payload
+    selectStage(state, action: PayloadAction<SelectedStage | null>) {
+      state.selectedStage = action.payload
     },
     setUserPageOpen(state, action: PayloadAction<boolean>) {
       state.userPageOpen = action.payload

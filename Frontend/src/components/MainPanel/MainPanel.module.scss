@@ -288,6 +288,85 @@
   }
 }
 
+// ── Chevron & add-sub button ──────────────────────────────
+.stageChevron {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$text-secondary;
+  opacity: 0;
+  transition: opacity v.$transition-fast, background v.$transition-fast, transform v.$transition-fast;
+
+  &.stageChevronVisible { opacity: 0.5; }
+  &.stageChevronOpen { transform: rotate(90deg); opacity: 1; }
+
+  .stageItem:hover & { opacity: 0.8; }
+
+  &:hover { background: v.$bg-item-hover; opacity: 1 !important; }
+}
+
+.stageAddSub {
+  opacity: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$accent;
+  transition: opacity v.$transition-fast, background v.$transition-fast;
+
+  &:hover { background: v.$accent-light; opacity: 1 !important; }
+
+  .stageItem:hover & { opacity: 1; }
+
+  @media (hover: none) { opacity: 1; width: 36px; height: 36px; }
+}
+
+// ── Sub-stage group (expanded area) ──────────────────────
+.subStageGroup {
+  background: v.$bg-primary;
+  border-left: 2px solid v.$divider;
+  margin-left: 52px;
+}
+
+.subStageItem {
+  padding-left: 8px !important;
+
+  .stageTitle { font-size: 14px; }
+}
+
+.subStageIndent {
+  width: 8px;
+  flex-shrink: 0;
+}
+
+.subStageInputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+}
+
+.subStageInput {
+  flex: 1;
+  height: 36px;
+  padding: 0 14px;
+  background: v.$bg-input;
+  border-radius: 18px;
+  font-size: 14px;
+  min-width: 0;
+  outline: none;
+  border: 1px solid v.$accent;
+
+  @supports (-webkit-touch-callout: none) { font-size: 16px; }
+}
+
 // ── Input row ─────────────────────────────────────────────
 .inputRow {
   display: flex;

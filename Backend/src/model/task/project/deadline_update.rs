@@ -13,7 +13,11 @@ pub struct DeadlineUpdate {
 
 impl DeadlineUpdate {
     pub fn new(pool: Arc<PgPool>, stage: Stage, deadline: Option<DateTime<Utc>>) -> Self {
-        Self { pool, stage, deadline }
+        Self {
+            pool,
+            stage,
+            deadline,
+        }
     }
 }
 
@@ -22,8 +26,9 @@ impl Task for DeadlineUpdate {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        sqlx::query("UPDATE stages SET deadline = $3 WHERE project_id = $1 AND position = $2")
+        sqlx::query("UPDATE stages SET deadline = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3")
             .bind(self.stage.project().id())
+            .bind(self.stage.parent_position())
             .bind(self.stage.position())
             .bind(self.deadline)
             .execute(self.pool.as_ref())

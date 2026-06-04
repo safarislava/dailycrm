@@ -1,6 +1,8 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::task::project::comment_text::CommentText;
+use crate::model::task::project::cost_change_text::CostChangeText;
 use crate::model::task::project::cost_update::CostUpdate;
 use crate::model::task::project::stage_cost_receipt::StageCostReceipt;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
@@ -17,7 +19,12 @@ pub struct LoggedCostUpdate {
 
 impl LoggedCostUpdate {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, cost: Option<i32>) -> Self {
-        Self { pool, stage, user, cost }
+        Self {
+            pool,
+            stage,
+            user,
+            cost,
+        }
     }
 }
 
@@ -33,37 +40,18 @@ impl Task for LoggedCostUpdate {
             .done()
             .await?;
         if let Some(old_cost) = old {
-            if self.cost == Some(old_cost) {
-                return Ok(());
+            if self.cost != Some(old_cost) {
+                let text = CostChangeText::new(old_cost, self.cost).text();
+                let _ = SystemCommentCreation::new(
+                    self.pool.clone(),
+                    self.stage.clone(),
+                    self.user.clone(),
+                    text,
+                )
+                .done()
+                .await;
             }
-            let text = match self.cost {
-                Some(new_cost) => format!(
-                    "Стоимость изменена: {} ₽ → {} ₽",
-                    format_cost(old_cost),
-                    format_cost(new_cost),
-                ),
-                None => format!("Стоимость удалена: {} ₽", format_cost(old_cost)),
-            };
-            let _ = SystemCommentCreation::new(
-                self.pool.clone(), self.stage.clone(), self.user.clone(), text,
-            )
-            .done()
-            .await;
         }
         Ok(())
     }
-}
-
-fn format_cost(cost: i32) -> String {
-    let s = cost.to_string();
-    let bytes = s.as_bytes();
-    let mut result = String::new();
-    let len = bytes.len();
-    for (i, &b) in bytes.iter().enumerate() {
-        if i > 0 && (len - i) % 3 == 0 {
-            result.push(' ');
-        }
-        result.push(b as char);
-    }
-    result
 }

@@ -1,6 +1,6 @@
 use crate::common::BoxError;
 use crate::model::task::contract::task::Task;
-use crate::model::user::invite::Invite;
+use crate::model::user::invite::InviteCode;
 use crate::model::user::user::User;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ impl InviteCreation {
 
 #[async_trait::async_trait]
 impl Task for InviteCreation {
-    type Output = Invite;
+    type Output = InviteCode;
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         #[derive(sqlx::FromRow)]
@@ -31,6 +31,6 @@ impl Task for InviteCreation {
                 .bind(self.user.id())
                 .fetch_one(self.pool.as_ref())
                 .await?;
-        Ok(Invite::new(row.token))
+        Ok(InviteCode::new(row.token))
     }
 }

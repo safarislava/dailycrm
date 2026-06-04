@@ -1,22 +1,18 @@
-use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::user::contract::invite::Invite;
 use uuid::Uuid;
 
-pub struct Invite {
+pub struct InviteCode {
     token: Uuid,
 }
 
-impl Invite {
-    pub fn new(token: Uuid) -> Invite {
-        Invite { token }
+impl InviteCode {
+    pub fn new(token: Uuid) -> Self {
+        Self { token }
     }
 }
 
-#[async_trait::async_trait]
-impl Contentable for Invite {
-    type Output = Uuid;
-
-    async fn content(&self) -> Result<Self::Output, BoxError> {
-        Ok(self.token)
+impl Invite for InviteCode {
+    fn token(&self) -> Uuid {
+        self.token
     }
 }

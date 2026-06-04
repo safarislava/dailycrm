@@ -1,6 +1,8 @@
 use crate::common::BoxError;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
+use crate::model::task::project::comment_text::CommentText;
+use crate::model::task::project::rename_text::RenameText;
 use crate::model::task::project::stage_rename::StageRename;
 use crate::model::task::project::stage_title_receipt::StageTitleReceipt;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
@@ -17,7 +19,12 @@ pub struct LoggedStageRename {
 
 impl LoggedStageRename {
     pub fn new(pool: Arc<PgPool>, stage: Stage, user: User, title: String) -> Self {
-        Self { pool, stage, user, title }
+        Self {
+            pool,
+            stage,
+            user,
+            title,
+        }
     }
 }
 
@@ -34,9 +41,12 @@ impl Task for LoggedStageRename {
             .await?;
         if let Some(old_title) = old {
             if old_title != self.title {
-                let text = format!("Название изменено: «{}» → «{}»", old_title, self.title);
+                let text = RenameText::new(old_title, self.title.clone()).text();
                 let _ = SystemCommentCreation::new(
-                    self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+                    self.pool.clone(),
+                    self.stage.clone(),
+                    self.user.clone(),
+                    text,
                 )
                 .done()
                 .await;

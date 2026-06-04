@@ -1,6 +1,6 @@
 use crate::endpoint::api_error::ApiError;
 use crate::endpoint::auth_header::UserHeader;
-use crate::model::credential::username::Username;
+use crate::model::credential::raw_username::RawUsername;
 use crate::model::credential::valid_username::ValidUsername;
 use crate::model::task::contract::task::Task;
 use crate::model::task::user::username_update::UsernameUpdate;
@@ -21,7 +21,7 @@ pub async fn patch(
     let user = request
         .user()
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
-    let username = ValidUsername::new(Username::new(body.username.clone()));
+    let username = ValidUsername::new(RawUsername::new(body.username.clone()));
     UsernameUpdate::new(state.pool.clone(), user, username)
         .done()
         .await

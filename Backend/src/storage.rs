@@ -76,7 +76,7 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn get_stream(&self, key: &str) -> Result<FileStream, BoxError> {
+    pub async fn stream(&self, key: &str) -> Result<FileStream, BoxError> {
         let output = self
             .client
             .get_object()

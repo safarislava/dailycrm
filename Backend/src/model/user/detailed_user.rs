@@ -1,4 +1,4 @@
-use crate::model::credential::username::Username;
+use crate::model::credential::raw_username::RawUsername;
 use crate::model::user::role::Role;
 use crate::model::user::user::User;
 use sqlx::PgPool;
@@ -14,7 +14,7 @@ impl DetailedUser {
         DetailedUser { pool, user }
     }
 
-    pub async fn username(&self) -> Result<Option<Username>, sqlx::Error> {
+    pub async fn username(&self) -> Result<Option<RawUsername>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             username: String,
@@ -23,7 +23,7 @@ impl DetailedUser {
             .bind(self.user.id())
             .fetch_optional(self.pool.as_ref())
             .await?;
-        Ok(row.map(|r| Username::new(r.username)))
+        Ok(row.map(|r| RawUsername::new(r.username)))
     }
 
     pub async fn email(&self) -> Result<Option<String>, sqlx::Error> {

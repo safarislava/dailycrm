@@ -1,10 +1,10 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::project::contract::json::Json;
 use crate::model::project::comment::Comment;
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Arc;
-use serde::Serialize;
 use uuid::Uuid;
 
 pub struct DetailedComment {
@@ -19,10 +19,9 @@ impl DetailedComment {
 }
 
 #[async_trait::async_trait]
-impl Contentable for DetailedComment {
-    type Output = serde_json::Value;
+impl Json for DetailedComment {
 
-    async fn content(&self) -> Result<Self::Output, BoxError> {
+    async fn json(&self) -> Result<serde_json::Value, BoxError> {
         #[derive(sqlx::FromRow, Serialize)]
         struct Row {
             id: Uuid,

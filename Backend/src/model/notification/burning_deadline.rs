@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::notification::contract::message::Message;
 use chrono::{DateTime, Utc};
 
 pub struct BurningDeadline {
@@ -10,19 +10,13 @@ pub struct BurningDeadline {
 
 impl BurningDeadline {
     pub fn new(project_title: String, stage_title: String, deadline: DateTime<Utc>) -> Self {
-        Self {
-            project_title,
-            stage_title,
-            deadline,
-        }
+        Self { project_title, stage_title, deadline }
     }
 }
 
 #[async_trait::async_trait]
-impl Contentable for BurningDeadline {
-    type Output = String;
-
-    async fn content(&self) -> Result<Self::Output, BoxError> {
+impl Message for BurningDeadline {
+    async fn text(&self) -> Result<String, BoxError> {
         Ok(format!(
             "• {} / {} — {}",
             self.project_title,

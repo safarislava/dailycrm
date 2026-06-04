@@ -1,5 +1,13 @@
-use crate::model::credential::contract::contentable::Contentable;
+use crate::common::BoxError;
 
-pub trait Token: Contentable<Output = String> {}
+#[async_trait::async_trait]
+pub trait Token: Send + Sync {
+    async fn value(&self) -> Result<String, BoxError>;
+}
 
-impl Token for String {}
+#[async_trait::async_trait]
+impl Token for String {
+    async fn value(&self) -> Result<String, BoxError> {
+        Ok(self.clone())
+    }
+}

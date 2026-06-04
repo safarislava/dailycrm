@@ -1,7 +1,8 @@
 use crate::common::BoxError;
 use crate::mail::Mailer;
-use crate::model::credential::contract::contentable::Contentable;
 use crate::model::notification::burning_deadlines::BurningDeadlines;
+use crate::model::notification::contract::digest::Digest;
+use crate::model::notification::contract::message::Message;
 use crate::model::notification::deadline_digest::DeadlineDigest;
 use crate::model::notification::role_recipients::RoleRecipients;
 use crate::model::project::contract::list::List;
@@ -10,7 +11,7 @@ use crate::model::user::role::Role;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-const SUBJECT: &str = "DailyCRM: Дедлайны";
+const SUBJECT: &str = "Горящие сроки выполнения";
 
 pub struct DeadlineDigestNotification {
     pool: Arc<PgPool>,
@@ -32,7 +33,7 @@ impl Task for DeadlineDigestNotification {
         if digest.is_empty() {
             return Ok(());
         }
-        let body = digest.content().await?;
+        let body = digest.text().await?;
         for email in RoleRecipients::new(self.pool.clone(), Role::Gip)
             .items()
             .await?

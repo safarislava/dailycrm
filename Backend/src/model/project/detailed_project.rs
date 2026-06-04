@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::project::contract::json::Json;
 use crate::model::project::project::Project;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -19,10 +19,9 @@ impl DetailedProject {
 }
 
 #[async_trait::async_trait]
-impl Contentable for DetailedProject {
-    type Output = serde_json::Value;
+impl Json for DetailedProject {
 
-    async fn content(&self) -> Result<Self::Output, BoxError> {
+    async fn json(&self) -> Result<serde_json::Value, BoxError> {
         #[derive(sqlx::FromRow, Serialize)]
         struct Row {
             id: Uuid,

@@ -1,5 +1,6 @@
-use crate::model::credential::contract::contentable::Contentable;
 use crate::model::session::access_token::AccessToken;
+use crate::model::session::contract::cookie::Cookie;
+use crate::model::session::contract::token::Token;
 use crate::model::session::cookie_token::CookieToken;
 use crate::model::session::refresh_token::{REFRESH_LIFETIME, RefreshToken};
 use actix_web::HttpResponse;
@@ -21,7 +22,7 @@ impl SessionResponse {
             Box::new(self.refresh),
             Duration::seconds(REFRESH_LIFETIME.num_seconds()),
         );
-        match (self.access.content().await, cookie.content().await) {
+        match (self.access.value().await, cookie.value().await) {
             (Ok(access), Ok(cookie)) => HttpResponse::Ok()
                 .cookie(cookie)
                 .json(serde_json::json!({ "access_token": access })),

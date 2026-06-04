@@ -26,14 +26,32 @@ import {
   useListCommentsQuery,
   useAddCommentMutation,
   useDeleteCommentMutation,
+  useAppendSubStageMutation,
+  useDeleteSubStageMutation,
+  useGetDetailedSubStageQuery,
+  useUpdateSubStageTitleMutation,
+  useUpdateSubStageDeadlineMutation,
+  useUpdateSubStageCostMutation,
+  useUpdateSubStageGipConfirmedMutation,
+  useUpdateSubStagePaymentConfirmedMutation,
+  useListSubStageActsQuery,
+  useUploadSubStageActMutation,
+  useDeleteSubStageActMutation,
+  useListSubStageAttachmentsQuery,
+  useUploadSubStageAttachmentMutation,
+  useDeleteSubStageAttachmentMutation,
+  useListSubStageCommentsQuery,
+  useAddSubStageCommentMutation,
+  useDeleteSubStageCommentMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
 
 export default function MainPanel() {
   const dispatch = useDispatch<AppDispatch>()
-  const projectId    = useSelector((s: RootState) => s.ui.selectedProjectId)
-  const stagePos     = useSelector((s: RootState) => s.ui.selectedStageId)
+  const projectId     = useSelector((s: RootState) => s.ui.selectedProjectId)
+  const selectedStage = useSelector((s: RootState) => s.ui.selectedStage)
+  const isSub         = selectedStage ? selectedStage.parentPosition !== 0 : false
 
   const { data: projects = [] } = useGetProjectsQuery()
   const project = projects.find((p) => p.id === projectId)
@@ -41,40 +59,149 @@ export default function MainPanel() {
   const { data: stages = [], isLoading: stagesLoading } = useGetStagesQuery(
     projectId!, { skip: !projectId },
   )
-  const { data: detail, isLoading: detailLoading } = useGetDetailedStageQuery(
-    { projectId: projectId!, position: Number(stagePos) },
-    { skip: !projectId || stagePos === null },
+
+  // ── Detail queries (one fires, one skips) ─────────────────
+  const { data: topDetail, isLoading: topDetailLoading } = useGetDetailedStageQuery(
+    { projectId: projectId!, position: selectedStage?.position ?? 0 },
+    { skip: !projectId || !selectedStage || isSub },
   )
-
-  const [appendStage, { isLoading: appending }] = useAppendStageMutation()
-  const [insertStage, { isLoading: inserting }] = useInsertStageMutation()
-  const [deleteStage]   = useDeleteStageMutation()
-  const [deleteProject] = useDeleteProjectMutation()
-
-  const [updateTitle]    = useUpdateStageTitleMutation()
-  const [updateDeadline] = useUpdateStageDeadlineMutation()
-  const [updateCost]     = useUpdateStageCostMutation()
-  const [updateGipConfirmed]    = useUpdateGipConfirmedMutation()
-  const [updatePaymentConfirmed] = useUpdatePaymentConfirmedMutation()
-  const { data: acts = [] } = useListActsQuery(
-    { projectId: projectId!, position: Number(stagePos) },
-    { skip: !projectId || stagePos === null },
+  const { data: subDetail, isLoading: subDetailLoading } = useGetDetailedSubStageQuery(
+    { projectId: projectId!, parentPosition: selectedStage?.parentPosition ?? 0, position: selectedStage?.position ?? 0 },
+    { skip: !projectId || !selectedStage || !isSub },
   )
-  const [uploadAct, { isLoading: uploadingAct }] = useUploadActMutation()
-  const [deleteAct] = useDeleteActMutation()
-  const [renameProject]     = useRenameProjectMutation()
+  const detail        = isSub ? subDetail : topDetail
+  const detailLoading = isSub ? subDetailLoading : topDetailLoading
 
-  const actFileInputRef = useRef<HTMLInputElement>(null)
-  const [actUploadError, setActUploadError] = useState<string | null>(null)
+  // ── Attachments / acts / comments queries ──────────────────
+  const actArgs        = { projectId: projectId!, position: selectedStage?.position ?? 0 }
+  const subActArgs     = { projectId: projectId!, parentPosition: selectedStage?.parentPosition ?? 0, position: selectedStage?.position ?? 0 }
+  const skipTop        = !projectId || !selectedStage || isSub
+  const skipSub        = !projectId || !selectedStage || !isSub
+
+  const { data: topActs = [] }         = useListActsQuery(actArgs, { skip: skipTop })
+  const { data: subActs = [] }         = useListSubStageActsQuery(subActArgs, { skip: skipSub })
+  const acts = isSub ? subActs : topActs
+
+  const { data: topAttachments = [] }  = useListAttachmentsQuery(actArgs, { skip: skipTop })
+  const { data: subAttachments = [] }  = useListSubStageAttachmentsQuery(subActArgs, { skip: skipSub })
+  const attachments = isSub ? subAttachments : topAttachments
+
+  const { data: topComments = [] }     = useListCommentsQuery(actArgs, { skip: skipTop })
+  const { data: subComments = [] }     = useListSubStageCommentsQuery(subActArgs, { skip: skipSub })
+  const comments = isSub ? subComments : topComments
+
+  // ── Stage list mutations ───────────────────────────────────
+  const [appendStage, { isLoading: appending }]   = useAppendStageMutation()
+  const [insertStage, { isLoading: inserting }]   = useInsertStageMutation()
+  const [deleteStage]                             = useDeleteStageMutation()
+  const [deleteProject]                           = useDeleteProjectMutation()
+  const [appendSubStage]                          = useAppendSubStageMutation()
+  const [deleteSubStage]                          = useDeleteSubStageMutation()
+  const [renameProject]                           = useRenameProjectMutation()
+
+  // ── Detail mutations (top-level) ───────────────────────────
+  const [updateTopTitle]   = useUpdateStageTitleMutation()
+  const [updateTopDeadline]= useUpdateStageDeadlineMutation()
+  const [updateTopCost]    = useUpdateStageCostMutation()
+  const [updateTopGip]     = useUpdateGipConfirmedMutation()
+  const [updateTopPayment] = useUpdatePaymentConfirmedMutation()
+  const [uploadTopAct, { isLoading: uploadingTopAct }]         = useUploadActMutation()
+  const [deleteTopAct]     = useDeleteActMutation()
+  const [uploadTopFile, { isLoading: uploadingTopFile }]       = useUploadAttachmentMutation()
+  const [deleteTopFile]    = useDeleteAttachmentMutation()
+  const [addTopComment, { isLoading: addingTopComment }]       = useAddCommentMutation()
+  const [deleteTopComment] = useDeleteCommentMutation()
+
+  // ── Detail mutations (sub-stage) ───────────────────────────
+  const [updateSubTitle]   = useUpdateSubStageTitleMutation()
+  const [updateSubDeadline]= useUpdateSubStageDeadlineMutation()
+  const [updateSubCost]    = useUpdateSubStageCostMutation()
+  const [updateSubGip]     = useUpdateSubStageGipConfirmedMutation()
+  const [updateSubPayment] = useUpdateSubStagePaymentConfirmedMutation()
+  const [uploadSubAct, { isLoading: uploadingSubAct }]         = useUploadSubStageActMutation()
+  const [deleteSubAct]     = useDeleteSubStageActMutation()
+  const [uploadSubFile, { isLoading: uploadingSubFile }]       = useUploadSubStageAttachmentMutation()
+  const [deleteSubFile]    = useDeleteSubStageAttachmentMutation()
+  const [addSubComment, { isLoading: addingSubComment }]       = useAddSubStageCommentMutation()
+  const [deleteSubComment] = useDeleteSubStageCommentMutation()
+
+  // Unified helpers
+  const uploadingAct  = isSub ? uploadingSubAct  : uploadingTopAct
+  const uploadingFile = isSub ? uploadingSubFile : uploadingTopFile
+  const addingComment = isSub ? addingSubComment : addingTopComment
+
+  const updateTitle   = isSub ? updateSubTitle   : updateTopTitle
+  const updateDeadline= isSub ? updateSubDeadline: updateTopDeadline
+  const updateCost    = isSub ? updateSubCost    : updateTopCost
+  const updateGip     = isSub ? updateSubGip     : updateTopGip
+  const updatePayment = isSub ? updateSubPayment : updateTopPayment
+
+  const handleUpdateTitle = async (v: string) => {
+    if (!v.trim() || !projectId || !selectedStage) return
+    if (isSub) {
+      await (updateTitle as typeof updateSubTitle)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, title: v.trim() })
+    } else {
+      await (updateTitle as typeof updateTopTitle)({ projectId, position: selectedStage.position, title: v.trim() })
+    }
+  }
+
+  const handleUpdateDeadline = async (v: string) => {
+    if (!projectId || !selectedStage) return
+    const deadline = v ? `${v}T00:00:00Z` : null
+    if (isSub) {
+      await (updateDeadline as typeof updateSubDeadline)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, deadline })
+    } else {
+      await (updateDeadline as typeof updateTopDeadline)({ projectId, position: selectedStage.position, deadline })
+    }
+  }
+
+  const handleUpdateCost = async (v: string) => {
+    if (!projectId || !selectedStage) return
+    const cost = v ? parseInt(v, 10) : null
+    if (isSub) {
+      await (updateCost as typeof updateSubCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+    } else {
+      await (updateCost as typeof updateTopCost)({ projectId, position: selectedStage.position, cost })
+    }
+  }
+
+  const handleToggleGip = async () => {
+    if (!projectId || !selectedStage || !detail) return
+    if (isSub) {
+      await (updateGip as typeof updateSubGip)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.gip_confirmed })
+    } else {
+      await (updateGip as typeof updateTopGip)({ projectId, position: selectedStage.position, confirmed: !detail.gip_confirmed })
+    }
+  }
+
+  const handleTogglePayment = async () => {
+    if (!projectId || !selectedStage || !detail) return
+    if (isSub) {
+      await (updatePayment as typeof updateSubPayment)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+    } else {
+      await (updatePayment as typeof updateTopPayment)({ projectId, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+    }
+  }
+
+  // ── File inputs ────────────────────────────────────────────
+  const actFileInputRef  = useRef<HTMLInputElement>(null)
+  const fileInputRef     = useRef<HTMLInputElement>(null)
+  const [actUploadError, setActUploadError]   = useState<string | null>(null)
+  const [uploadError, setUploadError]         = useState<string | null>(null)
 
   const handleActFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const original = e.target.files?.[0]
-      if (!original || !projectId || stagePos === null) return
+      if (!original || !projectId || !selectedStage) return
       setActUploadError(null)
       const buffer = await readFile(original)
       const file = new File([buffer], original.name || 'act', { type: original.type || 'application/octet-stream' })
-      const result = await uploadAct({ projectId, position: Number(stagePos), file })
+      let result
+      if (isSub) {
+        result = await uploadSubAct({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, file })
+      } else {
+        result = await uploadTopAct({ projectId, position: selectedStage.position, file })
+      }
       if (actFileInputRef.current) actFileInputRef.current.value = ''
       if ('error' in result) {
         const status = (result.error as { status?: number })?.status
@@ -82,38 +209,22 @@ export default function MainPanel() {
         else setActUploadError('Не удалось загрузить акт')
       }
     },
-    [projectId, stagePos, uploadAct],
+    [projectId, selectedStage, isSub, uploadTopAct, uploadSubAct],
   )
 
-  const { data: attachments = [] } = useListAttachmentsQuery(
-    { projectId: projectId!, position: Number(stagePos) },
-    { skip: !projectId || stagePos === null },
-  )
-  const [uploadAttachment, { isLoading: uploading }] = useUploadAttachmentMutation()
-  const [deleteAttachment] = useDeleteAttachmentMutation()
-  const [uploadError, setUploadError] = useState<string | null>(null)
-
-  const { data: comments = [] } = useListCommentsQuery(
-    { projectId: projectId!, position: Number(stagePos) },
-    { skip: !projectId || stagePos === null },
-  )
-  const [addComment, { isLoading: addingComment }] = useAddCommentMutation()
-  const [deleteComment] = useDeleteCommentMutation()
-  const [commentText, setCommentText] = useState('')
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const original = e.target.files?.[0]
-      if (!original || !projectId || stagePos === null) return
+      if (!original || !projectId || !selectedStage) return
       setUploadError(null)
       const buffer = await readFile(original)
-      const file = new File(
-        [buffer],
-        original.name || 'file',
-        { type: original.type || 'application/octet-stream' },
-      )
-      const result = await uploadAttachment({ projectId, position: Number(stagePos), file })
+      const file = new File([buffer], original.name || 'file', { type: original.type || 'application/octet-stream' })
+      let result
+      if (isSub) {
+        result = await uploadSubFile({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, file })
+      } else {
+        result = await uploadTopFile({ projectId, position: selectedStage.position, file })
+      }
       if (fileInputRef.current) fileInputRef.current.value = ''
       if ('error' in result) {
         const status = (result.error as { status?: number })?.status
@@ -122,40 +233,87 @@ export default function MainPanel() {
         else setUploadError('Не удалось загрузить файл')
       }
     },
-    [projectId, stagePos, uploadAttachment],
+    [projectId, selectedStage, isSub, uploadTopFile, uploadSubFile],
   )
 
+  const handleDeleteAct = (actId: string) => {
+    if (!projectId || !selectedStage) return
+    if (isSub) {
+      deleteSubAct({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, actId })
+    } else {
+      deleteTopAct({ projectId, position: selectedStage.position, actId })
+    }
+  }
+
+  const handleDeleteAttachment = (attachmentId: string) => {
+    if (!projectId || !selectedStage) return
+    if (isSub) {
+      deleteSubFile({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, attachmentId })
+    } else {
+      deleteTopFile({ projectId, position: selectedStage.position, attachmentId })
+    }
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!projectId || !selectedStage) return
+    if (isSub) {
+      deleteSubComment({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, commentId })
+    } else {
+      deleteTopComment({ projectId, position: selectedStage.position, commentId })
+    }
+  }
+
+  // ── Stage list state ───────────────────────────────────────
   const [title, setTitle]       = useState('')
   const [position, setPosition] = useState('')
+  const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set())
+  const [addingSubTo, setAddingSubTo]       = useState<number | null>(null)
+  const [subTitle, setSubTitle]             = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const creating  = appending || inserting
 
   type PendingDelete =
     | { kind: 'project' }
     | { kind: 'stage'; pos: number; stageTitle: string }
+    | { kind: 'sub'; parentPos: number; pos: number; stageTitle: string }
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
-  const creating = appending || inserting
 
-  const canSend = title.trim() !== '' && !creating
+  const canSend    = title.trim() !== '' && !creating
+  const canSendSub = subTitle.trim() !== ''
+
+  const topLevelStages  = stages.filter(s => s.parent_position === 0)
+  const childrenOf = (pos: number) => stages.filter(s => s.parent_position === pos)
+
+  const toggleExpand = (pos: number) => {
+    setExpandedStages(prev => {
+      const next = new Set(prev)
+      if (next.has(pos)) { next.delete(pos); if (addingSubTo === pos) setAddingSubTo(null) }
+      else next.add(pos)
+      return next
+    })
+  }
+
+  const startAddSub = (pos: number) => {
+    setExpandedStages(prev => new Set([...prev, pos]))
+    setAddingSubTo(pos)
+    setSubTitle('')
+  }
 
   const handleSend = async () => {
     if (!canSend || !projectId) return
     const t = title.trim()
     const p = position.trim()
-    if (p === '') {
-      await appendStage({ projectId, title: t })
-    } else {
-      await insertStage({ projectId, position: Number(p), title: t })
-    }
+    if (p === '') { await appendStage({ projectId, title: t }) }
+    else          { await insertStage({ projectId, position: Number(p), title: t }) }
     setTitle('')
     setPosition('')
   }
 
-  const handleDeleteStage = (pos: number, stageTitle: string) => {
-    setPendingDelete({ kind: 'stage', pos, stageTitle })
-  }
-
-  const handleDeleteProject = () => {
-    setPendingDelete({ kind: 'project' })
+  const handleSendSub = async (parentPos: number) => {
+    if (!canSendSub || !projectId) return
+    await appendSubStage({ projectId, parentPosition: parentPos, title: subTitle.trim() })
+    setSubTitle('')
+    setAddingSubTo(null)
   }
 
   const confirmDelete = async () => {
@@ -163,9 +321,14 @@ export default function MainPanel() {
     if (pendingDelete.kind === 'project') {
       await deleteProject(projectId)
       dispatch(selectProject(null))
-    } else {
+    } else if (pendingDelete.kind === 'stage') {
       await deleteStage({ projectId, position: pendingDelete.pos })
-      if (stagePos !== null && Number(stagePos) === pendingDelete.pos) dispatch(selectStage(null))
+      if (selectedStage?.parentPosition === 0 && selectedStage.position === pendingDelete.pos)
+        dispatch(selectStage(null))
+    } else {
+      await deleteSubStage({ projectId, parentPosition: pendingDelete.parentPos, position: pendingDelete.pos })
+      if (selectedStage?.parentPosition === pendingDelete.parentPos && selectedStage.position === pendingDelete.pos)
+        dispatch(selectStage(null))
     }
     setPendingDelete(null)
   }
@@ -173,11 +336,13 @@ export default function MainPanel() {
   const pendingDeleteName =
     pendingDelete?.kind === 'project'
       ? (project?.title ?? '')
-      : pendingDelete?.kind === 'stage'
+      : pendingDelete?.kind === 'stage' || pendingDelete?.kind === 'sub'
       ? pendingDelete.stageTitle
       : ''
 
-  // ── Empty state ────────────────────────────────────────
+  const [commentText, setCommentText] = useState('')
+
+  // ── Empty state ────────────────────────────────────────────
   if (!projectId) {
     return (
       <div className={styles.empty}>
@@ -188,8 +353,8 @@ export default function MainPanel() {
     )
   }
 
-  // ── Stage detail ───────────────────────────────────────
-  if (stagePos !== null) {
+  // ── Stage detail ───────────────────────────────────────────
+  if (selectedStage !== null) {
     return (
       <div className={styles.panel}>
         {pendingDelete && (
@@ -205,11 +370,15 @@ export default function MainPanel() {
             <ArrowLeftIcon />
           </button>
           <div className={styles.headerInfo}>
-            <span className={styles.headerTitle}>Детали этапа</span>
+            <span className={styles.headerTitle}>{isSub ? 'Детали подэтапа' : 'Детали этапа'}</span>
           </div>
           <button
             className={styles.dangerBtn}
-            onClick={() => detail && handleDeleteStage(Number(stagePos), detail.title)}
+            onClick={() => detail && (
+              isSub
+                ? setPendingDelete({ kind: 'sub', parentPos: selectedStage.parentPosition, pos: selectedStage.position, stageTitle: detail.title })
+                : setPendingDelete({ kind: 'stage', pos: selectedStage.position, stageTitle: detail.title })
+            )}
             title="Удалить этап"
           >
             <TrashIcon />
@@ -225,34 +394,18 @@ export default function MainPanel() {
                   label="Название"
                   displayValue={detail.title}
                   rawValue={detail.title}
-                  onSave={async (v) => {
-                    if (v.trim()) await updateTitle({ projectId: projectId!, position: Number(stagePos), title: v.trim() })
-                  }}
+                  onSave={handleUpdateTitle}
                 />
                 <EditableField
                   label="Срок выполнения"
                   displayValue={detail.deadline
-                    ? new Date(detail.deadline).toLocaleDateString('ru-RU', {
-                        day: '2-digit', month: 'long', year: 'numeric',
-                      })
+                    ? new Date(detail.deadline).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })
                     : '—'}
                   rawValue={detail.deadline?.slice(0, 10) ?? ''}
                   type="date"
-                  onSave={async (v) => {
-                    await updateDeadline({
-                      projectId: projectId!,
-                      position: Number(stagePos),
-                      deadline: v ? `${v}T00:00:00Z` : null,
-                    })
-                  }}
+                  onSave={handleUpdateDeadline}
                 />
-                <div className={`${styles.field} ${styles.fieldEditable}`}
-                  onClick={() => updateGipConfirmed({
-                    projectId: projectId!,
-                    position: Number(stagePos),
-                    confirmed: !detail.gip_confirmed,
-                  })}
-                >
+                <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleGip}>
                   <span className={styles.fieldLabel}>Выполнение ГИП</span>
                   <span className={styles.fieldValue}>
                     <span className={detail.gip_confirmed ? styles.completedBadge : styles.pendingBadge}>
@@ -268,36 +421,20 @@ export default function MainPanel() {
                   <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
                     {uploadingAct ? <SpinnerIcon /> : <PaperclipIcon />}
                     {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
-                    <input
-                      ref={actFileInputRef}
-                      type="file"
-                      className={styles.fileInputHidden}
-                      onChange={handleActFileChange}
-                      disabled={uploadingAct}
-                    />
+                    <input ref={actFileInputRef} type="file" className={styles.fileInputHidden}
+                      onChange={handleActFileChange} disabled={uploadingAct} />
                   </label>
                 </div>
                 {actUploadError && <p className={styles.uploadError}>{actUploadError}</p>}
-                {acts.length === 0 && !uploadingAct && (
-                  <p className={styles.attachmentsEmpty}>Нет актов</p>
-                )}
+                {acts.length === 0 && !uploadingAct && <p className={styles.attachmentsEmpty}>Нет актов</p>}
                 {acts.map((act) => (
                   <div key={act.id} className={styles.attachItem}>
                     <FileIcon mime={act.mime_type} />
                     <div className={styles.attachInfo}>
-                      <button
-                        className={styles.attachName}
-                        onClick={() => downloadFile(act.download_url, act.filename)}
-                      >
-                        {act.filename}
-                      </button>
+                      <button className={styles.attachName} onClick={() => downloadFile(act.download_url, act.filename)}>{act.filename}</button>
                       <span className={styles.attachMeta}>{formatBytes(act.size_bytes)}</span>
                     </div>
-                    <button
-                      className={styles.attachDeleteBtn}
-                      title="Удалить акт"
-                      onClick={() => deleteAct({ projectId: projectId!, position: Number(stagePos), actId: act.id })}
-                    >
+                    <button className={styles.attachDeleteBtn} title="Удалить акт" onClick={() => handleDeleteAct(act.id)}>
                       <CloseIcon />
                     </button>
                   </div>
@@ -311,21 +448,9 @@ export default function MainPanel() {
                     displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
                     rawValue={detail.cost?.toString() ?? ''}
                     type="number"
-                    onSave={async (v) => {
-                      await updateCost({
-                        projectId: projectId!,
-                        position: Number(stagePos),
-                        cost: v ? parseInt(v, 10) : null,
-                      })
-                    }}
+                    onSave={handleUpdateCost}
                   />
-                  <div className={`${styles.field} ${styles.fieldEditable}`}
-                    onClick={() => updatePaymentConfirmed({
-                      projectId: projectId!,
-                      position: Number(stagePos),
-                      confirmed: !detail.payment_confirmed,
-                    })}
-                  >
+                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleTogglePayment}>
                     <span className={styles.fieldLabel}>Подтверждение оплаты</span>
                     <span className={styles.fieldValue}>
                       <span className={detail.payment_confirmed ? styles.completedBadge : styles.pendingBadge}>
@@ -339,60 +464,34 @@ export default function MainPanel() {
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Файлы</span>
-                  <label
-                    className={`${styles.attachUploadBtn} ${uploading ? styles.attachUploadDisabled : ''}`}
-                    title="Прикрепить файл"
-                  >
-                    {uploading ? <SpinnerIcon /> : <PaperclipIcon />}
-                    {uploading ? 'Загрузка…' : 'Прикрепить'}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className={styles.fileInputHidden}
-                      onChange={handleFileChange}
-                      disabled={uploading}
-                    />
+                  <label className={`${styles.attachUploadBtn} ${uploadingFile ? styles.attachUploadDisabled : ''}`} title="Прикрепить файл">
+                    {uploadingFile ? <SpinnerIcon /> : <PaperclipIcon />}
+                    {uploadingFile ? 'Загрузка…' : 'Прикрепить'}
+                    <input ref={fileInputRef} type="file" className={styles.fileInputHidden}
+                      onChange={handleFileChange} disabled={uploadingFile} />
                   </label>
                 </div>
                 {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
-                {attachments.length === 0 && !uploading && (
-                  <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>
-                )}
+                {attachments.length === 0 && !uploadingFile && <p className={styles.attachmentsEmpty}>Нет прикреплённых файлов</p>}
                 {attachments.map((a) => (
                   <div key={a.id} className={styles.attachItem}>
                     <FileIcon mime={a.mime_type} />
                     <div className={styles.attachInfo}>
-                      <button
-                        className={styles.attachName}
-                        onClick={() => downloadFile(a.download_url, a.filename)}
-                      >
-                        {a.filename}
-                      </button>
+                      <button className={styles.attachName} onClick={() => downloadFile(a.download_url, a.filename)}>{a.filename}</button>
                       <span className={styles.attachMeta}>{formatBytes(a.size_bytes)}</span>
                     </div>
-                    <button
-                      className={styles.attachDeleteBtn}
-                      title="Удалить файл"
-                      onClick={() =>
-                        deleteAttachment({
-                          projectId: projectId!,
-                          position: Number(stagePos),
-                          attachmentId: a.id,
-                        })
-                      }
-                    >
+                    <button className={styles.attachDeleteBtn} title="Удалить файл" onClick={() => handleDeleteAttachment(a.id)}>
                       <CloseIcon />
                     </button>
                   </div>
                 ))}
               </div>
+
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Комментарии</span>
                 </div>
-                {comments.length === 0 && (
-                  <p className={styles.attachmentsEmpty}>Нет комментариев</p>
-                )}
+                {comments.length === 0 && <p className={styles.attachmentsEmpty}>Нет комментариев</p>}
                 {comments.map((c) => c.is_system ? (
                   <div key={c.id} className={styles.systemComment}>
                     <span className={styles.systemCommentText}>
@@ -400,10 +499,7 @@ export default function MainPanel() {
                       {' · '}{c.text}
                     </span>
                     <span className={styles.systemCommentDate}>
-                      {new Date(c.created_at).toLocaleString('ru-RU', {
-                        day: '2-digit', month: 'short',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
+                      {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 ) : (
@@ -411,16 +507,9 @@ export default function MainPanel() {
                     <div className={styles.commentBubbleHeader}>
                       <span className={styles.commentAuthor}>{c.author}</span>
                       <span className={styles.commentDate}>
-                        {new Date(c.created_at).toLocaleString('ru-RU', {
-                          day: '2-digit', month: 'short',
-                          hour: '2-digit', minute: '2-digit',
-                        })}
+                        {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <button
-                        className={styles.commentDeleteBtn}
-                        title="Удалить"
-                        onClick={() => deleteComment({ projectId: projectId!, position: Number(stagePos), commentId: c.id })}
-                      >
+                      <button className={styles.commentDeleteBtn} title="Удалить" onClick={() => handleDeleteComment(c.id)}>
                         <CloseIcon />
                       </button>
                     </div>
@@ -436,10 +525,13 @@ export default function MainPanel() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()
-                        if (commentText.trim() && !addingComment) {
-                          addComment({ projectId: projectId!, position: Number(stagePos), text: commentText.trim() })
-                          setCommentText('')
+                        if (!commentText.trim() || addingComment) return
+                        if (isSub) {
+                          addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
+                        } else {
+                          addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
                         }
+                        setCommentText('')
                       }
                     }}
                     rows={1}
@@ -448,10 +540,13 @@ export default function MainPanel() {
                     className={styles.sendBtn}
                     disabled={!commentText.trim() || addingComment}
                     onClick={() => {
-                      if (commentText.trim() && !addingComment) {
-                        addComment({ projectId: projectId!, position: Number(stagePos), text: commentText.trim() })
-                        setCommentText('')
+                      if (!commentText.trim() || addingComment) return
+                      if (isSub) {
+                        addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
+                      } else {
+                        addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
                       }
+                      setCommentText('')
                     }}
                   >
                     <SendIcon />
@@ -460,15 +555,13 @@ export default function MainPanel() {
               </div>
             </div>
           )}
-          {!detailLoading && !detail && (
-            <div className={styles.loading}>Нет данных</div>
-          )}
+          {!detailLoading && !detail && <div className={styles.loading}>Нет данных</div>}
         </div>
       </div>
     )
   }
 
-  // ── Stages list ────────────────────────────────────────
+  // ── Stages list with accordion ─────────────────────────────
   return (
     <div className={styles.panel}>
       {pendingDelete && (
@@ -480,69 +573,137 @@ export default function MainPanel() {
         />
       )}
       <header className={styles.header}>
-        <button
-          className={`${styles.backBtn} ${styles.mobileOnly}`}
-          onClick={() => dispatch(selectProject(null))}
-        >
+        <button className={`${styles.backBtn} ${styles.mobileOnly}`} onClick={() => dispatch(selectProject(null))}>
           <ArrowLeftIcon />
         </button>
         <div className={styles.headerInfo}>
           <InlineEdit
             value={project?.title ?? ''}
-            onSave={async (v) => {
-              if (v.trim() && projectId) await renameProject({ id: projectId, title: v.trim() })
-            }}
+            onSave={async (v) => { if (v.trim() && projectId) await renameProject({ id: projectId, title: v.trim() }) }}
             className={styles.headerTitle}
           />
           <span className={styles.headerSub}>
-            {stages.length} {stages.length === 1 ? 'этап' : stages.length < 5 ? 'этапа' : 'этапов'}
+            {topLevelStages.length} {topLevelStages.length === 1 ? 'этап' : topLevelStages.length < 5 ? 'этапа' : 'этапов'}
           </span>
         </div>
-        <button className={styles.dangerBtn} onClick={handleDeleteProject} title="Удалить проект">
+        <button className={styles.dangerBtn} onClick={() => setPendingDelete({ kind: 'project' })} title="Удалить проект">
           <TrashIcon />
         </button>
       </header>
 
       <div className={styles.stageList}>
         {stagesLoading && <div className={styles.loading}>Загрузка…</div>}
-        {!stagesLoading && stages.length === 0 && (
+        {!stagesLoading && topLevelStages.length === 0 && (
           <div className={styles.noStages}>
             <ListIcon />
             <p>Нет этапов</p>
             <span>Введите название ниже, чтобы добавить первый</span>
           </div>
         )}
-        {stages.map((stage) => (
-          <div
-            key={stage.position}
-            className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''}`}
-            onClick={() => dispatch(selectStage(String(stage.position)))}
-          >
-            <span
-              className={styles.stageCheck}
-              title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}
-            >
-              {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
-            </span>
-            <div className={styles.stageInfo}>
-              <span className={styles.stageTitle}>{stage.title}</span>
-              {stage.deadline && (
-                <span className={styles.stageDeadline}>
-                  {new Date(stage.deadline).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'short', year: 'numeric',
-                  })}
+        {topLevelStages.map((stage) => {
+          const children  = childrenOf(stage.position)
+          const expanded  = expandedStages.has(stage.position)
+          const addingHere= addingSubTo === stage.position
+
+          return (
+            <React.Fragment key={stage.position}>
+              <div
+                className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''}`}
+                onClick={() => dispatch(selectStage({ parentPosition: 0, position: stage.position }))}
+              >
+                <button
+                  className={`${styles.stageChevron} ${(children.length > 0 || expanded) ? styles.stageChevronVisible : ''} ${expanded ? styles.stageChevronOpen : ''}`}
+                  onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
+                  title={expanded ? 'Свернуть' : 'Развернуть'}
+                >
+                  <ChevronRightIcon />
+                </button>
+                <span className={styles.stageCheck} title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}>
+                  {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
                 </span>
+                <div className={styles.stageInfo}>
+                  <span className={styles.stageTitle}>{stage.title}</span>
+                  {stage.deadline && (
+                    <span className={styles.stageDeadline}>
+                      {new Date(stage.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+                <button
+                  className={styles.stageAddSub}
+                  onClick={(e) => { e.stopPropagation(); startAddSub(stage.position) }}
+                  title="Добавить подэтап"
+                >
+                  <PlusIcon />
+                </button>
+                <button
+                  className={styles.stageDelete}
+                  onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'stage', pos: stage.position, stageTitle: stage.title }) }}
+                  title="Удалить этап"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+
+              {(expanded || addingHere) && (
+                <div className={styles.subStageGroup}>
+                  {children.map((child) => (
+                    <div
+                      key={child.position}
+                      className={`${styles.stageItem} ${styles.subStageItem} ${child.completed ? styles.stageCompleted : ''}`}
+                      onClick={() => dispatch(selectStage({ parentPosition: stage.position, position: child.position }))}
+                    >
+                      <span className={styles.subStageIndent} />
+                      <span className={styles.stageCheck} title={child.completed ? 'Выполнен' : 'Не выполнен'}>
+                        {child.completed ? <CheckCircleIcon /> : <CircleIcon />}
+                      </span>
+                      <div className={styles.stageInfo}>
+                        <span className={styles.stageTitle}>{child.title}</span>
+                        {child.deadline && (
+                          <span className={styles.stageDeadline}>
+                            {new Date(child.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        className={styles.stageDelete}
+                        onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'sub', parentPos: stage.position, pos: child.position, stageTitle: child.title }) }}
+                        title="Удалить подэтап"
+                      >
+                        <CloseIcon />
+                      </button>
+                    </div>
+                  ))}
+
+                  {addingHere && (
+                    <div className={styles.subStageInputRow}>
+                      <span className={styles.subStageIndent} />
+                      <input
+                        autoFocus
+                        className={styles.subStageInput}
+                        placeholder="Новый подэтап…"
+                        value={subTitle}
+                        onChange={(e) => setSubTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSendSub(stage.position)
+                          if (e.key === 'Escape') { setAddingSubTo(null); setSubTitle('') }
+                        }}
+                        onBlur={() => { if (!subTitle.trim()) { setAddingSubTo(null) } }}
+                      />
+                      <button
+                        className={styles.sendBtn}
+                        onClick={() => handleSendSub(stage.position)}
+                        disabled={!canSendSub}
+                      >
+                        <SendIcon />
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-            <button
-              className={styles.stageDelete}
-              onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.position, stage.title) }}
-              title="Удалить этап"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        ))}
+            </React.Fragment>
+          )
+        })}
         <div ref={bottomRef} />
       </div>
 
@@ -563,11 +724,7 @@ export default function MainPanel() {
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
         />
-        <button
-          className={styles.sendBtn}
-          onClick={handleSend}
-          disabled={!canSend}
-        >
+        <button className={styles.sendBtn} onClick={handleSend} disabled={!canSend}>
           <SendIcon />
         </button>
       </div>
@@ -575,67 +732,42 @@ export default function MainPanel() {
   )
 }
 
-// ── InlineEdit — однострочный редактор для хедера ──────
-function InlineEdit({
-  value,
-  onSave,
-  className,
-}: {
+// ── InlineEdit ─────────────────────────────────────────────
+function InlineEdit({ value, onSave, className }: {
   value: string
   onSave: (value: string) => Promise<void>
   className?: string
 }) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
-  const cancelled = useRef(false)
+  const [draft, setDraft]     = useState('')
+  const cancelled             = useRef(false)
 
-  const startEdit = () => {
-    setDraft(value)
-    setEditing(true)
-  }
+  const startEdit = () => { setDraft(value); setEditing(true) }
 
   const handleBlur = async () => {
-    if (cancelled.current) {
-      cancelled.current = false
-      return
-    }
+    if (cancelled.current) { cancelled.current = false; return }
     setEditing(false)
     await onSave(draft)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') (e.target as HTMLElement).blur()
-    if (e.key === 'Escape') {
-      cancelled.current = true
-      ;(e.target as HTMLElement).blur()
-    }
+    if (e.key === 'Enter')  (e.target as HTMLElement).blur()
+    if (e.key === 'Escape') { cancelled.current = true; (e.target as HTMLElement).blur() }
   }
 
   return editing ? (
-    <input
-      autoFocus
-      className={`${className ?? ''} ${styles.inlineInput}`}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-    />
+    <input autoFocus className={`${className ?? ''} ${styles.inlineInput}`}
+      value={draft} onChange={(e) => setDraft(e.target.value)}
+      onBlur={handleBlur} onKeyDown={handleKeyDown} />
   ) : (
     <span className={`${className ?? ''} ${styles.inlineValue}`} onClick={startEdit} title="Переименовать">
-      {value}
-      <PencilIcon />
+      {value}<PencilIcon />
     </span>
   )
 }
 
-function EditableField({
-  label,
-  displayValue,
-  rawValue,
-  onSave,
-  type = 'text',
-  multiline = false,
-}: {
+// ── EditableField ──────────────────────────────────────────
+function EditableField({ label, displayValue, rawValue, onSave, type = 'text', multiline = false }: {
   label: string
   displayValue: string
   rawValue: string
@@ -644,60 +776,32 @@ function EditableField({
   multiline?: boolean
 }) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
-  const cancelled = useRef(false)
+  const [draft, setDraft]     = useState('')
+  const cancelled             = useRef(false)
 
-  const startEdit = () => {
-    setDraft(rawValue)
-    setEditing(true)
-  }
+  const startEdit = () => { setDraft(rawValue); setEditing(true) }
 
   const handleBlur = async () => {
-    if (cancelled.current) {
-      cancelled.current = false
-      return
-    }
+    if (cancelled.current) { cancelled.current = false; return }
     setEditing(false)
     await onSave(draft)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !multiline) {
-      ;(e.target as HTMLElement).blur()
-    }
-    if (e.key === 'Escape') {
-      cancelled.current = true
-      ;(e.target as HTMLElement).blur()
-    }
+    if (e.key === 'Enter' && !multiline) (e.target as HTMLElement).blur()
+    if (e.key === 'Escape') { cancelled.current = true; (e.target as HTMLElement).blur() }
   }
 
   return (
-    <div
-      className={`${styles.field} ${styles.fieldEditable}`}
-      onClick={!editing ? startEdit : undefined}
-    >
+    <div className={`${styles.field} ${styles.fieldEditable}`} onClick={!editing ? startEdit : undefined}>
       <span className={styles.fieldLabel}>{label}</span>
       {editing ? (
         multiline ? (
-          <textarea
-            autoFocus
-            className={styles.fieldInput}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            rows={3}
-          />
+          <textarea autoFocus className={styles.fieldInput} value={draft}
+            onChange={(e) => setDraft(e.target.value)} onBlur={handleBlur} onKeyDown={handleKeyDown} rows={3} />
         ) : (
-          <input
-            autoFocus
-            type={type}
-            className={styles.fieldInput}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-          />
+          <input autoFocus type={type} className={styles.fieldInput} value={draft}
+            onChange={(e) => setDraft(e.target.value)} onBlur={handleBlur} onKeyDown={handleKeyDown} />
         )
       ) : (
         <span className={styles.fieldValue}>{displayValue}</span>
@@ -706,12 +810,10 @@ function EditableField({
   )
 }
 
-// ── Helpers ────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────
 async function downloadFile(url: string, filename: string) {
   const token = store.getState().auth.accessToken
-  const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
+  const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
   if (!res.ok) return
   const blob = await res.blob()
   const blobUrl = URL.createObjectURL(blob)
@@ -727,24 +829,23 @@ async function downloadFile(url: string, filename: string) {
 function readFile(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onload  = () => resolve(reader.result as ArrayBuffer)
     reader.onerror = () => reject(reader.error)
     reader.readAsArrayBuffer(file)
   })
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024)       return `${bytes} B`
+  if (bytes < 1_048_576)  return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / 1_048_576).toFixed(1)} MB`
 }
 
-// ── Icons ──────────────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────────
 function ArrowLeftIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.2"
-        strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -762,8 +863,7 @@ function SendIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path d="M22 2 11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M22 2 15 22 11 13 2 9l20-7Z" stroke="currentColor" strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M22 2 15 22 11 13 2 9l20-7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -785,10 +885,8 @@ function FolderIcon() {
 function PencilIcon() {
   return (
     <svg className={styles.pencilIcon} width="12" height="12" viewBox="0 0 24 24" fill="none">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L13 14l-4 1 1-4 8.5-8.5Z"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L13 14l-4 1 1-4 8.5-8.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -829,12 +927,11 @@ function PaperclipIcon() {
 }
 function FileIcon({ mime }: { mime: string }) {
   const isImage = mime.startsWith('image/')
-  const isPdf = mime === 'application/pdf'
-  const color = isImage ? '#65aadd' : isPdf ? '#e53935' : '#708499'
+  const isPdf   = mime === 'application/pdf'
+  const color   = isImage ? '#65aadd' : isPdf ? '#e53935' : '#708499'
   return (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color }}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"
-        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
@@ -843,6 +940,20 @@ function SpinnerIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.8s linear infinite' }}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeDasharray="40 20" strokeLinecap="round"/>
+    </svg>
+  )
+}
+function ChevronRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function PlusIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
   )
 }

@@ -12,7 +12,11 @@ pub struct PaymentConfirmation {
 
 impl PaymentConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, confirmed: bool) -> Self {
-        Self { pool, stage, confirmed }
+        Self {
+            pool,
+            stage,
+            confirmed,
+        }
     }
 }
 
@@ -22,9 +26,10 @@ impl Task for PaymentConfirmation {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
-            "UPDATE stages SET payment_confirmed = $3 WHERE project_id = $1 AND position = $2",
+            "UPDATE stages SET payment_confirmed = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .bind(self.confirmed)
         .execute(self.pool.as_ref())

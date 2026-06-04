@@ -1,6 +1,6 @@
 use crate::endpoint::api_error::ApiError;
 use crate::endpoint::auth_header::UserHeader;
-use crate::model::credential::contract::contentable::Contentable;
+use crate::model::credential::contract::username::Username;
 use crate::model::user::detailed_user::DetailedUser;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, web};
@@ -33,8 +33,7 @@ pub async fn get(
     match (username, email, notifications_enabled) {
         (Some(username), Some(email), Some(notifications_enabled)) => {
             let username = username
-                .content()
-                .await
+                .value()
                 .map_err(|e| ApiError::Internal(e.to_string()))?;
             Ok(HttpResponse::Ok().json(serde_json::json!({
                 "username": username,

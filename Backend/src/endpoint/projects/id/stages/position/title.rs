@@ -26,9 +26,14 @@ pub async fn patch(
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     let (project_id, position) = path.into_inner();
     let stage = Stage::new(Project::new(project_id), position);
-    LoggedStageRename::new(state.pool.clone(), stage, user, body.title.trim().to_string())
-        .done()
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
+    LoggedStageRename::new(
+        state.pool.clone(),
+        stage,
+        user,
+        body.title.trim().to_string(),
+    )
+    .done()
+    .await
+    .map_err(|e| ApiError::Internal(e.to_string()))?;
     Ok(HttpResponse::Ok().finish())
 }

@@ -1,5 +1,6 @@
 pub mod act;
 pub mod acts;
+pub mod file_content;
 pub mod attachment;
 pub mod attachments;
 pub mod comment;
@@ -12,7 +13,6 @@ pub mod detailed_comment;
 pub mod detailed_project;
 pub mod detailed_stage;
 pub mod project;
-pub mod project_stage_summary;
 pub mod projects;
 pub mod stage;
 pub mod stage_summary;

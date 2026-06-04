@@ -1,7 +1,11 @@
 use crate::common::BoxError;
+use crate::model::project::contract::file::File;
+use crate::model::project::file_content::FileContent;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
 use crate::model::task::project::attachment_upload::AttachmentUpload;
+use crate::model::task::project::attachment_upload_text::AttachmentUploadText;
+use crate::model::task::project::comment_text::CommentText;
 use crate::model::task::project::system_comment_creation::SystemCommentCreation;
 use crate::model::user::user::User;
 use crate::storage::Storage;
@@ -14,9 +18,7 @@ pub struct LoggedAttachmentUpload {
     storage: Arc<Storage>,
     stage: Stage,
     user: User,
-    filename: String,
-    mime_type: String,
-    data: Vec<u8>,
+    file: FileContent,
 }
 
 impl LoggedAttachmentUpload {
@@ -25,11 +27,15 @@ impl LoggedAttachmentUpload {
         storage: Arc<Storage>,
         stage: Stage,
         user: User,
-        filename: String,
-        mime_type: String,
-        data: Vec<u8>,
+        file: FileContent,
     ) -> Self {
-        Self { pool, storage, stage, user, filename, mime_type, data }
+        Self {
+            pool,
+            storage,
+            stage,
+            user,
+            file,
+        }
     }
 }
 
@@ -42,16 +48,16 @@ impl Task for LoggedAttachmentUpload {
             self.pool.clone(),
             self.storage.clone(),
             self.stage.clone(),
-            self.filename.clone(),
-            self.mime_type.clone(),
-            self.data.clone(),
-            false,
+            self.file.clone(),
         )
         .done()
         .await?;
-        let text = format!("Загружен файл: {}", self.filename);
+        let text = AttachmentUploadText::new(self.file.name().to_string()).text();
         let _ = SystemCommentCreation::new(
-            self.pool.clone(), self.stage.clone(), self.user.clone(), text,
+            self.pool.clone(),
+            self.stage.clone(),
+            self.user.clone(),
+            text,
         )
         .done()
         .await;

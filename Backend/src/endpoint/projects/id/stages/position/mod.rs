@@ -8,4 +8,5 @@ pub mod delete;
 pub mod get;
 pub mod gip_confirmed;
 pub mod payment_confirmed;
+pub mod sub;
 pub mod title;

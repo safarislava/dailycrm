@@ -1,0 +1,16 @@
+use crate::common::BoxError;
+use crate::model::credential::contract::username::Username;
+
+pub struct RawUsername(String);
+
+impl RawUsername {
+    pub fn new(username: String) -> Self {
+        Self(username)
+    }
+}
+
+impl Username for RawUsername {
+    fn value(&self) -> Result<String, BoxError> {
+        Ok(self.0.clone())
+    }
+}

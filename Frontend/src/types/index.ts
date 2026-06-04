@@ -8,6 +8,7 @@ export interface Project {
 
 export interface Stage {
   project_id: string
+  parent_position: number
   position: number
   title: string
   deadline: string | null
@@ -16,6 +17,7 @@ export interface Stage {
 
 export interface DetailedStage {
   project_id: string
+  parent_position: number
   position: number
   title: string
   deadline: string | null
