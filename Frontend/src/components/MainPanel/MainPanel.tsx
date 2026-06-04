@@ -1,9 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
+import type { Comment } from '../../types'
 import { selectProject, selectStage } from '../../store/uiSlice'
 import { store } from '../../store'
 import {
+  crmApi,
   useGetProjectsQuery,
   useGetStagesQuery,
   useAppendStageMutation,
@@ -89,6 +91,84 @@ export default function MainPanel() {
   const { data: topComments = [] }     = useListCommentsQuery(actArgs, { skip: skipTop })
   const { data: subComments = [] }     = useListSubStageCommentsQuery(subActArgs, { skip: skipSub })
   const comments = isSub ? subComments : topComments
+
+  // ── Lazy-loaded older comments ─────────────────────────────
+  const COMMENTS_PAGE = 25
+  const stageKey = `${projectId}-${selectedStage?.parentPosition ?? 0}-${selectedStage?.position ?? 0}`
+  const [olderComments, setOlderComments] = useState<Comment[]>([])
+  const [hasMoreComments, setHasMoreComments] = useState(true)
+  const [loadingOlderComments, setLoadingOlderComments] = useState(false)
+  const commentsScrollRef = useRef<HTMLDivElement>(null)
+  const restoreScrollRef = useRef<number | null>(null)
+  const initialScrolledKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    setOlderComments([])
+    setHasMoreComments(true)
+    setLoadingOlderComments(false)
+    restoreScrollRef.current = null
+    initialScrolledKeyRef.current = null
+  }, [stageKey])
+
+  const allComments = useMemo(() => {
+    const byId = new Map<string, Comment>()
+    for (const c of olderComments) byId.set(c.id, c)
+    for (const c of comments) byId.set(c.id, c)
+    return Array.from(byId.values()).sort((a, b) =>
+      a.created_at === b.created_at ? a.id.localeCompare(b.id) : a.created_at.localeCompare(b.created_at),
+    )
+  }, [olderComments, comments])
+
+  const handleLoadOlderComments = useCallback(async () => {
+    if (!projectId || !selectedStage || loadingOlderComments || !hasMoreComments) return
+    const oldest = allComments[0]
+    if (!oldest) return
+    const el = commentsScrollRef.current
+    if (el) restoreScrollRef.current = el.scrollHeight - el.scrollTop
+    setLoadingOlderComments(true)
+    try {
+      const page = isSub
+        ? await dispatch(
+            crmApi.endpoints.listSubStageComments.initiate(
+              { projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, before: oldest.id },
+              { subscribe: false },
+            ),
+          ).unwrap()
+        : await dispatch(
+            crmApi.endpoints.listComments.initiate(
+              { projectId, position: selectedStage.position, before: oldest.id },
+              { subscribe: false },
+            ),
+          ).unwrap()
+      if (page.length < COMMENTS_PAGE) setHasMoreComments(false)
+      setOlderComments((prev) => [...page, ...prev])
+    } finally {
+      setLoadingOlderComments(false)
+    }
+  }, [projectId, selectedStage, loadingOlderComments, hasMoreComments, allComments, isSub, dispatch])
+
+  const handleCommentsScroll = useCallback(() => {
+    const el = commentsScrollRef.current
+    if (el && el.scrollTop <= 48) handleLoadOlderComments()
+  }, [handleLoadOlderComments])
+
+  // Keep the viewport anchored when older comments are prepended.
+  useLayoutEffect(() => {
+    const el = commentsScrollRef.current
+    if (el && restoreScrollRef.current !== null) {
+      el.scrollTop = el.scrollHeight - restoreScrollRef.current
+      restoreScrollRef.current = null
+    }
+  }, [olderComments])
+
+  // Scroll to the newest comment once when a stage's comments first appear.
+  useLayoutEffect(() => {
+    const el = commentsScrollRef.current
+    if (el && allComments.length > 0 && initialScrolledKeyRef.current !== stageKey) {
+      el.scrollTop = el.scrollHeight
+      initialScrolledKeyRef.current = stageKey
+    }
+  }, [stageKey, allComments.length])
 
   // ── Stage list mutations ───────────────────────────────────
   const [appendStage, { isLoading: appending }]   = useAppendStageMutation()
@@ -261,6 +341,7 @@ export default function MainPanel() {
     } else {
       deleteTopComment({ projectId, position: selectedStage.position, commentId })
     }
+    setOlderComments((prev) => prev.filter((c) => c.id !== commentId))
   }
 
   // ── Stage list state ───────────────────────────────────────
@@ -285,12 +366,14 @@ export default function MainPanel() {
   const childrenOf = (pos: number) => stages.filter(s => s.parent_position === pos)
 
   const toggleExpand = (pos: number) => {
+    const collapsing = expandedStages.has(pos)
     setExpandedStages(prev => {
       const next = new Set(prev)
-      if (next.has(pos)) { next.delete(pos); if (addingSubTo === pos) setAddingSubTo(null) }
+      if (collapsing) next.delete(pos)
       else next.add(pos)
       return next
     })
+    if (collapsing && addingSubTo === pos) setAddingSubTo(null)
   }
 
   const startAddSub = (pos: number) => {
@@ -491,31 +574,34 @@ export default function MainPanel() {
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Комментарии</span>
                 </div>
-                {comments.length === 0 && <p className={styles.attachmentsEmpty}>Нет комментариев</p>}
-                {comments.map((c) => c.is_system ? (
-                  <div key={c.id} className={styles.systemComment}>
-                    <span className={styles.systemCommentText}>
-                      <span className={styles.systemCommentAuthor}>{c.author}</span>
-                      {' · '}{c.text}
-                    </span>
-                    <span className={styles.systemCommentDate}>
-                      {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                ) : (
-                  <div key={c.id} className={styles.commentBubble}>
-                    <div className={styles.commentBubbleHeader}>
-                      <span className={styles.commentAuthor}>{c.author}</span>
-                      <span className={styles.commentDate}>
+                <div className={styles.commentsScroll} ref={commentsScrollRef} onScroll={handleCommentsScroll}>
+                  {loadingOlderComments && <div className={styles.commentsLoading}>Загрузка…</div>}
+                  {allComments.length === 0 && <p className={styles.attachmentsEmpty}>Нет комментариев</p>}
+                  {allComments.map((c) => c.is_system ? (
+                    <div key={c.id} className={styles.systemComment}>
+                      <span className={styles.systemCommentText}>
+                        <span className={styles.systemCommentAuthor}>{c.author}</span>
+                        {' · '}{c.text}
+                      </span>
+                      <span className={styles.systemCommentDate}>
                         {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <button className={styles.commentDeleteBtn} title="Удалить" onClick={() => handleDeleteComment(c.id)}>
-                        <CloseIcon />
-                      </button>
                     </div>
-                    <p className={styles.commentText}>{c.text}</p>
-                  </div>
-                ))}
+                  ) : (
+                    <div key={c.id} className={styles.commentBubble}>
+                      <div className={styles.commentBubbleHeader}>
+                        <span className={styles.commentAuthor}>{c.author}</span>
+                        <span className={styles.commentDate}>
+                          {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <button className={styles.commentDeleteBtn} title="Удалить" onClick={() => handleDeleteComment(c.id)}>
+                          <CloseIcon />
+                        </button>
+                      </div>
+                      <p className={styles.commentText}>{c.text}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className={styles.commentInputRow}>
                   <textarea
                     className={styles.commentInput}
