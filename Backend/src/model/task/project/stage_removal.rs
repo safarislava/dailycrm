@@ -20,8 +20,9 @@ impl Task for StageRemoval {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND position = $2")
+        let result = sqlx::query("DELETE FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3")
             .bind(self.stage.project().id())
+            .bind(self.stage.parent_position())
             .bind(self.stage.position())
             .execute(self.pool.as_ref())
             .await?;

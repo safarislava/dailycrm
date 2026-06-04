@@ -23,17 +23,18 @@ impl List for Stages {
     async fn items(&self) -> Result<Vec<Stage>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct StageRow {
+            parent_position: i32,
             position: i32,
         }
         let rows = sqlx::query_as::<_, StageRow>(
-            "SELECT position FROM stages WHERE project_id = $1 ORDER BY position",
+            "SELECT parent_position, position FROM stages WHERE project_id = $1 ORDER BY parent_position, position",
         )
         .bind(self.project.id())
         .fetch_all(self.pool.as_ref())
         .await?;
         Ok(rows
             .into_iter()
-            .map(|r| Stage::new(self.project.clone(), r.position))
+            .map(|r| Stage::new_substage(self.project.clone(), r.parent_position, r.position))
             .collect())
     }
 }

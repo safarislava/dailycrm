@@ -25,6 +25,7 @@ impl Json for DetailedStage {
         #[derive(sqlx::FromRow, Serialize)]
         struct Row {
             project_id: Uuid,
+            parent_position: i32,
             position: i32,
             title: String,
             deadline: Option<DateTime<Utc>>,
@@ -34,16 +35,18 @@ impl Json for DetailedStage {
             payment_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT project_id, position, title, deadline,
+            "SELECT project_id, parent_position, position, title, deadline,
                     (gip_confirmed AND payment_confirmed AND EXISTS(
                         SELECT 1 FROM attachments a
                         WHERE a.project_id = stages.project_id
+                        AND a.parent_position = stages.parent_position
                         AND a.stage_position = stages.position AND a.is_act = TRUE
                     )) AS completed,
                     cost, gip_confirmed, payment_confirmed
-             FROM stages WHERE project_id = $1 AND position = $2",
+             FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .fetch_one(self.pool.as_ref())
         .await?;

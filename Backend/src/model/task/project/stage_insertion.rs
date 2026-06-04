@@ -13,12 +13,7 @@ pub struct StageInsertion {
 
 impl StageInsertion {
     pub fn new(pool: Arc<PgPool>, project: Project, position: i32, title: String) -> Self {
-        Self {
-            pool,
-            project,
-            position,
-            title,
-        }
+        Self { pool, project, position, title }
     }
 }
 
@@ -34,7 +29,7 @@ impl Task for StageInsertion {
         let mut transaction = self.pool.begin().await?;
         let rows = sqlx::query_as::<_, Row>(
             "SELECT position FROM stages \
-             WHERE project_id = $1 AND position >= $2 ORDER BY position DESC",
+             WHERE project_id = $1 AND parent_position = 0 AND position >= $2 ORDER BY position DESC",
         )
         .bind(self.project.id())
         .bind(self.position)
@@ -43,19 +38,21 @@ impl Task for StageInsertion {
         for row in rows {
             sqlx::query(
                 "UPDATE stages SET position = position + 1 \
-                 WHERE project_id = $1 AND position = $2",
+                 WHERE project_id = $1 AND parent_position = 0 AND position = $2",
             )
             .bind(self.project.id())
             .bind(row.position)
             .execute(&mut *transaction)
             .await?;
         }
-        sqlx::query("INSERT INTO stages(project_id, position, title) VALUES ($1, $2, $3)")
-            .bind(self.project.id())
-            .bind(self.position)
-            .bind(&self.title)
-            .execute(&mut *transaction)
-            .await?;
+        sqlx::query(
+            "INSERT INTO stages(project_id, parent_position, position, title) VALUES ($1, 0, $2, $3)",
+        )
+        .bind(self.project.id())
+        .bind(self.position)
+        .bind(&self.title)
+        .execute(&mut *transaction)
+        .await?;
         transaction.commit().await?;
         Ok(())
     }

@@ -25,9 +25,10 @@ impl Task for StageGipConfirmedReceipt {
             gip_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT gip_confirmed FROM stages WHERE project_id = $1 AND position = $2",
+            "SELECT gip_confirmed FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .fetch_optional(self.pool.as_ref())
         .await?;

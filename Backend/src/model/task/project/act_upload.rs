@@ -36,11 +36,12 @@ impl Task for ActUpload {
             .upload_to(self.storage.as_ref(), &id.to_string())
             .await?;
         sqlx::query(
-            "INSERT INTO attachments(id, project_id, stage_position, filename, mime_type, size_bytes, is_act)
-             VALUES ($1, $2, $3, $4, $5, $6, true)",
+            "INSERT INTO attachments(id, project_id, parent_position, stage_position, filename, mime_type, size_bytes, is_act)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, true)",
         )
         .bind(id)
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .bind(self.file.name())
         .bind(self.file.media_type())

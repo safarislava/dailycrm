@@ -21,8 +21,9 @@ impl Task for StageRename {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        sqlx::query("UPDATE stages SET title = $3 WHERE project_id = $1 AND position = $2")
+        sqlx::query("UPDATE stages SET title = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3")
             .bind(self.stage.project().id())
+            .bind(self.stage.parent_position())
             .bind(self.stage.position())
             .bind(&self.title)
             .execute(self.pool.as_ref())

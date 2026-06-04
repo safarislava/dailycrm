@@ -29,7 +29,7 @@ pub async fn patch(
     let current_password = ValidPassword::new(RawPassword::new(body.current_password.clone()));
     let hash = DbHash::new(state.pool.clone(), user.clone());
     let verification = HashUserVerification::new(hash, current_password);
-    let user = VerificationProtectedUser::new(state.pool.clone(), user, verification);
+    let user = VerificationProtectedUser::new(user, verification);
     let new_password = HashedPassword::new(ValidPassword::new(RawPassword::new(body.new_password.clone())));
     PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password))
         .done()

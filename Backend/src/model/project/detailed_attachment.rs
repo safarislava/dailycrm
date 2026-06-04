@@ -25,6 +25,7 @@ impl Json for DetailedAttachment {
         struct Row {
             id: Uuid,
             project_id: Uuid,
+            parent_position: i32,
             stage_position: i32,
             filename: String,
             mime_type: String,
@@ -32,16 +33,17 @@ impl Json for DetailedAttachment {
             created_at: DateTime<Utc>,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT id, project_id, stage_position, filename, mime_type, size_bytes, created_at
+            "SELECT id, project_id, parent_position, stage_position, filename, mime_type, size_bytes, created_at
              FROM attachments WHERE id = $1",
         )
         .bind(self.attachment.id())
         .fetch_one(self.pool.as_ref())
         .await?;
-        let download_url = format!(
-            "/api/projects/{}/stages/{}/attachments/{}/download",
-            row.project_id, row.stage_position, row.id
-        );
+        let download_url = if row.parent_position == 0 {
+            format!("/api/projects/{}/stages/{}/attachments/{}/download", row.project_id, row.stage_position, row.id)
+        } else {
+            format!("/api/projects/{}/stages/{}/sub/{}/attachments/{}/download", row.project_id, row.parent_position, row.stage_position, row.id)
+        };
         Ok(serde_json::json!({
             "id": row.id,
             "filename": row.filename,

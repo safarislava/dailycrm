@@ -29,10 +29,11 @@ impl Task for SystemCommentCreation {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
-            "INSERT INTO stage_comments(project_id, stage_position, author_id, text, is_system) \
-             VALUES ($1, $2, $3, $4, TRUE)",
+            "INSERT INTO stage_comments(project_id, parent_position, stage_position, author_id, text, is_system) \
+             VALUES ($1, $2, $3, $4, $5, TRUE)",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .bind(self.author.id())
         .bind(&self.text)

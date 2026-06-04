@@ -22,6 +22,7 @@ impl List for Deadlines {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
+            parent_position: i32,
             position: i32,
             title: String,
             deadline: Option<DateTime<Utc>>,
@@ -29,10 +30,11 @@ impl List for Deadlines {
             project_title: String,
         }
         let rows = sqlx::query_as::<_, Row>(
-            "SELECT s.project_id, s.position, s.title, s.deadline,
+            "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline,
                     (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
                         SELECT 1 FROM attachments a
                         WHERE a.project_id = s.project_id
+                        AND a.parent_position = s.parent_position
                         AND a.stage_position = s.position AND a.is_act = TRUE
                     )) AS completed,
                     p.title AS project_title
@@ -49,6 +51,7 @@ impl List for Deadlines {
                 serde_json::json!({
                     "stage": {
                         "project_id": r.project_id,
+                        "parent_position": r.parent_position,
                         "position": r.position,
                         "title": r.title,
                         "deadline": r.deadline,

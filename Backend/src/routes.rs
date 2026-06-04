@@ -114,6 +114,70 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/comments/{comment_id}")
                                     .delete(endpoint::projects::id::stages::position::comments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub")
+                                    .post(endpoint::projects::id::stages::position::sub::create::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}")
+                                    .get(endpoint::projects::id::stages::position::sub::position::get::get)
+                                    .delete(endpoint::projects::id::stages::position::sub::position::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/title")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::title::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/deadline")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::deadline::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/cost")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::cost::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/gip-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::gip_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/payment-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::payment_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act")
+                                    .get(endpoint::projects::id::stages::position::sub::position::act::list::get)
+                                    .post(endpoint::projects::id::stages::position::sub::position::act::upload::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act/{act_id}")
+                                    .delete(endpoint::projects::id::stages::position::sub::position::act::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act/{act_id}/download")
+                                    .get(endpoint::projects::id::stages::position::sub::position::act::download::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments")
+                                    .get(endpoint::projects::id::stages::position::sub::position::attachments::list::get)
+                                    .post(endpoint::projects::id::stages::position::sub::position::attachments::upload::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments/{attachment_id}/download")
+                                    .get(endpoint::projects::id::stages::position::sub::position::attachments::download::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments/{attachment_id}")
+                                    .delete(endpoint::projects::id::stages::position::sub::position::attachments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments")
+                                    .get(endpoint::projects::id::stages::position::sub::position::comments::list::get)
+                                    .post(endpoint::projects::id::stages::position::sub::position::comments::create::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments/{comment_id}")
+                                    .delete(endpoint::projects::id::stages::position::sub::position::comments::delete::delete),
                             ),
                     ),
             ),

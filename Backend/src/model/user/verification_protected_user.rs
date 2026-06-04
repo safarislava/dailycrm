@@ -1,19 +1,15 @@
 use crate::model::credential::contract::hash_verification::{UserVerification, VerificationError};
 use crate::model::user::contract::protected_user::ProtectedUser;
 use crate::model::user::user::User;
-use sqlx::PgPool;
-use std::sync::Arc;
 
 pub struct VerificationProtectedUser {
-    pool: Arc<PgPool>,
     user: User,
     verification: Box<dyn UserVerification>,
 }
 
 impl VerificationProtectedUser {
-    pub fn new(pool: Arc<PgPool>, user: User, verification: impl UserVerification) -> Self {
+    pub fn new(user: User, verification: impl UserVerification) -> Self {
         Self {
-            pool,
             user,
             verification: Box::new(verification),
         }

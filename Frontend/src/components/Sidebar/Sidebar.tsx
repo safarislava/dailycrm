@@ -176,7 +176,7 @@ export default function Sidebar() {
                 className={styles.deadlineItem}
                 onClick={() => {
                   dispatch(selectProject(item.stage.project_id))
-                  dispatch(selectStage(String(item.stage.position)))
+                  dispatch(selectStage({ parentPosition: item.stage.parent_position, position: item.stage.position }))
                   setDeadlinesOpen(false)
                 }}
               >

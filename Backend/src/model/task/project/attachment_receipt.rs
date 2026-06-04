@@ -26,18 +26,19 @@ impl Task for AttachmentReceipt {
         #[derive(sqlx::FromRow)]
         struct Row {
             project_id: Uuid,
+            parent_position: i32,
             stage_position: i32,
             filename: String,
             is_act: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT project_id, stage_position, filename, is_act FROM attachments WHERE id = $1",
+            "SELECT project_id, parent_position, stage_position, filename, is_act FROM attachments WHERE id = $1",
         )
         .bind(self.attachment.id())
         .fetch_optional(self.pool.as_ref())
         .await?;
         Ok(row.map(|r| {
-            let stage = Stage::new(Project::new(r.project_id), r.stage_position);
+            let stage = Stage::new_substage(Project::new(r.project_id), r.parent_position, r.stage_position);
             (r.filename, stage, r.is_act)
         }))
     }
