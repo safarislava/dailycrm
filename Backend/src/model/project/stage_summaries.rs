@@ -1,27 +1,28 @@
-use crate::common::BoxError;
-use crate::model::project::contract::json::Json;
-use crate::model::project::stage::Stage;
+use crate::model::project::contract::list::List;
+use crate::model::project::project::Project;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub struct StageSummary {
+pub struct StageSummaries {
     pool: Arc<PgPool>,
-    stage: Stage,
+    project: Project,
 }
 
-impl StageSummary {
-    pub fn new(pool: Arc<PgPool>, stage: Stage) -> Self {
-        Self { pool, stage }
+impl StageSummaries {
+    pub fn new(pool: Arc<PgPool>, project: Project) -> Self {
+        Self { pool, project }
     }
 }
 
-#[async_trait::async_trait]
-impl Json for StageSummary {
+#[async_trait]
+impl List for StageSummaries {
+    type Output = serde_json::Value;
 
-    async fn json(&self) -> Result<serde_json::Value, BoxError> {
+    async fn items(&self) -> Result<Vec<serde_json::Value>, sqlx::Error> {
         #[derive(sqlx::FromRow, Serialize)]
         struct Row {
             project_id: Uuid,
@@ -31,7 +32,7 @@ impl Json for StageSummary {
             deadline: Option<DateTime<Utc>>,
             completed: bool,
         }
-        let row = sqlx::query_as::<_, Row>(
+        let rows = sqlx::query_as::<_, Row>(
             "SELECT project_id, parent_position, position, title, deadline,
                     (gip_confirmed AND payment_confirmed AND EXISTS(
                         SELECT 1 FROM attachments a
@@ -39,13 +40,13 @@ impl Json for StageSummary {
                         AND a.parent_position = stages.parent_position
                         AND a.stage_position = stages.position AND a.is_act = TRUE
                     )) AS completed
-             FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+             FROM stages WHERE project_id = $1 ORDER BY parent_position, position",
         )
-        .bind(self.stage.project().id())
-        .bind(self.stage.parent_position())
-        .bind(self.stage.position())
-        .fetch_one(self.pool.as_ref())
+        .bind(self.project.id())
+        .fetch_all(self.pool.as_ref())
         .await?;
-        Ok(serde_json::to_value(row)?)
+        rows.into_iter()
+            .map(|r| serde_json::to_value(r).map_err(|e| sqlx::Error::Decode(e.into())))
+            .collect()
     }
 }
