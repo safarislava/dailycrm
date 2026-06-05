@@ -731,13 +731,17 @@ export default function MainPanel() {
                 onDrop={(e) => { e.preventDefault(); handleStageDrop(stage.position) }}
                 onDragEnd={() => { setDragPos(null); setDragOverPos(null) }}
               >
-                <button
-                  className={`${styles.stageChevron} ${(children.length > 0 || expanded) ? styles.stageChevronVisible : ''} ${expanded ? styles.stageChevronOpen : ''}`}
-                  onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
-                  title={expanded ? 'Свернуть' : 'Развернуть'}
-                >
-                  <ChevronRightIcon />
-                </button>
+                {(children.length > 0 || expanded) ? (
+                  <button
+                    className={`${styles.stageChevron} ${styles.stageChevronVisible} ${expanded ? styles.stageChevronOpen : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
+                    title={expanded ? 'Свернуть' : 'Развернуть'}
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                ) : (
+                  <span className={styles.stageChevronSpacer} />
+                )}
                 <span className={styles.stageCheck} title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}>
                   {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
                 </span>

@@ -313,9 +313,14 @@
   &.stageChevronVisible { opacity: 0.5; }
   &.stageChevronOpen { transform: rotate(90deg); opacity: 1; }
 
-  .stageItem:hover & { opacity: 0.8; }
-
   &:hover { background: v.$bg-item-hover; opacity: 1 !important; }
+
+  @media (hover: none) { opacity: 1; width: 36px; height: 36px; }
+}
+
+.stageChevronSpacer {
+  width: 24px;
+  flex-shrink: 0;
 }
 
 .stageAddSub {
