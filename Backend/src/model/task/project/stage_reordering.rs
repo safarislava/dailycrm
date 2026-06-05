@@ -12,8 +12,6 @@ pub struct StageReordering {
     to: i32,
 }
 
-const PARKED: i32 = -1;
-
 impl StageReordering {
     pub fn new(pool: Arc<PgPool>, project: Project, from: i32, to: i32) -> Self {
         Self { pool, project, parent_position: 0, from, to }
@@ -51,54 +49,29 @@ impl Task for StageReordering {
             return Ok(());
         }
 
+        let lo = self.from.min(to);
+        let hi = self.from.max(to);
+
         sqlx::query(
-            "UPDATE stages SET position = $3 \
-             WHERE project_id = $1 AND parent_position = $2 AND position = $4",
+            "UPDATE stages SET position = -position \
+             WHERE project_id = $1 AND parent_position = $2 AND position BETWEEN $3 AND $4",
         )
         .bind(self.project.id())
         .bind(self.parent_position)
-        .bind(PARKED)
-        .bind(self.from)
+        .bind(lo)
+        .bind(hi)
         .execute(&mut *transaction)
         .await?;
         if self.parent_position == 0 {
             sqlx::query(
-                "UPDATE stages SET parent_position = $2 WHERE project_id = $1 AND parent_position = $3",
+                "UPDATE stages SET parent_position = -parent_position \
+                 WHERE project_id = $1 AND parent_position BETWEEN $2 AND $3",
             )
             .bind(self.project.id())
-            .bind(PARKED)
-            .bind(self.from)
+            .bind(lo)
+            .bind(hi)
             .execute(&mut *transaction)
             .await?;
-        }
-
-        let shifted: Vec<i32> = if self.from < to {
-            (self.from + 1..=to).collect()
-        } else {
-            (to..self.from).rev().collect()
-        };
-        let step = if self.from < to { -1 } else { 1 };
-        for position in shifted {
-            sqlx::query(
-                "UPDATE stages SET position = $3 \
-                 WHERE project_id = $1 AND parent_position = $2 AND position = $4",
-            )
-            .bind(self.project.id())
-            .bind(self.parent_position)
-            .bind(position + step)
-            .bind(position)
-            .execute(&mut *transaction)
-            .await?;
-            if self.parent_position == 0 {
-                sqlx::query(
-                    "UPDATE stages SET parent_position = $2 WHERE project_id = $1 AND parent_position = $3",
-                )
-                .bind(self.project.id())
-                .bind(position + step)
-                .bind(position)
-                .execute(&mut *transaction)
-                .await?;
-            }
         }
 
         sqlx::query(
@@ -108,7 +81,7 @@ impl Task for StageReordering {
         .bind(self.project.id())
         .bind(self.parent_position)
         .bind(to)
-        .bind(PARKED)
+        .bind(-self.from)
         .execute(&mut *transaction)
         .await?;
         if self.parent_position == 0 {
@@ -117,7 +90,36 @@ impl Task for StageReordering {
             )
             .bind(self.project.id())
             .bind(to)
-            .bind(PARKED)
+            .bind(-self.from)
+            .execute(&mut *transaction)
+            .await?;
+        }
+
+        let (lower, upper, delta) = if self.from < to {
+            (-hi, -(lo + 1), -1)
+        } else {
+            (-(hi - 1), -lo, 1)
+        };
+        sqlx::query(
+            "UPDATE stages SET position = -position + $5 \
+             WHERE project_id = $1 AND parent_position = $2 AND position BETWEEN $3 AND $4",
+        )
+        .bind(self.project.id())
+        .bind(self.parent_position)
+        .bind(lower)
+        .bind(upper)
+        .bind(delta)
+        .execute(&mut *transaction)
+        .await?;
+        if self.parent_position == 0 {
+            sqlx::query(
+                "UPDATE stages SET parent_position = -parent_position + $4 \
+                 WHERE project_id = $1 AND parent_position BETWEEN $2 AND $3",
+            )
+            .bind(self.project.id())
+            .bind(lower)
+            .bind(upper)
+            .bind(delta)
             .execute(&mut *transaction)
             .await?;
         }
