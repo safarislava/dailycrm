@@ -1,6 +1,8 @@
-use crate::model::credential::raw_username::RawUsername;
+use crate::common::BoxError;
+use crate::model::project::contract::json::Json;
 use crate::model::user::role::Role;
 use crate::model::user::user::User;
+use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -14,43 +16,16 @@ impl DetailedUser {
         DetailedUser { pool, user }
     }
 
-    pub async fn username(&self) -> Result<Option<RawUsername>, sqlx::Error> {
-        #[derive(sqlx::FromRow)]
-        struct Row {
-            username: String,
-        }
-        let row = sqlx::query_as::<_, Row>("SELECT username FROM users WHERE id = $1")
-            .bind(self.user.id())
-            .fetch_optional(self.pool.as_ref())
-            .await?;
-        Ok(row.map(|r| RawUsername::new(r.username)))
+    async fn profile(&self) -> Result<Profile, sqlx::Error> {
+        sqlx::query_as::<_, Profile>(
+            "SELECT username, email, notifications_enabled FROM users WHERE id = $1",
+        )
+        .bind(self.user.id())
+        .fetch_one(self.pool.as_ref())
+        .await
     }
 
-    pub async fn email(&self) -> Result<Option<String>, sqlx::Error> {
-        #[derive(sqlx::FromRow)]
-        struct Row {
-            email: String,
-        }
-        let row = sqlx::query_as::<_, Row>("SELECT email FROM users WHERE id = $1")
-            .bind(self.user.id())
-            .fetch_optional(self.pool.as_ref())
-            .await?;
-        Ok(row.map(|r| r.email))
-    }
-
-    pub async fn notifications_enabled(&self) -> Result<Option<bool>, sqlx::Error> {
-        #[derive(sqlx::FromRow)]
-        struct Row {
-            notifications_enabled: bool,
-        }
-        let row = sqlx::query_as::<_, Row>("SELECT notifications_enabled FROM users WHERE id = $1")
-            .bind(self.user.id())
-            .fetch_optional(self.pool.as_ref())
-            .await?;
-        Ok(row.map(|r| r.notifications_enabled))
-    }
-
-    pub async fn roles(&self) -> Result<Vec<Role>, sqlx::Error> {
+    async fn roles(&self) -> Result<Vec<Role>, sqlx::Error> {
         #[derive(sqlx::FromRow)]
         struct Row {
             role: Role,
@@ -60,5 +35,25 @@ impl DetailedUser {
             .fetch_all(self.pool.as_ref())
             .await?;
         Ok(rows.into_iter().map(|r| r.role).collect())
+    }
+}
+
+#[derive(sqlx::FromRow, Serialize)]
+struct Profile {
+    username: String,
+    email: String,
+    notifications_enabled: bool,
+}
+
+#[async_trait::async_trait]
+impl Json for DetailedUser {
+    async fn json(&self) -> Result<serde_json::Value, BoxError> {
+        let (profile, roles) = futures_util::try_join!(self.profile(), self.roles())?;
+        Ok(serde_json::json!({
+            "username": profile.username,
+            "email": profile.email,
+            "notifications_enabled": profile.notifications_enabled,
+            "roles": roles,
+        }))
     }
 }
