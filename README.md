@@ -137,6 +137,32 @@ Frontend/src/
 | `POST`   | `/projects/{project_id}/stages/{stage_id}/comments`              | `[auth]` Добавление комментария |
 | `DELETE` | `/projects/{project_id}/stages/{stage_id}/comments/{comment_id}` | `[auth]` Удаление комментария   |
 
+### Подэтапы
+
+Подэтапы содержат те же поля, что и обычные этапы. `{stage_id}` — позиция родительского этапа.
+
+| Метод    | Маршрут                                                                             | Описание                               |
+|----------|-------------------------------------------------------------------------------------|----------------------------------------|
+| `POST`   | `/projects/{project_id}/stages/{stage_id}/sub`                                      | `[auth]` Добавление подэтапа в конец   |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}`                             | `[auth]` Подэтап по позиции            |
+| `DELETE` | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}`                             | `[auth]` Удаление подэтапа             |
+| `PATCH`  | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/title`                       | `[auth]` Переименование подэтапа       |
+| `PATCH`  | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/deadline`                    | `[auth]` Установка дедлайна            |
+| `PATCH`  | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/cost`                        | `[auth]` Установка стоимости           |
+| `PATCH`  | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/gip-confirmed`               | `[auth]` Подтверждение ГИП             |
+| `PATCH`  | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/payment-confirmed`           | `[auth]` Подтверждение оплаты          |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/act`                         | `[auth]` Список актов                  |
+| `POST`   | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/act`                         | `[auth]` Загрузка акта (multipart)     |
+| `DELETE` | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/act/{act_id}`                | `[auth]` Удаление акта                 |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/act/{act_id}/download`       | `[auth]` Скачивание акта               |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments`                 | `[auth]` Список вложений               |
+| `POST`   | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments`                 | `[auth]` Загрузка файла (до 50 МБ)     |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments/{id}/download`   | `[auth]` Скачивание файла              |
+| `DELETE` | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments/{id}`            | `[auth]` Удаление файла                |
+| `GET`    | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/comments`                    | `[auth]` Список комментариев           |
+| `POST`   | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/comments`                    | `[auth]` Добавление комментария        |
+| `DELETE` | `/projects/{project_id}/stages/{stage_id}/sub/{sub_id}/comments/{comment_id}`       | `[auth]` Удаление комментария          |
+
 ### Администрирование
 
 | Метод  | Маршрут         | Описание                                             |

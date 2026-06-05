@@ -1,25 +1,29 @@
 use crate::model::project::contract::list::List;
+use crate::model::project::project::Project;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub struct Deadlines {
+pub struct StageSummaries {
     pool: Arc<PgPool>,
+    project: Project,
 }
 
-impl Deadlines {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        Self { pool }
+impl StageSummaries {
+    pub fn new(pool: Arc<PgPool>, project: Project) -> Self {
+        Self { pool, project }
     }
 }
 
-#[async_trait::async_trait]
-impl List for Deadlines {
+#[async_trait]
+impl List for StageSummaries {
     type Output = serde_json::Value;
 
     async fn items(&self) -> Result<Vec<serde_json::Value>, sqlx::Error> {
-        #[derive(sqlx::FromRow)]
+        #[derive(sqlx::FromRow, Serialize)]
         struct Row {
             project_id: Uuid,
             parent_position: i32,
@@ -27,14 +31,11 @@ impl List for Deadlines {
             title: String,
             deadline: Option<DateTime<Utc>>,
             completed: bool,
-            project_title: String,
         }
         let rows = sqlx::query_as::<_, Row>(
             "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline,
-                    (s.gip_confirmed AND s.payment_confirmed) AS completed,
-                    p.title AS project_title
+                    (s.gip_confirmed AND s.payment_confirmed) AS completed
              FROM stages s
-             JOIN projects p ON p.id = s.project_id
              LEFT JOIN LATERAL (
                  SELECT 1 AS id FROM attachments a
                  WHERE a.project_id = s.project_id
@@ -42,26 +43,13 @@ impl List for Deadlines {
                  AND a.stage_position = s.position AND a.is_act = TRUE
                  LIMIT 1
              ) act ON TRUE
-             WHERE s.deadline IS NOT NULL
-             ORDER BY s.deadline",
+             WHERE s.project_id = $1 ORDER BY s.parent_position, s.position",
         )
+        .bind(self.project.id())
         .fetch_all(self.pool.as_ref())
         .await?;
-        Ok(rows
-            .into_iter()
-            .map(|r| {
-                serde_json::json!({
-                    "stage": {
-                        "project_id": r.project_id,
-                        "parent_position": r.parent_position,
-                        "position": r.position,
-                        "title": r.title,
-                        "deadline": r.deadline,
-                        "completed": r.completed,
-                    },
-                    "project_title": r.project_title,
-                })
-            })
-            .collect())
+        rows.into_iter()
+            .map(|r| serde_json::to_value(r).map_err(|e| sqlx::Error::Decode(e.into())))
+            .collect()
     }
 }

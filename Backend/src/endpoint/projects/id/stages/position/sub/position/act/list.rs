@@ -1,13 +1,10 @@
 use crate::endpoint::api_error::ApiError;
-use crate::model::project::acts::Acts;
-use crate::model::project::contract::json::Json;
+use crate::model::project::act_summaries::ActSummaries;
 use crate::model::project::contract::list::List;
-use crate::model::project::detailed_act::DetailedAct;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
 use crate::state::AppState;
 use actix_web::{HttpResponse, web};
-use futures_util::future::try_join_all;
 use uuid::Uuid;
 
 pub async fn get(
@@ -16,15 +13,8 @@ pub async fn get(
 ) -> Result<HttpResponse, ApiError> {
     let (project_id, parent_position, position) = path.into_inner();
     let stage = Stage::new_substage(Project::new(project_id), parent_position, position);
-    let list = Acts::new(state.pool.clone(), stage)
+    let items = ActSummaries::new(state.pool.clone(), stage)
         .items()
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
-    let futures = list.into_iter().map(|act| {
-        let detailed = DetailedAct::new(state.pool.clone(), act);
-        async move { detailed.json().await }
-    });
-    let items = try_join_all(futures)
         .await
         .map_err(|e| ApiError::Internal(e.to_string()))?;
     Ok(HttpResponse::Ok().json(items))

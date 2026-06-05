@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())
+            .wrap(actix_web::middleware::Compress::default())
             .wrap(cors::rules())
             .wrap(cors::security_headers())
             .configure(routes::configure)

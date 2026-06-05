@@ -296,8 +296,9 @@ export const crmApi = createApi({
       invalidatesTags: ['Me'],
     }),
 
-    listComments: builder.query<Comment[], { projectId: string; position: number }>({
-      query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}/comments`,
+    listComments: builder.query<Comment[], { projectId: string; position: number; before?: string }>({
+      query: ({ projectId, position, before }) =>
+        `/projects/${projectId}/stages/${position}/comments${before ? `?before=${before}` : ''}`,
       providesTags: (_r, _e, { projectId, position }) => [
         { type: 'Comment' as const, id: `${projectId}-${position}` },
       ],
@@ -468,8 +469,9 @@ export const crmApi = createApi({
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
       ],
     }),
-    listSubStageComments: builder.query<Comment[], { projectId: string; parentPosition: number; position: number }>({
-      query: ({ projectId, parentPosition, position }) => `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments`,
+    listSubStageComments: builder.query<Comment[], { projectId: string; parentPosition: number; position: number; before?: string }>({
+      query: ({ projectId, parentPosition, position, before }) =>
+        `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments${before ? `?before=${before}` : ''}`,
       providesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
       ],

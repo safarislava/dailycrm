@@ -690,6 +690,19 @@
   opacity: 0.6;
 }
 
+.commentsScroll {
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.commentsLoading {
+  padding: 8px;
+  font-size: 12px;
+  color: v.$text-secondary;
+  text-align: center;
+}
+
 .commentBubble {
   padding: 8px 16px 10px;
   border-top: 1px solid v.$divider;

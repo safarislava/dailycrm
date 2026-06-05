@@ -5,7 +5,7 @@ use std::env;
 pub async fn connect() -> PgPool {
     let url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPoolOptions::new()
-        .max_connections(20)
+        .max_connections(100)
         .connect(&url)
         .await
         .expect("Failed to connect to database");
