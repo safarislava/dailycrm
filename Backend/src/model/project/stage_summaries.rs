@@ -34,15 +34,13 @@ impl List for StageSummaries {
         }
         let rows = sqlx::query_as::<_, Row>(
             "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline,
-                    (s.gip_confirmed AND s.payment_confirmed) AS completed
+                    (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
+                        SELECT 1 FROM attachments a
+                        WHERE a.project_id = s.project_id
+                        AND a.parent_position = s.parent_position
+                        AND a.stage_position = s.position AND a.is_act = TRUE
+                    )) AS completed
              FROM stages s
-             LEFT JOIN LATERAL (
-                 SELECT 1 AS id FROM attachments a
-                 WHERE a.project_id = s.project_id
-                 AND a.parent_position = s.parent_position
-                 AND a.stage_position = s.position AND a.is_act = TRUE
-                 LIMIT 1
-             ) act ON TRUE
              WHERE s.project_id = $1 ORDER BY s.parent_position, s.position",
         )
         .bind(self.project.id())
