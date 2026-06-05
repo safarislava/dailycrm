@@ -148,6 +148,14 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project', 'Deadline'],
     }),
+    reorderStage: builder.mutation<void, { projectId: string; position: number; to: number }>({
+      query: ({ projectId, position, to }) => ({
+        url: `/projects/${projectId}/stages/${position}/position`,
+        method: 'PATCH',
+        body: { to },
+      }),
+      invalidatesTags: ['Stage', 'Project', 'Deadline', 'Comment', 'Act', 'Attachment'],
+    }),
 
     getDetailedStage: builder.query<DetailedStage, { projectId: string; position: number }>({
       query: ({ projectId, position }) => `/projects/${projectId}/stages/${position}`,
@@ -338,6 +346,14 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId }) => [{ type: 'Stage', id: projectId }, 'Project', 'Deadline'],
     }),
+    reorderSubStage: builder.mutation<void, { projectId: string; parentPosition: number; position: number; to: number }>({
+      query: ({ projectId, parentPosition, position, to }) => ({
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/position`,
+        method: 'PATCH',
+        body: { to },
+      }),
+      invalidatesTags: ['Stage', 'Project', 'Deadline', 'Comment', 'Act', 'Attachment'],
+    }),
     getDetailedSubStage: builder.query<DetailedStage, { projectId: string; parentPosition: number; position: number }>({
       query: ({ projectId, parentPosition, position }) => `/projects/${projectId}/stages/${parentPosition}/sub/${position}`,
       providesTags: (_r, _e, { projectId, parentPosition, position }) => [
@@ -523,6 +539,7 @@ export const {
   useAppendStageMutation,
   useInsertStageMutation,
   useDeleteStageMutation,
+  useReorderStageMutation,
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
@@ -537,6 +554,7 @@ export const {
   useDeleteCommentMutation,
   useAppendSubStageMutation,
   useDeleteSubStageMutation,
+  useReorderSubStageMutation,
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,

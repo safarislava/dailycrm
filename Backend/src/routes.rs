@@ -65,6 +65,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::title::patch),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/position")
+                                    .patch(endpoint::projects::id::stages::position::reorder::patch),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/deadline")
                                     .patch(endpoint::projects::id::stages::position::deadline::patch),
                             )
@@ -127,6 +131,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/title")
                                     .patch(endpoint::projects::id::stages::position::sub::position::title::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/position")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::reorder::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/deadline")

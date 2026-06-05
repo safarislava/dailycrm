@@ -11,6 +11,8 @@ import {
   useAppendStageMutation,
   useInsertStageMutation,
   useDeleteStageMutation,
+  useReorderStageMutation,
+  useReorderSubStageMutation,
   useDeleteProjectMutation,
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
@@ -174,6 +176,8 @@ export default function MainPanel() {
   const [appendStage, { isLoading: appending }]   = useAppendStageMutation()
   const [insertStage, { isLoading: inserting }]   = useInsertStageMutation()
   const [deleteStage]                             = useDeleteStageMutation()
+  const [reorderStage]                            = useReorderStageMutation()
+  const [reorderSubStage]                         = useReorderSubStageMutation()
   const [deleteProject]                           = useDeleteProjectMutation()
   const [appendSubStage]                          = useAppendSubStageMutation()
   const [deleteSubStage]                          = useDeleteSubStageMutation()
@@ -352,6 +356,30 @@ export default function MainPanel() {
   const [subTitle, setSubTitle]             = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const creating  = appending || inserting
+
+  // ── Drag-and-drop reordering ───────────────────────────────
+  // Top-level stages are dragged by position; sub-stages also carry their
+  // parent so a drop only reorders within the same parent.
+  const [dragPos, setDragPos]           = useState<number | null>(null)
+  const [dragOverPos, setDragOverPos]   = useState<number | null>(null)
+  const [dragSub, setDragSub]           = useState<{ parent: number; pos: number } | null>(null)
+  const [dragOverSub, setDragOverSub]   = useState<{ parent: number; pos: number } | null>(null)
+
+  const handleStageDrop = async (target: number) => {
+    const from = dragPos
+    setDragPos(null)
+    setDragOverPos(null)
+    if (from === null || from === target || !projectId) return
+    await reorderStage({ projectId, position: from, to: target })
+  }
+
+  const handleSubDrop = async (parent: number, target: number) => {
+    const dragged = dragSub
+    setDragSub(null)
+    setDragOverSub(null)
+    if (!dragged || dragged.parent !== parent || dragged.pos === target || !projectId) return
+    await reorderSubStage({ projectId, parentPosition: parent, position: dragged.pos, to: target })
+  }
 
   type PendingDelete =
     | { kind: 'project' }
@@ -694,16 +722,26 @@ export default function MainPanel() {
           return (
             <React.Fragment key={stage.position}>
               <div
-                className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''}`}
+                className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''} ${dragPos === stage.position ? styles.stageDragging : ''} ${dragOverPos === stage.position ? styles.stageDragOver : ''}`}
                 onClick={() => dispatch(selectStage({ parentPosition: 0, position: stage.position }))}
+                draggable
+                onDragStart={(e) => { e.stopPropagation(); setDragPos(stage.position) }}
+                onDragOver={(e) => { if (dragPos !== null) { e.preventDefault(); setDragOverPos(stage.position) } }}
+                onDragLeave={() => setDragOverPos((p) => (p === stage.position ? null : p))}
+                onDrop={(e) => { e.preventDefault(); handleStageDrop(stage.position) }}
+                onDragEnd={() => { setDragPos(null); setDragOverPos(null) }}
               >
-                <button
-                  className={`${styles.stageChevron} ${(children.length > 0 || expanded) ? styles.stageChevronVisible : ''} ${expanded ? styles.stageChevronOpen : ''}`}
-                  onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
-                  title={expanded ? 'Свернуть' : 'Развернуть'}
-                >
-                  <ChevronRightIcon />
-                </button>
+                {(children.length > 0 || expanded) ? (
+                  <button
+                    className={`${styles.stageChevron} ${styles.stageChevronVisible} ${expanded ? styles.stageChevronOpen : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
+                    title={expanded ? 'Свернуть' : 'Развернуть'}
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                ) : (
+                  <span className={styles.stageChevronSpacer} />
+                )}
                 <span className={styles.stageCheck} title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}>
                   {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
                 </span>
@@ -736,8 +774,14 @@ export default function MainPanel() {
                   {children.map((child) => (
                     <div
                       key={child.position}
-                      className={`${styles.stageItem} ${styles.subStageItem} ${child.completed ? styles.stageCompleted : ''}`}
+                      className={`${styles.stageItem} ${styles.subStageItem} ${child.completed ? styles.stageCompleted : ''} ${dragSub?.parent === stage.position && dragSub?.pos === child.position ? styles.stageDragging : ''} ${dragOverSub?.parent === stage.position && dragOverSub?.pos === child.position ? styles.stageDragOver : ''}`}
                       onClick={() => dispatch(selectStage({ parentPosition: stage.position, position: child.position }))}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); setDragSub({ parent: stage.position, pos: child.position }) }}
+                      onDragOver={(e) => { if (dragSub?.parent === stage.position) { e.preventDefault(); setDragOverSub({ parent: stage.position, pos: child.position }) } }}
+                      onDragLeave={() => setDragOverSub((s) => (s?.parent === stage.position && s?.pos === child.position ? null : s))}
+                      onDrop={(e) => { e.preventDefault(); handleSubDrop(stage.position, child.position) }}
+                      onDragEnd={() => { setDragSub(null); setDragOverSub(null) }}
                     >
                       <span className={styles.subStageIndent} />
                       <span className={styles.stageCheck} title={child.completed ? 'Выполнен' : 'Не выполнен'}>
