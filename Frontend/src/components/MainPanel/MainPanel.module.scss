@@ -201,6 +201,15 @@
   .stageCheck { opacity: 1; color: #7bc862; }
 }
 
+.stageDragging {
+  opacity: 0.4;
+}
+
+.stageDragOver {
+  box-shadow: inset 0 2px 0 0 v.$accent;
+  background: v.$bg-item-hover;
+}
+
 .stageCheck {
   opacity: 0.35;
   width: 28px;

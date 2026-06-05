@@ -39,5 +39,6 @@ pub mod stage_insertion;
 pub mod stage_payment_confirmed_receipt;
 pub mod stage_removal;
 pub mod stage_rename;
+pub mod stage_reordering;
 pub mod stage_title_receipt;
 pub mod system_comment_creation;
