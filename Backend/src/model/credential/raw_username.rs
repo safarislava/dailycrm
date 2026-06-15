@@ -1,5 +1,4 @@
-use crate::common::BoxError;
-use crate::model::credential::contract::username::Username;
+use crate::model::credential::contract::username::{Username, UsernameError};
 
 pub struct RawUsername(String);
 
@@ -10,7 +9,7 @@ impl RawUsername {
 }
 
 impl Username for RawUsername {
-    fn value(&self) -> Result<String, BoxError> {
+    fn value(&self) -> Result<String, UsernameError> {
         Ok(self.0.clone())
     }
 }

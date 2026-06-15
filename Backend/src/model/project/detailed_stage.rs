@@ -36,14 +36,8 @@ impl Json for DetailedStage {
         }
         let row = sqlx::query_as::<_, Row>(
             "SELECT project_id, parent_position, position, title, deadline,
-                    (gip_confirmed AND payment_confirmed AND EXISTS(
-                        SELECT 1 FROM attachments a
-                        WHERE a.project_id = stages.project_id
-                        AND a.parent_position = stages.parent_position
-                        AND a.stage_position = stages.position AND a.is_act = TRUE
-                    )) AS completed,
-                    cost, gip_confirmed, payment_confirmed
-             FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+                    completed, cost, gip_confirmed, payment_confirmed
+             FROM detailed_stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())
         .bind(self.stage.parent_position())

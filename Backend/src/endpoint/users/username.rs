@@ -24,7 +24,6 @@ pub async fn patch(
     let username = ValidUsername::new(RawUsername::new(body.username.clone()));
     UsernameUpdate::new(state.pool.clone(), user, username)
         .done()
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
+        .await?;
     Ok(HttpResponse::Ok().finish())
 }

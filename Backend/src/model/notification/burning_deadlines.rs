@@ -33,13 +33,9 @@ impl List for BurningDeadlines {
         let end = start + Duration::days(1);
         let rows = sqlx::query_as::<_, Row>(
             "SELECT p.title AS project_title, s.title AS stage_title, s.deadline
-             FROM stages s
+             FROM detailed_stages s
              JOIN projects p ON p.id = s.project_id
-             WHERE NOT (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
-                        SELECT 1 FROM attachments a
-                        WHERE a.project_id = s.project_id
-                        AND a.stage_position = s.position AND a.is_act = TRUE
-                    ))
+             WHERE NOT s.completed
                AND s.deadline >= $1 AND s.deadline < $2
              ORDER BY s.deadline",
         )

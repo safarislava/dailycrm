@@ -33,10 +33,6 @@ pub async fn patch(
     let new_password = HashedPassword::new(ValidPassword::new(RawPassword::new(body.new_password.clone())));
     PasswordUpdate::new(state.pool.clone(), Box::new(user), Box::new(new_password))
         .done()
-        .await
-        .map_err(|e| match e.to_string().as_str() {
-            "Wrong password" => ApiError::Unauthorized("Wrong current password".to_string()),
-            _ => ApiError::Internal(e.to_string()),
-        })?;
+        .await?;
     Ok(HttpResponse::Ok().finish())
 }

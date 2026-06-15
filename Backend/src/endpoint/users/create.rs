@@ -34,8 +34,7 @@ pub async fn create(
         body.email.clone(),
     )
     .done()
-    .await
-    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    .await?;
     match result {
         InviteStatus::Ok => Ok(HttpResponse::Created().finish()),
         InviteStatus::InvalidInvite => {

@@ -1,3 +1,7 @@
+use crate::common::BoxError;
+use crate::model::credential::contract::hash_verification::VerificationError;
+use crate::model::credential::contract::password::PasswordError;
+use crate::model::credential::contract::username::UsernameError;
 use actix_web::HttpResponse;
 use actix_web::http::StatusCode;
 use std::fmt;
@@ -33,6 +37,22 @@ impl fmt::Display for ApiError {
 }
 
 impl std::error::Error for ApiError {}
+
+impl From<BoxError> for ApiError {
+    fn from(error: BoxError) -> Self {
+        let mut cause: Option<&(dyn std::error::Error + 'static)> = Some(error.as_ref());
+        while let Some(current) = cause {
+            if current.is::<UsernameError>() || current.is::<PasswordError>() {
+                return ApiError::BadRequest(error.to_string());
+            }
+            if let Some(VerificationError::Wrong) = current.downcast_ref::<VerificationError>() {
+                return ApiError::Unauthorized(error.to_string());
+            }
+            cause = current.source();
+        }
+        ApiError::Internal(error.to_string())
+    }
+}
 
 impl actix_web::ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {

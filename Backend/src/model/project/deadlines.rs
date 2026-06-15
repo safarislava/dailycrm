@@ -31,14 +31,8 @@ impl List for Deadlines {
         }
         let rows = sqlx::query_as::<_, Row>(
             "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline,
-                    (s.gip_confirmed AND s.payment_confirmed AND EXISTS(
-                        SELECT 1 FROM attachments a
-                        WHERE a.project_id = s.project_id
-                        AND a.parent_position = s.parent_position
-                        AND a.stage_position = s.position AND a.is_act = TRUE
-                    )) AS completed,
-                    p.title AS project_title
-             FROM stages s
+                    s.completed, p.title AS project_title
+             FROM detailed_stages s
              JOIN projects p ON p.id = s.project_id
              WHERE s.deadline IS NOT NULL
              ORDER BY s.deadline",
