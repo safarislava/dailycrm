@@ -1,5 +1,4 @@
-use crate::common::BoxError;
-use crate::model::credential::contract::password::Password;
+use crate::model::credential::contract::password::{Password, PasswordError};
 
 pub struct ValidPassword(Box<dyn Password>);
 
@@ -10,31 +9,15 @@ impl ValidPassword {
 }
 
 impl Password for ValidPassword {
-    fn value(&self) -> Result<String, BoxError> {
+    fn value(&self) -> Result<String, PasswordError> {
         let content = self.0.value()?;
         let len = content.len();
         if len < 6 {
-            return Err(Box::new(PasswordError::TooShort));
+            return Err(PasswordError::TooShort);
         }
         if len > 72 {
-            return Err(Box::new(PasswordError::TooLong));
+            return Err(PasswordError::TooLong);
         }
         Ok(content)
     }
 }
-
-#[derive(Debug)]
-pub enum PasswordError {
-    TooShort,
-    TooLong,
-}
-
-impl std::fmt::Display for PasswordError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Self::TooShort | Self::TooLong => "Password must be 6–72 characters",
-        })
-    }
-}
-
-impl std::error::Error for PasswordError {}

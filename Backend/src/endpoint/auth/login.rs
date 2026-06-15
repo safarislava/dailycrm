@@ -28,8 +28,7 @@ pub async fn post(
     let username = ValidUsername::new(RawUsername::new(body.username.clone()));
     let user = Users::new(state.pool.clone())
         .found(username)
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?
+        .await?
         .ok_or(ApiError::Unauthorized("Invalid credentials".to_string()))?;
     let password = ValidPassword::new(RawPassword::new(body.password.clone()));
     let hash = DbHash::new(state.pool.clone(), user.clone());
@@ -37,8 +36,7 @@ pub async fn post(
     let user = VerificationProtectedUser::new(user, verification);
     let (access, refresh) = TokenIssuance::new(state.pool.clone(), Box::new(user))
         .done()
-        .await
-        .map_err(|e| ApiError::Internal(e.to_string()))?
+        .await?
         .ok_or(ApiError::Unauthorized("Invalid credentials".to_string()))?;
     Ok(SessionResponse::new(access, refresh).response().await)
 }

@@ -1,6 +1,5 @@
-pub use crate::model::credential::contract::hash_verification::VerificationError;
 use crate::model::credential::contract::hash::Hash;
-use crate::model::credential::contract::hash_verification::UserVerification;
+use crate::model::credential::contract::hash_verification::{UserVerification, VerificationError};
 use crate::model::credential::contract::password::Password;
 
 pub struct HashUserVerification {
@@ -18,7 +17,7 @@ impl HashUserVerification {
 impl UserVerification for HashUserVerification {
     async fn status(&self) -> Result<(), VerificationError> {
         let hash = self.hash.value().await.map_err(|_| VerificationError::Internal)?;
-        let password = self.password.value().map_err(|_| VerificationError::Internal)?;
+        let password = self.password.value().map_err(|_| VerificationError::Wrong)?;
         match actix_web::rt::task::spawn_blocking(move || bcrypt::verify(&password, &hash)).await {
             Ok(Ok(true)) => Ok(()),
             Ok(Ok(false)) => Err(VerificationError::Wrong),

@@ -1,5 +1,4 @@
-use crate::common::BoxError;
-use crate::model::credential::contract::password::Password;
+use crate::model::credential::contract::password::{Password, PasswordError};
 
 #[derive(Clone)]
 pub struct RawPassword(String);
@@ -11,7 +10,7 @@ impl RawPassword {
 }
 
 impl Password for RawPassword {
-    fn value(&self) -> Result<String, BoxError> {
+    fn value(&self) -> Result<String, PasswordError> {
         Ok(self.0.clone())
     }
 }

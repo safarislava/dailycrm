@@ -1,5 +1,5 @@
 use crate::common::BoxError;
-use crate::model::credential::hash_user_verification::VerificationError;
+use crate::model::credential::contract::hash_verification::VerificationError;
 use crate::model::session::access_token::AccessToken;
 use crate::model::session::new_token::NewToken;
 use crate::model::session::refresh_token::{REFRESH_LIFETIME, RefreshToken};

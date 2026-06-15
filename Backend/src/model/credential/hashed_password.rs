@@ -1,5 +1,4 @@
-use crate::common::BoxError;
-use crate::model::credential::contract::hash::Hash;
+use crate::model::credential::contract::hash::{Hash, HashError};
 use crate::model::credential::contract::password::Password;
 
 pub struct HashedPassword(Box<dyn Password>);
@@ -12,35 +11,13 @@ impl HashedPassword {
 
 #[async_trait::async_trait]
 impl Hash for HashedPassword {
-    async fn value(&self) -> Result<String, BoxError> {
-        let raw = self.0.value()?;
+    async fn value(&self) -> Result<String, HashError> {
+        let raw = self.0.value().map_err(|e| HashError::Internal(Box::new(e)))?;
         actix_web::rt::task::spawn_blocking(move || {
             bcrypt::hash(&raw, bcrypt::DEFAULT_COST)
-                .map_err(|_| Box::new(HashError::Bcrypt) as BoxError)
+                .map_err(|_| HashError::Bcrypt)
         })
         .await
-        .map_err(|_| Box::new(HashError::Task) as BoxError)?
+        .map_err(|_| HashError::Task)?
     }
 }
-
-pub enum HashError {
-    Bcrypt,
-    Task,
-}
-
-impl std::fmt::Display for HashError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Self::Bcrypt => "Failed to hash password",
-            Self::Task => "Blocking task failed",
-        })
-    }
-}
-
-impl std::fmt::Debug for HashError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self, f)
-    }
-}
-
-impl std::error::Error for HashError {}
