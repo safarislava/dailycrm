@@ -616,12 +616,19 @@ export default function MainPanel() {
                     type="number"
                     onSave={handleUpdateAdvanceCost}
                   />
-                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleAdvancePayment}>
+                  <div
+                    className={`${styles.field} ${detail.advance_cost != null ? styles.fieldEditable : ''}`}
+                    onClick={detail.advance_cost != null ? handleToggleAdvancePayment : undefined}
+                  >
                     <span className={styles.fieldLabel}>Подтверждение аванса</span>
                     <span className={styles.fieldValue}>
-                      <span className={detail.advance_confirmed ? styles.completedBadge : styles.pendingBadge}>
-                        {detail.advance_confirmed ? 'Подтверждено' : 'Не подтверждено'}
-                      </span>
+                      {detail.advance_cost == null ? (
+                        <span className={styles.pendingBadge}>Не требуется</span>
+                      ) : (
+                        <span className={detail.advance_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                          {detail.advance_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
