@@ -68,6 +68,6 @@ impl actix_web::ResponseError for ApiError {
     }
 
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code()).body(self.to_string())
+        HttpResponse::build(self.status_code()).json(self.to_string())
     }
 }
