@@ -346,6 +346,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Comment' as const, id: `${projectId}-${position}` },
+        'Project',
       ],
     }),
     deleteComment: builder.mutation<void, { projectId: string; position: number; commentId: string }>({
@@ -552,6 +553,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+        'Project',
       ],
     }),
     deleteSubStageComment: builder.mutation<void, { projectId: string; parentPosition: number; position: number; commentId: string }>({
