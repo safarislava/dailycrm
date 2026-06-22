@@ -103,6 +103,7 @@ export default function MainPanel() {
   const commentsScrollRef = useRef<HTMLDivElement>(null)
   const restoreScrollRef = useRef<number | null>(null)
   const initialScrolledKeyRef = useRef<string | null>(null)
+  const pendingScrollToBottomRef = useRef(false)
 
   useEffect(() => {
     setOlderComments([])
@@ -171,6 +172,17 @@ export default function MainPanel() {
       initialScrolledKeyRef.current = stageKey
     }
   }, [stageKey, allComments.length])
+
+  // Scroll to the bottom once the comment just sent lands in the list.
+  // Keyed on the array itself, not its length: once the latest-page window
+  // is full, a new comment replaces the oldest one instead of growing it.
+  useLayoutEffect(() => {
+    const el = commentsScrollRef.current
+    if (el && pendingScrollToBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+      pendingScrollToBottomRef.current = false
+    }
+  }, [allComments])
 
   // ── Stage list mutations ───────────────────────────────────
   const [appendStage, { isLoading: appending }]   = useAppendStageMutation()
@@ -453,6 +465,17 @@ export default function MainPanel() {
 
   const [commentText, setCommentText] = useState('')
 
+  const handleSendComment = () => {
+    if (!commentText.trim() || addingComment || !projectId || !selectedStage) return
+    pendingScrollToBottomRef.current = true
+    if (isSub) {
+      addSubComment({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
+    } else {
+      addTopComment({ projectId, position: selectedStage.position, text: commentText.trim() })
+    }
+    setCommentText('')
+  }
+
   // ── Empty state ────────────────────────────────────────────
   if (!projectId) {
     return (
@@ -639,13 +662,7 @@ export default function MainPanel() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()
-                        if (!commentText.trim() || addingComment) return
-                        if (isSub) {
-                          addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
-                        } else {
-                          addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
-                        }
-                        setCommentText('')
+                        handleSendComment()
                       }
                     }}
                     rows={1}
@@ -653,15 +670,7 @@ export default function MainPanel() {
                   <button
                     className={styles.sendBtn}
                     disabled={!commentText.trim() || addingComment}
-                    onClick={() => {
-                      if (!commentText.trim() || addingComment) return
-                      if (isSub) {
-                        addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
-                      } else {
-                        addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
-                      }
-                      setCommentText('')
-                    }}
+                    onClick={handleSendComment}
                   >
                     <SendIcon />
                   </button>
