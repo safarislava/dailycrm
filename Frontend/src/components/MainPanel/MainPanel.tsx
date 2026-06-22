@@ -17,9 +17,11 @@ import {
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
-  useUpdateStageCostMutation,
+  useUpdateAdvanceCostMutation,
+  useUpdateFinalCostMutation,
   useUpdateGipConfirmedMutation,
-  useUpdatePaymentConfirmedMutation,
+  useUpdateAdvanceConfirmedMutation,
+  useUpdateFinalConfirmedMutation,
   useListActsQuery,
   useUploadActMutation,
   useDeleteActMutation,
@@ -35,9 +37,11 @@ import {
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,
-  useUpdateSubStageCostMutation,
+  useUpdateSubStageAdvanceCostMutation,
+  useUpdateSubStageFinalCostMutation,
   useUpdateSubStageGipConfirmedMutation,
-  useUpdateSubStagePaymentConfirmedMutation,
+  useUpdateSubStageAdvanceConfirmedMutation,
+  useUpdateSubStageFinalConfirmedMutation,
   useListSubStageActsQuery,
   useUploadSubStageActMutation,
   useDeleteSubStageActMutation,
@@ -103,6 +107,7 @@ export default function MainPanel() {
   const commentsScrollRef = useRef<HTMLDivElement>(null)
   const restoreScrollRef = useRef<number | null>(null)
   const initialScrolledKeyRef = useRef<string | null>(null)
+  const pendingScrollToBottomRef = useRef(false)
 
   useEffect(() => {
     setOlderComments([])
@@ -172,6 +177,17 @@ export default function MainPanel() {
     }
   }, [stageKey, allComments.length])
 
+  // Scroll to the bottom once the comment just sent lands in the list.
+  // Keyed on the array itself, not its length: once the latest-page window
+  // is full, a new comment replaces the oldest one instead of growing it.
+  useLayoutEffect(() => {
+    const el = commentsScrollRef.current
+    if (el && pendingScrollToBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+      pendingScrollToBottomRef.current = false
+    }
+  }, [allComments])
+
   // ── Stage list mutations ───────────────────────────────────
   const [appendStage, { isLoading: appending }]   = useAppendStageMutation()
   const [insertStage, { isLoading: inserting }]   = useInsertStageMutation()
@@ -186,9 +202,11 @@ export default function MainPanel() {
   // ── Detail mutations (top-level) ───────────────────────────
   const [updateTopTitle]   = useUpdateStageTitleMutation()
   const [updateTopDeadline]= useUpdateStageDeadlineMutation()
-  const [updateTopCost]    = useUpdateStageCostMutation()
+  const [updateTopAdvanceCost] = useUpdateAdvanceCostMutation()
+  const [updateTopFinalCost]   = useUpdateFinalCostMutation()
   const [updateTopGip]     = useUpdateGipConfirmedMutation()
-  const [updateTopPayment] = useUpdatePaymentConfirmedMutation()
+  const [updateTopAdvanceConfirmed] = useUpdateAdvanceConfirmedMutation()
+  const [updateTopFinalConfirmed]   = useUpdateFinalConfirmedMutation()
   const [uploadTopAct, { isLoading: uploadingTopAct }]         = useUploadActMutation()
   const [deleteTopAct]     = useDeleteActMutation()
   const [uploadTopFile, { isLoading: uploadingTopFile }]       = useUploadAttachmentMutation()
@@ -199,9 +217,11 @@ export default function MainPanel() {
   // ── Detail mutations (sub-stage) ───────────────────────────
   const [updateSubTitle]   = useUpdateSubStageTitleMutation()
   const [updateSubDeadline]= useUpdateSubStageDeadlineMutation()
-  const [updateSubCost]    = useUpdateSubStageCostMutation()
+  const [updateSubAdvanceCost] = useUpdateSubStageAdvanceCostMutation()
+  const [updateSubFinalCost]   = useUpdateSubStageFinalCostMutation()
   const [updateSubGip]     = useUpdateSubStageGipConfirmedMutation()
-  const [updateSubPayment] = useUpdateSubStagePaymentConfirmedMutation()
+  const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
+  const [updateSubFinalConfirmed]   = useUpdateSubStageFinalConfirmedMutation()
   const [uploadSubAct, { isLoading: uploadingSubAct }]         = useUploadSubStageActMutation()
   const [deleteSubAct]     = useDeleteSubStageActMutation()
   const [uploadSubFile, { isLoading: uploadingSubFile }]       = useUploadSubStageAttachmentMutation()
@@ -216,9 +236,11 @@ export default function MainPanel() {
 
   const updateTitle   = isSub ? updateSubTitle   : updateTopTitle
   const updateDeadline= isSub ? updateSubDeadline: updateTopDeadline
-  const updateCost    = isSub ? updateSubCost    : updateTopCost
-  const updateGip     = isSub ? updateSubGip     : updateTopGip
-  const updatePayment = isSub ? updateSubPayment : updateTopPayment
+  const updateAdvanceCost      = isSub ? updateSubAdvanceCost      : updateTopAdvanceCost
+  const updateFinalCost        = isSub ? updateSubFinalCost        : updateTopFinalCost
+  const updateGip               = isSub ? updateSubGip               : updateTopGip
+  const updateAdvanceConfirmed = isSub ? updateSubAdvanceConfirmed : updateTopAdvanceConfirmed
+  const updateFinalConfirmed   = isSub ? updateSubFinalConfirmed   : updateTopFinalConfirmed
 
   const handleUpdateTitle = async (v: string) => {
     if (!v.trim() || !projectId || !selectedStage) return
@@ -239,13 +261,23 @@ export default function MainPanel() {
     }
   }
 
-  const handleUpdateCost = async (v: string) => {
+  const handleUpdateAdvanceCost = async (v: string) => {
     if (!projectId || !selectedStage) return
     const cost = v ? parseInt(v, 10) : null
     if (isSub) {
-      await (updateCost as typeof updateSubCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+      await (updateAdvanceCost as typeof updateSubAdvanceCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
     } else {
-      await (updateCost as typeof updateTopCost)({ projectId, position: selectedStage.position, cost })
+      await (updateAdvanceCost as typeof updateTopAdvanceCost)({ projectId, position: selectedStage.position, cost })
+    }
+  }
+
+  const handleUpdateFinalCost = async (v: string) => {
+    if (!projectId || !selectedStage) return
+    const cost = v ? parseInt(v, 10) : null
+    if (isSub) {
+      await (updateFinalCost as typeof updateSubFinalCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+    } else {
+      await (updateFinalCost as typeof updateTopFinalCost)({ projectId, position: selectedStage.position, cost })
     }
   }
 
@@ -258,12 +290,21 @@ export default function MainPanel() {
     }
   }
 
-  const handleTogglePayment = async () => {
+  const handleToggleAdvancePayment = async () => {
     if (!projectId || !selectedStage || !detail) return
     if (isSub) {
-      await (updatePayment as typeof updateSubPayment)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+      await (updateAdvanceConfirmed as typeof updateSubAdvanceConfirmed)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.advance_confirmed })
     } else {
-      await (updatePayment as typeof updateTopPayment)({ projectId, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+      await (updateAdvanceConfirmed as typeof updateTopAdvanceConfirmed)({ projectId, position: selectedStage.position, confirmed: !detail.advance_confirmed })
+    }
+  }
+
+  const handleToggleFinalPayment = async () => {
+    if (!projectId || !selectedStage || !detail) return
+    if (isSub) {
+      await (updateFinalConfirmed as typeof updateSubFinalConfirmed)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.final_confirmed })
+    } else {
+      await (updateFinalConfirmed as typeof updateTopFinalConfirmed)({ projectId, position: selectedStage.position, confirmed: !detail.final_confirmed })
     }
   }
 
@@ -453,6 +494,17 @@ export default function MainPanel() {
 
   const [commentText, setCommentText] = useState('')
 
+  const handleSendComment = () => {
+    if (!commentText.trim() || addingComment || !projectId || !selectedStage) return
+    pendingScrollToBottomRef.current = true
+    if (isSub) {
+      addSubComment({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
+    } else {
+      addTopComment({ projectId, position: selectedStage.position, text: commentText.trim() })
+    }
+    setCommentText('')
+  }
+
   // ── Empty state ────────────────────────────────────────────
   if (!projectId) {
     return (
@@ -528,7 +580,10 @@ export default function MainPanel() {
 
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
-                  <span className={styles.attachmentsSectionLabel}>Акты</span>
+                  <div className={styles.attachmentsHeaderLeft}>
+                    <span className={styles.attachmentsSectionLabel}>Акты</span>
+                    {acts.length > 0 && <span className={styles.completedBadge}>Акт загружен</span>}
+                  </div>
                   <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
                     {uploadingAct ? <SpinnerIcon /> : <PaperclipIcon />}
                     {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
@@ -555,17 +610,41 @@ export default function MainPanel() {
               <div className={styles.fields}>
                 <div className={styles.splitRow}>
                   <EditableField
-                    label="Стоимость"
-                    displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
-                    rawValue={detail.cost?.toString() ?? ''}
+                    label="Аванс"
+                    displayValue={detail.advance_cost != null ? `${detail.advance_cost.toLocaleString()} ₽` : '—'}
+                    rawValue={detail.advance_cost?.toString() ?? ''}
                     type="number"
-                    onSave={handleUpdateCost}
+                    onSave={handleUpdateAdvanceCost}
                   />
-                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleTogglePayment}>
+                  <div
+                    className={`${styles.field} ${detail.advance_cost != null ? styles.fieldEditable : ''}`}
+                    onClick={detail.advance_cost != null ? handleToggleAdvancePayment : undefined}
+                  >
+                    <span className={styles.fieldLabel}>Подтверждение аванса</span>
+                    <span className={styles.fieldValue}>
+                      {detail.advance_cost == null ? (
+                        <span className={styles.pendingBadge}>Не требуется</span>
+                      ) : (
+                        <span className={detail.advance_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                          {detail.advance_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div className={styles.splitRow}>
+                  <EditableField
+                    label="Окончательная оплата"
+                    displayValue={detail.final_cost != null ? `${detail.final_cost.toLocaleString()} ₽` : '—'}
+                    rawValue={detail.final_cost?.toString() ?? ''}
+                    type="number"
+                    onSave={handleUpdateFinalCost}
+                  />
+                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleFinalPayment}>
                     <span className={styles.fieldLabel}>Подтверждение оплаты</span>
                     <span className={styles.fieldValue}>
-                      <span className={detail.payment_confirmed ? styles.completedBadge : styles.pendingBadge}>
-                        {detail.payment_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                      <span className={detail.final_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                        {detail.final_confirmed ? 'Подтверждено' : 'Не подтверждено'}
                       </span>
                     </span>
                   </div>
@@ -639,13 +718,7 @@ export default function MainPanel() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()
-                        if (!commentText.trim() || addingComment) return
-                        if (isSub) {
-                          addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
-                        } else {
-                          addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
-                        }
-                        setCommentText('')
+                        handleSendComment()
                       }
                     }}
                     rows={1}
@@ -653,15 +726,7 @@ export default function MainPanel() {
                   <button
                     className={styles.sendBtn}
                     disabled={!commentText.trim() || addingComment}
-                    onClick={() => {
-                      if (!commentText.trim() || addingComment) return
-                      if (isSub) {
-                        addSubComment({ projectId: projectId!, parentPosition: selectedStage.parentPosition, position: selectedStage.position, text: commentText.trim() })
-                      } else {
-                        addTopComment({ projectId: projectId!, position: selectedStage.position, text: commentText.trim() })
-                      }
-                      setCommentText('')
-                    }}
+                    onClick={handleSendComment}
                   >
                     <SendIcon />
                   </button>

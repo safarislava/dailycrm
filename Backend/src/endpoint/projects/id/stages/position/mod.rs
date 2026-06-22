@@ -1,13 +1,15 @@
 pub mod act;
+pub mod advance_confirmed;
+pub mod advance_cost;
 pub mod attachments;
 pub mod comments;
-pub mod cost;
 pub mod create;
 pub mod deadline;
 pub mod delete;
+pub mod final_confirmed;
+pub mod final_cost;
 pub mod get;
 pub mod gip_confirmed;
-pub mod payment_confirmed;
 pub mod reorder;
 pub mod sub;
 pub mod title;

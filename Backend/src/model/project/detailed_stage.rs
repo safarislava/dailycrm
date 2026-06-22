@@ -30,13 +30,15 @@ impl Json for DetailedStage {
             title: String,
             deadline: Option<DateTime<Utc>>,
             completed: bool,
-            cost: Option<i32>,
+            advance_cost: Option<i32>,
+            advance_confirmed: bool,
+            final_cost: Option<i32>,
+            final_confirmed: bool,
             gip_confirmed: bool,
-            payment_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
             "SELECT project_id, parent_position, position, title, deadline,
-                    completed, cost, gip_confirmed, payment_confirmed
+                    completed, advance_cost, advance_confirmed, final_cost, final_confirmed, gip_confirmed
              FROM detailed_stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())

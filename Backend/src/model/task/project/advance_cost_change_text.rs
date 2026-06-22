@@ -1,26 +1,26 @@
 use crate::model::task::project::comment_text::CommentText;
 use std::fmt;
 
-pub struct CostChangeText {
+pub struct AdvanceCostChangeText {
     old: i32,
     new: Option<i32>,
 }
 
-impl CostChangeText {
+impl AdvanceCostChangeText {
     pub fn new(old: i32, new: Option<i32>) -> Self {
         Self { old, new }
     }
 }
 
-impl CommentText for CostChangeText {
+impl CommentText for AdvanceCostChangeText {
     fn text(&self) -> String {
         match self.new {
             Some(new) => format!(
-                "Стоимость изменена: {} ₽ → {} ₽",
+                "Аванс изменён: {} ₽ → {} ₽",
                 FormattedCost(self.old),
                 FormattedCost(new)
             ),
-            None => format!("Стоимость удалена: {} ₽", FormattedCost(self.old)),
+            None => format!("Аванс удалён: {} ₽", FormattedCost(self.old)),
         }
     }
 }

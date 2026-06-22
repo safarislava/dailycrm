@@ -193,9 +193,22 @@ export const crmApi = createApi({
       ],
     }),
 
-    updateStageCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
+    updateAdvanceCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
       query: ({ projectId, position, cost }) => ({
-        url: `/projects/${projectId}/stages/${position}/cost`,
+        url: `/projects/${projectId}/stages/${position}/advance-cost`,
+        method: 'PATCH',
+        body: { cost },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+        'Project',
+      ],
+    }),
+
+    updateFinalCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
+      query: ({ projectId, position, cost }) => ({
+        url: `/projects/${projectId}/stages/${position}/final-cost`,
         method: 'PATCH',
         body: { cost },
       }),
@@ -249,9 +262,23 @@ export const crmApi = createApi({
       ],
     }),
 
-    updatePaymentConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
+    updateAdvanceConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
       query: ({ projectId, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${position}/payment-confirmed`,
+        url: `/projects/${projectId}/stages/${position}/advance-confirmed`,
+        method: 'PATCH',
+        body: { confirmed },
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+        'Project',
+      ],
+    }),
+
+    updateFinalConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
+      query: ({ projectId, position, confirmed }) => ({
+        url: `/projects/${projectId}/stages/${position}/final-confirmed`,
         method: 'PATCH',
         body: { confirmed },
       }),
@@ -319,6 +346,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Comment' as const, id: `${projectId}-${position}` },
+        'Project',
       ],
     }),
     deleteComment: builder.mutation<void, { projectId: string; position: number; commentId: string }>({
@@ -387,9 +415,21 @@ export const crmApi = createApi({
         'Deadline',
       ],
     }),
-    updateSubStageCost: builder.mutation<void, { projectId: string; parentPosition: number; position: number; cost: number | null }>({
+    updateSubStageAdvanceCost: builder.mutation<void, { projectId: string; parentPosition: number; position: number; cost: number | null }>({
       query: ({ projectId, parentPosition, position, cost }) => ({
-        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/cost`,
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/advance-cost`,
+        method: 'PATCH',
+        body: { cost },
+      }),
+      invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
+        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+        'Project',
+      ],
+    }),
+    updateSubStageFinalCost: builder.mutation<void, { projectId: string; parentPosition: number; position: number; cost: number | null }>({
+      query: ({ projectId, parentPosition, position, cost }) => ({
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/final-cost`,
         method: 'PATCH',
         body: { cost },
       }),
@@ -412,9 +452,22 @@ export const crmApi = createApi({
         'Deadline', 'Project',
       ],
     }),
-    updateSubStagePaymentConfirmed: builder.mutation<void, { projectId: string; parentPosition: number; position: number; confirmed: boolean }>({
+    updateSubStageAdvanceConfirmed: builder.mutation<void, { projectId: string; parentPosition: number; position: number; confirmed: boolean }>({
       query: ({ projectId, parentPosition, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/payment-confirmed`,
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/advance-confirmed`,
+        method: 'PATCH',
+        body: { confirmed },
+      }),
+      invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
+        { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
+        { type: 'Stage' as const, id: projectId },
+        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+        'Project',
+      ],
+    }),
+    updateSubStageFinalConfirmed: builder.mutation<void, { projectId: string; parentPosition: number; position: number; confirmed: boolean }>({
+      query: ({ projectId, parentPosition, position, confirmed }) => ({
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/final-confirmed`,
         method: 'PATCH',
         body: { confirmed },
       }),
@@ -500,6 +553,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+        'Project',
       ],
     }),
     deleteSubStageComment: builder.mutation<void, { projectId: string; parentPosition: number; position: number; commentId: string }>({
@@ -543,9 +597,11 @@ export const {
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
-  useUpdateStageCostMutation,
+  useUpdateAdvanceCostMutation,
+  useUpdateFinalCostMutation,
   useUpdateGipConfirmedMutation,
-  useUpdatePaymentConfirmedMutation,
+  useUpdateAdvanceConfirmedMutation,
+  useUpdateFinalConfirmedMutation,
   useUploadActMutation,
   useDeleteActMutation,
   useRenameProjectMutation,
@@ -558,9 +614,11 @@ export const {
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,
-  useUpdateSubStageCostMutation,
+  useUpdateSubStageAdvanceCostMutation,
+  useUpdateSubStageFinalCostMutation,
   useUpdateSubStageGipConfirmedMutation,
-  useUpdateSubStagePaymentConfirmedMutation,
+  useUpdateSubStageAdvanceConfirmedMutation,
+  useUpdateSubStageFinalConfirmedMutation,
   useListSubStageActsQuery,
   useUploadSubStageActMutation,
   useDeleteSubStageActMutation,

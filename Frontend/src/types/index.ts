@@ -22,9 +22,11 @@ export interface DetailedStage {
   title: string
   deadline: string | null
   completed: boolean
-  cost: number | null
+  advance_cost: number | null
+  advance_confirmed: boolean
+  final_cost: number | null
+  final_confirmed: boolean
   gip_confirmed: boolean
-  payment_confirmed: boolean
 }
 
 export type Act = Attachment

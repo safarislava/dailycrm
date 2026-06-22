@@ -563,6 +563,12 @@
   font-weight: 600;
 }
 
+.attachmentsHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .attachUploadBtn {
   position: relative;
   display: flex;
