@@ -29,7 +29,7 @@ pub async fn post(
     let user = Users::new(state.pool.clone())
         .found(username)
         .await?
-        .ok_or(ApiError::Unauthorized("Invalid credentials".to_string()))?;
+        .ok_or(ApiError::NotFound("User not found".to_string()))?;
     let password = ValidPassword::new(RawPassword::new(body.password.clone()));
     let hash = DbHash::new(state.pool.clone(), user.clone());
     let verification = HashUserVerification::new(hash, password);

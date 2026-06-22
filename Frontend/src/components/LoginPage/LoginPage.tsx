@@ -59,7 +59,8 @@ export default function LoginPage() {
       dispatch(setAccessToken(result.data.access_token))
     } else {
       const status = (result.error as { status?: number })?.status
-      if (status === 401) setError('Неверный логин или пароль')
+      if (status === 404) setError('Такого пользователя нет')
+      else if (status === 401) setError('Неверный логин или пароль')
       else setError('Что-то пошло не так')
     }
   }
