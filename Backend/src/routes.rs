@@ -73,16 +73,24 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::deadline::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/cost")
-                                    .patch(endpoint::projects::id::stages::position::cost::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/advance-cost")
+                                    .patch(endpoint::projects::id::stages::position::advance_cost::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/final-cost")
+                                    .patch(endpoint::projects::id::stages::position::final_cost::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/gip-confirmed")
                                     .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/payment-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::payment_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/advance-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/final-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::final_confirmed::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/act")
@@ -141,16 +149,24 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::sub::position::deadline::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/cost")
-                                    .patch(endpoint::projects::id::stages::position::sub::position::cost::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-cost")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::advance_cost::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-cost")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::final_cost::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/gip-confirmed")
                                     .patch(endpoint::projects::id::stages::position::sub::position::gip_confirmed::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/payment-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::sub::position::payment_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::advance_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::final_confirmed::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act")

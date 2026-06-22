@@ -17,9 +17,11 @@ import {
   useGetDetailedStageQuery,
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
-  useUpdateStageCostMutation,
+  useUpdateAdvanceCostMutation,
+  useUpdateFinalCostMutation,
   useUpdateGipConfirmedMutation,
-  useUpdatePaymentConfirmedMutation,
+  useUpdateAdvanceConfirmedMutation,
+  useUpdateFinalConfirmedMutation,
   useListActsQuery,
   useUploadActMutation,
   useDeleteActMutation,
@@ -35,9 +37,11 @@ import {
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,
-  useUpdateSubStageCostMutation,
+  useUpdateSubStageAdvanceCostMutation,
+  useUpdateSubStageFinalCostMutation,
   useUpdateSubStageGipConfirmedMutation,
-  useUpdateSubStagePaymentConfirmedMutation,
+  useUpdateSubStageAdvanceConfirmedMutation,
+  useUpdateSubStageFinalConfirmedMutation,
   useListSubStageActsQuery,
   useUploadSubStageActMutation,
   useDeleteSubStageActMutation,
@@ -198,9 +202,11 @@ export default function MainPanel() {
   // ── Detail mutations (top-level) ───────────────────────────
   const [updateTopTitle]   = useUpdateStageTitleMutation()
   const [updateTopDeadline]= useUpdateStageDeadlineMutation()
-  const [updateTopCost]    = useUpdateStageCostMutation()
+  const [updateTopAdvanceCost] = useUpdateAdvanceCostMutation()
+  const [updateTopFinalCost]   = useUpdateFinalCostMutation()
   const [updateTopGip]     = useUpdateGipConfirmedMutation()
-  const [updateTopPayment] = useUpdatePaymentConfirmedMutation()
+  const [updateTopAdvanceConfirmed] = useUpdateAdvanceConfirmedMutation()
+  const [updateTopFinalConfirmed]   = useUpdateFinalConfirmedMutation()
   const [uploadTopAct, { isLoading: uploadingTopAct }]         = useUploadActMutation()
   const [deleteTopAct]     = useDeleteActMutation()
   const [uploadTopFile, { isLoading: uploadingTopFile }]       = useUploadAttachmentMutation()
@@ -211,9 +217,11 @@ export default function MainPanel() {
   // ── Detail mutations (sub-stage) ───────────────────────────
   const [updateSubTitle]   = useUpdateSubStageTitleMutation()
   const [updateSubDeadline]= useUpdateSubStageDeadlineMutation()
-  const [updateSubCost]    = useUpdateSubStageCostMutation()
+  const [updateSubAdvanceCost] = useUpdateSubStageAdvanceCostMutation()
+  const [updateSubFinalCost]   = useUpdateSubStageFinalCostMutation()
   const [updateSubGip]     = useUpdateSubStageGipConfirmedMutation()
-  const [updateSubPayment] = useUpdateSubStagePaymentConfirmedMutation()
+  const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
+  const [updateSubFinalConfirmed]   = useUpdateSubStageFinalConfirmedMutation()
   const [uploadSubAct, { isLoading: uploadingSubAct }]         = useUploadSubStageActMutation()
   const [deleteSubAct]     = useDeleteSubStageActMutation()
   const [uploadSubFile, { isLoading: uploadingSubFile }]       = useUploadSubStageAttachmentMutation()
@@ -228,9 +236,11 @@ export default function MainPanel() {
 
   const updateTitle   = isSub ? updateSubTitle   : updateTopTitle
   const updateDeadline= isSub ? updateSubDeadline: updateTopDeadline
-  const updateCost    = isSub ? updateSubCost    : updateTopCost
-  const updateGip     = isSub ? updateSubGip     : updateTopGip
-  const updatePayment = isSub ? updateSubPayment : updateTopPayment
+  const updateAdvanceCost      = isSub ? updateSubAdvanceCost      : updateTopAdvanceCost
+  const updateFinalCost        = isSub ? updateSubFinalCost        : updateTopFinalCost
+  const updateGip               = isSub ? updateSubGip               : updateTopGip
+  const updateAdvanceConfirmed = isSub ? updateSubAdvanceConfirmed : updateTopAdvanceConfirmed
+  const updateFinalConfirmed   = isSub ? updateSubFinalConfirmed   : updateTopFinalConfirmed
 
   const handleUpdateTitle = async (v: string) => {
     if (!v.trim() || !projectId || !selectedStage) return
@@ -251,13 +261,23 @@ export default function MainPanel() {
     }
   }
 
-  const handleUpdateCost = async (v: string) => {
+  const handleUpdateAdvanceCost = async (v: string) => {
     if (!projectId || !selectedStage) return
     const cost = v ? parseInt(v, 10) : null
     if (isSub) {
-      await (updateCost as typeof updateSubCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+      await (updateAdvanceCost as typeof updateSubAdvanceCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
     } else {
-      await (updateCost as typeof updateTopCost)({ projectId, position: selectedStage.position, cost })
+      await (updateAdvanceCost as typeof updateTopAdvanceCost)({ projectId, position: selectedStage.position, cost })
+    }
+  }
+
+  const handleUpdateFinalCost = async (v: string) => {
+    if (!projectId || !selectedStage) return
+    const cost = v ? parseInt(v, 10) : null
+    if (isSub) {
+      await (updateFinalCost as typeof updateSubFinalCost)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+    } else {
+      await (updateFinalCost as typeof updateTopFinalCost)({ projectId, position: selectedStage.position, cost })
     }
   }
 
@@ -270,12 +290,21 @@ export default function MainPanel() {
     }
   }
 
-  const handleTogglePayment = async () => {
+  const handleToggleAdvancePayment = async () => {
     if (!projectId || !selectedStage || !detail) return
     if (isSub) {
-      await (updatePayment as typeof updateSubPayment)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+      await (updateAdvanceConfirmed as typeof updateSubAdvanceConfirmed)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.advance_confirmed })
     } else {
-      await (updatePayment as typeof updateTopPayment)({ projectId, position: selectedStage.position, confirmed: !detail.payment_confirmed })
+      await (updateAdvanceConfirmed as typeof updateTopAdvanceConfirmed)({ projectId, position: selectedStage.position, confirmed: !detail.advance_confirmed })
+    }
+  }
+
+  const handleToggleFinalPayment = async () => {
+    if (!projectId || !selectedStage || !detail) return
+    if (isSub) {
+      await (updateFinalConfirmed as typeof updateSubFinalConfirmed)({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.final_confirmed })
+    } else {
+      await (updateFinalConfirmed as typeof updateTopFinalConfirmed)({ projectId, position: selectedStage.position, confirmed: !detail.final_confirmed })
     }
   }
 
@@ -578,17 +607,34 @@ export default function MainPanel() {
               <div className={styles.fields}>
                 <div className={styles.splitRow}>
                   <EditableField
-                    label="Стоимость"
-                    displayValue={detail.cost != null ? `${detail.cost.toLocaleString()} ₽` : '—'}
-                    rawValue={detail.cost?.toString() ?? ''}
+                    label="Аванс"
+                    displayValue={detail.advance_cost != null ? `${detail.advance_cost.toLocaleString()} ₽` : '—'}
+                    rawValue={detail.advance_cost?.toString() ?? ''}
                     type="number"
-                    onSave={handleUpdateCost}
+                    onSave={handleUpdateAdvanceCost}
                   />
-                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleTogglePayment}>
+                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleAdvancePayment}>
+                    <span className={styles.fieldLabel}>Подтверждение аванса</span>
+                    <span className={styles.fieldValue}>
+                      <span className={detail.advance_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                        {detail.advance_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <div className={styles.splitRow}>
+                  <EditableField
+                    label="Окончательная оплата"
+                    displayValue={detail.final_cost != null ? `${detail.final_cost.toLocaleString()} ₽` : '—'}
+                    rawValue={detail.final_cost?.toString() ?? ''}
+                    type="number"
+                    onSave={handleUpdateFinalCost}
+                  />
+                  <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleFinalPayment}>
                     <span className={styles.fieldLabel}>Подтверждение оплаты</span>
                     <span className={styles.fieldValue}>
-                      <span className={detail.payment_confirmed ? styles.completedBadge : styles.pendingBadge}>
-                        {detail.payment_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                      <span className={detail.final_confirmed ? styles.completedBadge : styles.pendingBadge}>
+                        {detail.final_confirmed ? 'Подтверждено' : 'Не подтверждено'}
                       </span>
                     </span>
                   </div>

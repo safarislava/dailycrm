@@ -4,13 +4,13 @@ use crate::model::task::contract::task::Task;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct PaymentConfirmation {
+pub struct AdvancePaymentConfirmation {
     pool: Arc<PgPool>,
     stage: Stage,
     confirmed: bool,
 }
 
-impl PaymentConfirmation {
+impl AdvancePaymentConfirmation {
     pub fn new(pool: Arc<PgPool>, stage: Stage, confirmed: bool) -> Self {
         Self {
             pool,
@@ -21,12 +21,12 @@ impl PaymentConfirmation {
 }
 
 #[async_trait::async_trait]
-impl Task for PaymentConfirmation {
+impl Task for AdvancePaymentConfirmation {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
-            "UPDATE stages SET payment_confirmed = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+            "UPDATE stages SET advance_confirmed = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
         .bind(self.stage.project().id())
         .bind(self.stage.parent_position())

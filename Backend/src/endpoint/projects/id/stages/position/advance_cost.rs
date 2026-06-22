@@ -3,7 +3,7 @@ use crate::endpoint::auth_header::UserHeader;
 use crate::model::project::project::Project;
 use crate::model::project::stage::Stage;
 use crate::model::task::contract::task::Task;
-use crate::model::task::project::logged_cost_update::LoggedCostUpdate;
+use crate::model::task::project::logged_advance_cost_update::LoggedAdvanceCostUpdate;
 use crate::state::AppState;
 use actix_web::web::Json;
 use actix_web::{HttpRequest, HttpResponse, web};
@@ -26,7 +26,7 @@ pub async fn patch(
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     let (project_id, position) = path.into_inner();
     let stage = Stage::new(Project::new(project_id), position);
-    LoggedCostUpdate::new(state.pool.clone(), stage, user, body.cost)
+    LoggedAdvanceCostUpdate::new(state.pool.clone(), stage, user, body.cost)
         .done()
         .await
         .map_err(|e| ApiError::Internal(e.to_string()))?;
