@@ -580,7 +580,10 @@ export default function MainPanel() {
 
               <div className={styles.attachmentsSection}>
                 <div className={styles.attachmentsHeader}>
-                  <span className={styles.attachmentsSectionLabel}>Акты</span>
+                  <div className={styles.attachmentsHeaderLeft}>
+                    <span className={styles.attachmentsSectionLabel}>Акты</span>
+                    {acts.length > 0 && <span className={styles.completedBadge}>Акт загружен</span>}
+                  </div>
                   <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
                     {uploadingAct ? <SpinnerIcon /> : <PaperclipIcon />}
                     {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
