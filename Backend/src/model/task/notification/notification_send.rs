@@ -35,8 +35,12 @@ impl Task for NotificationSend {
         ) else {
             return Ok(());
         };
-        for email in RoleRecipients::new(self.pool.clone(), role).items().await? {
-            let _ = self.mailer.send(&email, subject, body.clone()).await;
+        let emails = RoleRecipients::new(self.pool.clone(), role.clone()).items().await?;
+        for email in emails {
+            match self.mailer.send(&email, subject, body.clone()).await {
+                Ok(_) => {},
+                Err(err) => eprintln!("Failed to send notification email to {}: {:?}", email, err),
+            }
         }
         Ok(())
     }
