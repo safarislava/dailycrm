@@ -342,10 +342,8 @@
   @media (hover: none) { opacity: 1; width: 36px; height: 36px; }
 }
 
-// ── Sub-stage group (expanded area) ──────────────────────
 .subStageGroup {
   background: v.$bg-primary;
-  border-left: 2px solid v.$divider;
   margin-left: 52px;
 }
 
