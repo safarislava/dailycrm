@@ -114,7 +114,7 @@ export default function MainPanel() {
       .map(s => ({
         id: `${s.parent_position}-${s.position}-stage`,
         label: getStageLabel(s),
-        title: s.title,
+        title: `${getStageLabel(s)}. ${s.title}`,
         cost: (s.advance_cost ?? 0) + (s.final_cost ?? 0),
         parent_position: s.parent_position,
         position: s.position,
@@ -138,7 +138,7 @@ export default function MainPanel() {
         paymentItems.push({
           id: `${s.parent_position}-${s.position}-advance`,
           label: `${getStageLabel(s)} (аванс)`,
-          title: `${s.title} (аванс)`,
+          title: `${getStageLabel(s)}. ${s.title} (аванс)`,
           cost: s.advance_cost,
           isConfirmed: s.advance_confirmed,
           parent_position: s.parent_position,
@@ -149,7 +149,7 @@ export default function MainPanel() {
         paymentItems.push({
           id: `${s.parent_position}-${s.position}-final`,
           label: `${getStageLabel(s)} (стоимость)`,
-          title: `${s.title} (стоимость)`,
+          title: `${getStageLabel(s)}. ${s.title} (стоимость)`,
           cost: s.final_cost,
           isConfirmed: s.final_confirmed,
           parent_position: s.parent_position,
@@ -717,7 +717,9 @@ export default function MainPanel() {
             <ArrowLeftIcon />
           </button>
           <div className={styles.headerInfo}>
-            <span className={styles.headerTitle}>{isSub ? 'Детали подэтапа' : 'Детали этапа'}</span>
+            <span className={styles.headerTitle}>
+              {isSub ? `Детали подэтапа ${selectedStage.parentPosition}.${selectedStage.position}` : `Детали этапа ${selectedStage.position}`}
+            </span>
           </div>
           <button
             className={styles.dangerBtn}
@@ -1009,7 +1011,7 @@ export default function MainPanel() {
                           {sortedStagesForDashboard.map(stage => {
                             const label = getStageLabel(stage)
                             return (
-                              <th key={label} className={styles.matrixColHeader} title={stage.title}>
+                              <th key={label} className={styles.matrixColHeader} title={`${label}. ${stage.title}`}>
                                 {label}
                               </th>
                             )
@@ -1201,7 +1203,7 @@ export default function MainPanel() {
                   {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
                 </span>
                 <div className={styles.stageInfo}>
-                  <span className={styles.stageTitle}>{stage.title}</span>
+                  <span className={styles.stageTitle}>{stage.position}. {stage.title}</span>
                   {stage.deadline && (
                     <span className={styles.stageDeadline}>
                       {new Date(stage.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -1243,7 +1245,7 @@ export default function MainPanel() {
                         {child.completed ? <CheckCircleIcon /> : <CircleIcon />}
                       </span>
                       <div className={styles.stageInfo}>
-                        <span className={styles.stageTitle}>{child.title}</span>
+                        <span className={styles.stageTitle}>{stage.position}.{child.position}. {child.title}</span>
                         {child.deadline && (
                           <span className={styles.stageDeadline}>
                             {new Date(child.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
