@@ -50,3 +50,5 @@ pub mod stage_rename;
 pub mod stage_reordering;
 pub mod stage_title_receipt;
 pub mod system_comment_creation;
+pub mod comment_pinning;
+

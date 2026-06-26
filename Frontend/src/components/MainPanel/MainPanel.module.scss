@@ -727,7 +727,12 @@
   padding: 8px 16px 10px;
   border-top: 1px solid v.$divider;
 
-  &:hover .commentDeleteBtn { opacity: 1; }
+  &:hover {
+    .commentDeleteBtn,
+    .commentPinBtn {
+      opacity: 0.6;
+    }
+  }
 }
 
 .commentBubbleHeader {
@@ -750,6 +755,34 @@
   flex: 1;
 }
 
+.commentPinBtn {
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: v.$text-secondary;
+  transition: opacity v.$transition-fast, color v.$transition-fast,
+    background v.$transition-fast;
+  margin-right: 4px;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+    opacity: 1 !important;
+  }
+
+  &.commentPinned {
+    opacity: 1 !important;
+    color: v.$accent;
+  }
+
+  @media (hover: none) { opacity: 0.6; }
+}
+
 .commentDeleteBtn {
   opacity: 0;
   width: 20px;
@@ -769,7 +802,44 @@
     opacity: 1 !important;
   }
 
-  @media (hover: none) { opacity: 1; }
+  @media (hover: none) { opacity: 0.6; }
+}
+
+.pinnedCommentsContainer {
+  background: rgba(v.$accent, 0.02);
+  border-bottom: 1px solid v.$divider;
+  overflow: hidden;
+}
+
+.pinnedScroll {
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.pinnedComment {
+  display: flex;
+  gap: 8px;
+  background: transparent !important;
+  border-top: 1px dashed rgba(v.$divider, 0.5) !important;
+  padding: 8px 16px 10px !important;
+  margin: 0 !important;
+
+  &:first-child {
+    border-top: none !important;
+  }
+}
+
+.pinnedCommentIcon {
+  color: v.$accent;
+  margin-top: 4px;
+  flex-shrink: 0;
+  transform: rotate(45deg);
+  opacity: 0.8;
+}
+
+.pinnedCommentBody {
+  flex: 1;
+  min-width: 0;
 }
 
 .commentText {

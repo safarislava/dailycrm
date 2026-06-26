@@ -124,8 +124,16 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .post(endpoint::projects::id::stages::position::comments::create::post),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments/pinned")
+                                    .get(endpoint::projects::id::stages::position::comments::pinned::get),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/comments/{comment_id}")
                                     .delete(endpoint::projects::id::stages::position::comments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments/{comment_id}/pin")
+                                    .patch(endpoint::projects::id::stages::position::comments::pin::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub")
@@ -200,8 +208,16 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .post(endpoint::projects::id::stages::position::sub::position::comments::create::post),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments/pinned")
+                                    .get(endpoint::projects::id::stages::position::sub::position::comments::pinned::get),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments/{comment_id}")
                                     .delete(endpoint::projects::id::stages::position::sub::position::comments::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments/{comment_id}/pin")
+                                    .patch(endpoint::projects::id::stages::position::sub::position::comments::pin::patch),
                             ),
                     ),
             ),

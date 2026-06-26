@@ -338,6 +338,13 @@ export const crmApi = createApi({
         { type: 'Comment' as const, id: `${projectId}-${position}` },
       ],
     }),
+    listPinnedComments: builder.query<Comment[], { projectId: string; position: number }>({
+      query: ({ projectId, position }) =>
+        `/projects/${projectId}/stages/${position}/comments/pinned`,
+      providesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
     addComment: builder.mutation<void, { projectId: string; position: number; text: string }>({
       query: ({ projectId, position, text }) => ({
         url: `/projects/${projectId}/stages/${position}/comments`,
@@ -353,6 +360,16 @@ export const crmApi = createApi({
       query: ({ projectId, position, commentId }) => ({
         url: `/projects/${projectId}/stages/${position}/comments/${commentId}`,
         method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { projectId, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-${position}` },
+      ],
+    }),
+    pinComment: builder.mutation<void, { projectId: string; position: number; commentId: string; pinned: boolean }>({
+      query: ({ projectId, position, commentId, pinned }) => ({
+        url: `/projects/${projectId}/stages/${position}/comments/${commentId}/pin`,
+        method: 'PATCH',
+        body: { pinned },
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Comment' as const, id: `${projectId}-${position}` },
@@ -545,6 +562,13 @@ export const crmApi = createApi({
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
       ],
     }),
+    listPinnedSubStageComments: builder.query<Comment[], { projectId: string; parentPosition: number; position: number }>({
+      query: ({ projectId, parentPosition, position }) =>
+        `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments/pinned`,
+      providesTags: (_r, _e, { projectId, parentPosition, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+      ],
+    }),
     addSubStageComment: builder.mutation<void, { projectId: string; parentPosition: number; position: number; text: string }>({
       query: ({ projectId, parentPosition, position, text }) => ({
         url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments`,
@@ -560,6 +584,16 @@ export const crmApi = createApi({
       query: ({ projectId, parentPosition, position, commentId }) => ({
         url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments/${commentId}`,
         method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
+        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+      ],
+    }),
+    pinSubStageComment: builder.mutation<void, { projectId: string; parentPosition: number; position: number; commentId: string; pinned: boolean }>({
+      query: ({ projectId, parentPosition, position, commentId, pinned }) => ({
+        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/comments/${commentId}/pin`,
+        method: 'PATCH',
+        body: { pinned },
       }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
@@ -606,8 +640,10 @@ export const {
   useDeleteActMutation,
   useRenameProjectMutation,
   useListCommentsQuery,
+  useListPinnedCommentsQuery,
   useAddCommentMutation,
   useDeleteCommentMutation,
+  usePinCommentMutation,
   useAppendSubStageMutation,
   useDeleteSubStageMutation,
   useReorderSubStageMutation,
@@ -626,6 +662,8 @@ export const {
   useUploadSubStageAttachmentMutation,
   useDeleteSubStageAttachmentMutation,
   useListSubStageCommentsQuery,
+  useListPinnedSubStageCommentsQuery,
   useAddSubStageCommentMutation,
   useDeleteSubStageCommentMutation,
+  usePinSubStageCommentMutation,
 } = crmApi
