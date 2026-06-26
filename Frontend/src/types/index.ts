@@ -13,6 +13,12 @@ export interface Stage {
   title: string
   deadline: string | null
   completed: boolean
+  gip_confirmed: boolean
+  advance_cost: number | null
+  advance_confirmed: boolean
+  final_cost: number | null
+  final_confirmed: boolean
+  has_act: boolean
 }
 
 export interface DetailedStage {

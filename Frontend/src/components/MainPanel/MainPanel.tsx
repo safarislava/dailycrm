@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import type { Comment } from '../../types'
+import type { Comment, Stage } from '../../types'
 import { selectProject, selectStage } from '../../store/uiSlice'
 import { store } from '../../store'
 import {
@@ -71,6 +71,170 @@ export default function MainPanel() {
   const { data: stages = [], isLoading: stagesLoading } = useGetStagesQuery(
     projectId!, { skip: !projectId },
   )
+
+  const [matrixOpen, setMatrixOpen] = useState(true)
+  const [budgetOpen, setBudgetOpen] = useState(true)
+  const [hoveredSlice, setHoveredSlice] = useState<{ label: string; title: string; cost: number; percent: number } | null>(null)
+  const [activeTab, setActiveTab] = useState<'stages' | 'dashboard'>('stages')
+
+
+  const getStageLabel = useCallback((stage: Stage) => {
+    if (stage.parent_position === 0) {
+      return `${stage.position}`
+    }
+    return `${stage.parent_position}.${stage.position}`
+  }, [])
+
+  const sortedStagesForDashboard = useMemo(() => {
+    const list: Stage[] = []
+    const topLevels = stages.filter(s => s.parent_position === 0)
+    for (const top of topLevels) {
+      list.push(top)
+      const children = stages.filter(s => s.parent_position === top.position)
+      list.push(...children)
+    }
+    return list
+  }, [stages])
+
+  const projectTotalCost = useMemo(() => {
+    return stages.reduce((acc, s) => acc + (s.advance_cost ?? 0) + (s.final_cost ?? 0), 0)
+  }, [stages])
+
+  const projectConfirmedCost = useMemo(() => {
+    return stages.reduce((acc, s) => {
+      const adv = s.advance_confirmed ? (s.advance_cost ?? 0) : 0
+      const fin = s.final_confirmed ? (s.final_cost ?? 0) : 0
+      return acc + adv + fin
+    }, 0)
+  }, [stages])
+
+  const pieChartSlices = useMemo(() => {
+    if (projectTotalCost === 0) return { outer: [], inner: [] }
+    
+    // 1. Build cost items for the outer ring (stages)
+    const stageItems = sortedStagesForDashboard
+      .map(s => ({
+        id: `${s.parent_position}-${s.position}-stage`,
+        label: getStageLabel(s),
+        title: `${getStageLabel(s)}. ${s.title}`,
+        cost: (s.advance_cost ?? 0) + (s.final_cost ?? 0),
+        parent_position: s.parent_position,
+        position: s.position,
+        isConfirmed: (!s.advance_cost || s.advance_confirmed) && s.final_confirmed
+      }))
+      .filter(item => item.cost > 0)
+
+    // 2. Build cost items for the inner ring (payments)
+    const paymentItems: Array<{
+      id: string
+      label: string
+      title: string
+      cost: number
+      isConfirmed: boolean
+      parent_position: number
+      position: number
+    }> = []
+
+    for (const s of sortedStagesForDashboard) {
+      if (s.advance_cost && s.advance_cost > 0) {
+        paymentItems.push({
+          id: `${s.parent_position}-${s.position}-advance`,
+          label: `${getStageLabel(s)} (аванс)`,
+          title: `${getStageLabel(s)}. ${s.title} (аванс)`,
+          cost: s.advance_cost,
+          isConfirmed: s.advance_confirmed,
+          parent_position: s.parent_position,
+          position: s.position
+        })
+      }
+      if (s.final_cost && s.final_cost > 0) {
+        paymentItems.push({
+          id: `${s.parent_position}-${s.position}-final`,
+          label: `${getStageLabel(s)} (стоимость)`,
+          title: `${getStageLabel(s)}. ${s.title} (стоимость)`,
+          cost: s.final_cost,
+          isConfirmed: s.final_confirmed,
+          parent_position: s.parent_position,
+          position: s.position
+        })
+      }
+    }
+
+    // Map stages to HSL colors to ensure alignment of colors between inner segments
+    const stageColorMap = new Map<string, string>()
+    stageItems.forEach((item, idx) => {
+      stageColorMap.set(item.id.replace('-stage', ''), `hsl(${(idx * 137.5) % 360}, 65%, 55%)`)
+    })
+
+    // Calculate outer slices
+    let outerCumulative = 0
+    const outerSlices = stageItems.map(item => {
+      const percent = item.cost / projectTotalCost
+      const startPercent = outerCumulative
+      const endPercent = outerCumulative + percent
+      outerCumulative = endPercent
+
+      const getCoordinatesForPercent = (p: number, r: number) => {
+        const x = 50 + r * Math.cos(2 * Math.PI * (p - 0.25))
+        const y = 50 + r * Math.sin(2 * Math.PI * (p - 0.25))
+        return [x, y]
+      }
+
+      const [startX, startY] = getCoordinatesForPercent(startPercent, 40)
+      const [endX, endY] = getCoordinatesForPercent(endPercent, 40)
+      const largeArcFlag = percent > 0.5 ? 1 : 0
+
+      const d = percent >= 0.9999
+        ? `M 50 10 A 40 40 0 1 1 49.99 10 Z`
+        : `M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
+
+      const color = item.isConfirmed ? 'var(--chart-confirmed)' : 'var(--chart-unconfirmed)'
+
+      return {
+        ...item,
+        d,
+        color,
+        percent: Math.round(percent * 100)
+      }
+    })
+
+    // Calculate inner slices
+    let innerCumulative = 0
+    const innerSlices = paymentItems.map(item => {
+      const percent = item.cost / projectTotalCost
+      const startPercent = innerCumulative
+      const endPercent = innerCumulative + percent
+      innerCumulative = endPercent
+
+      const getCoordinatesForPercent = (p: number, r: number) => {
+        const x = 50 + r * Math.cos(2 * Math.PI * (p - 0.25))
+        const y = 50 + r * Math.sin(2 * Math.PI * (p - 0.25))
+        return [x, y]
+      }
+
+      // Inner ring uses outer radius 36
+      const [startX, startY] = getCoordinatesForPercent(startPercent, 36)
+      const [endX, endY] = getCoordinatesForPercent(endPercent, 36)
+      const largeArcFlag = percent > 0.5 ? 1 : 0
+
+      const d = percent >= 0.9999
+        ? `M 50 14 A 36 36 0 1 1 49.99 14 Z`
+        : `M 50 50 L ${startX} ${startY} A 36 36 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
+
+      const stageKey = `${item.parent_position}-${item.position}`
+      const baseColor = stageColorMap.get(stageKey) || '#ccc'
+      const color = item.isConfirmed ? baseColor : 'var(--chart-unconfirmed)'
+
+      return {
+        ...item,
+        d,
+        color,
+        percent: Math.round(percent * 100)
+      }
+    })
+
+    return { outer: outerSlices, inner: innerSlices }
+  }, [sortedStagesForDashboard, projectTotalCost, getStageLabel])
 
   // ── Detail queries (one fires, one skips) ─────────────────
   const { data: topDetail, isLoading: topDetailLoading } = useGetDetailedStageQuery(
@@ -555,7 +719,9 @@ export default function MainPanel() {
             <ArrowLeftIcon />
           </button>
           <div className={styles.headerInfo}>
-            <span className={styles.headerTitle}>{isSub ? 'Детали подэтапа' : 'Детали этапа'}</span>
+            <span className={styles.headerTitle}>
+              {isSub ? `Детали подэтапа ${selectedStage.parentPosition}.${selectedStage.position}` : `Детали этапа ${selectedStage.position}`}
+            </span>
           </div>
           <button
             className={styles.dangerBtn}
@@ -591,7 +757,7 @@ export default function MainPanel() {
                   onSave={handleUpdateDeadline}
                 />
                 <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleGip}>
-                  <span className={styles.fieldLabel}>Выполнение ГИП</span>
+                  <span className={styles.fieldLabel}>Выполнение</span>
                   <span className={styles.fieldValue}>
                     <span className={detail.gip_confirmed ? styles.completedBadge : styles.pendingBadge}>
                       {detail.gip_confirmed ? 'Выполнено' : 'Не выполнено'}
@@ -821,164 +987,359 @@ export default function MainPanel() {
             {topLevelStages.length} {topLevelStages.length === 1 ? 'этап' : topLevelStages.length < 5 ? 'этапа' : 'этапов'}
           </span>
         </div>
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === 'stages' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('stages')}
+          >
+            Этапы
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'dashboard' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            Дашборд
+          </button>
+        </div>
         <button className={styles.dangerBtn} onClick={() => setPendingDelete({ kind: 'project' })} title="Удалить проект">
           <TrashIcon />
         </button>
       </header>
 
-      <div className={styles.stageList}>
-        {stagesLoading && <div className={styles.loading}>Загрузка…</div>}
-        {!stagesLoading && topLevelStages.length === 0 && (
-          <div className={styles.noStages}>
-            <ListIcon />
-            <p>Нет этапов</p>
-            <span>Введите название ниже, чтобы добавить первый</span>
-          </div>
-        )}
-        {topLevelStages.map((stage) => {
-          const children  = childrenOf(stage.position)
-          const expanded  = expandedStages.has(stage.position)
-          const addingHere= addingSubTo === stage.position
-
-          return (
-            <React.Fragment key={stage.position}>
-              <div
-                className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''} ${dragPos === stage.position ? styles.stageDragging : ''} ${dragOverPos === stage.position ? styles.stageDragOver : ''}`}
-                onClick={() => dispatch(selectStage({ parentPosition: 0, position: stage.position }))}
-                draggable
-                onDragStart={(e) => { e.stopPropagation(); setDragPos(stage.position) }}
-                onDragOver={(e) => { if (dragPos !== null) { e.preventDefault(); setDragOverPos(stage.position) } }}
-                onDragLeave={() => setDragOverPos((p) => (p === stage.position ? null : p))}
-                onDrop={(e) => { e.preventDefault(); handleStageDrop(stage.position) }}
-                onDragEnd={() => { setDragPos(null); setDragOverPos(null) }}
-              >
-                {(children.length > 0 || expanded) ? (
-                  <button
-                    className={`${styles.stageChevron} ${styles.stageChevronVisible} ${expanded ? styles.stageChevronOpen : ''}`}
-                    onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
-                    title={expanded ? 'Свернуть' : 'Развернуть'}
-                  >
-                    <ChevronRightIcon />
-                  </button>
-                ) : (
-                  <span className={styles.stageChevronSpacer} />
-                )}
-                <span className={styles.stageCheck} title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}>
-                  {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
+      {activeTab === 'dashboard' ? (
+        projectId && !stagesLoading && stages.length > 0 && (
+          <div className={styles.tabContentDashboard}>
+            {/* Panel 1: Checkpoint Matrix */}
+            <div className={styles.dashboardContainer}>
+              <div className={styles.dashboardHeader} onClick={() => setMatrixOpen(o => !o)}>
+                <span className={styles.dashboardHeaderTitle}>Матрица выполнения</span>
+                <span className={styles.dashboardHeaderToggle}>
+                  {matrixOpen ? 'Свернуть ▲' : 'Развернуть ▼'}
                 </span>
-                <div className={styles.stageInfo}>
-                  <span className={styles.stageTitle}>{stage.title}</span>
-                  {stage.deadline && (
-                    <span className={styles.stageDeadline}>
-                      {new Date(stage.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-                <button
-                  className={styles.stageAddSub}
-                  onClick={(e) => { e.stopPropagation(); startAddSub(stage.position) }}
-                  title="Добавить подэтап"
-                >
-                  <PlusIcon />
-                </button>
-                <button
-                  className={styles.stageDelete}
-                  onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'stage', pos: stage.position, stageTitle: stage.title }) }}
-                  title="Удалить этап"
-                >
-                  <CloseIcon />
-                </button>
               </div>
-
-              {(expanded || addingHere) && (
-                <div className={styles.subStageGroup}>
-                  {children.map((child) => (
-                    <div
-                      key={child.position}
-                      className={`${styles.stageItem} ${styles.subStageItem} ${child.completed ? styles.stageCompleted : ''} ${dragSub?.parent === stage.position && dragSub?.pos === child.position ? styles.stageDragging : ''} ${dragOverSub?.parent === stage.position && dragOverSub?.pos === child.position ? styles.stageDragOver : ''}`}
-                      onClick={() => dispatch(selectStage({ parentPosition: stage.position, position: child.position }))}
-                      draggable
-                      onDragStart={(e) => { e.stopPropagation(); setDragSub({ parent: stage.position, pos: child.position }) }}
-                      onDragOver={(e) => { if (dragSub?.parent === stage.position) { e.preventDefault(); setDragOverSub({ parent: stage.position, pos: child.position }) } }}
-                      onDragLeave={() => setDragOverSub((s) => (s?.parent === stage.position && s?.pos === child.position ? null : s))}
-                      onDrop={(e) => { e.preventDefault(); handleSubDrop(stage.position, child.position) }}
-                      onDragEnd={() => { setDragSub(null); setDragOverSub(null) }}
-                    >
-                      <span className={styles.subStageIndent} />
-                      <span className={styles.stageCheck} title={child.completed ? 'Выполнен' : 'Не выполнен'}>
-                        {child.completed ? <CheckCircleIcon /> : <CircleIcon />}
-                      </span>
-                      <div className={styles.stageInfo}>
-                        <span className={styles.stageTitle}>{child.title}</span>
-                        {child.deadline && (
-                          <span className={styles.stageDeadline}>
-                            {new Date(child.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        className={styles.stageDelete}
-                        onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'sub', parentPos: stage.position, pos: child.position, stageTitle: child.title }) }}
-                        title="Удалить подэтап"
-                      >
-                        <CloseIcon />
-                      </button>
+              {matrixOpen && (
+                <div className={styles.dashboardBody}>
+                  <div className={styles.matrixWrapper}>
+                    <div className={styles.matrixScroll}>
+                      <table className={styles.matrixTable}>
+                        <thead>
+                          <tr>
+                            <th className={styles.matrixRowHeader}>Стадия</th>
+                            {sortedStagesForDashboard.map(stage => {
+                              const label = getStageLabel(stage)
+                              return (
+                                <th
+                                  key={label}
+                                  className={styles.matrixColHeader}
+                                  title={`${label}. ${stage.title}`}
+                                  onClick={() => dispatch(selectStage({ parentPosition: stage.parent_position, position: stage.position }))}
+                                >
+                                  {label}
+                                </th>
+                              )
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className={styles.matrixRowHeader}>Выполнение</td>
+                            {sortedStagesForDashboard.map(stage => (
+                              <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                                <span
+                                  className={`${styles.matrixDot} ${stage.gip_confirmed ? styles.dotCompleted : styles.dotPending}`}
+                                  title={`Выполнение: ${stage.gip_confirmed ? 'Выполнено' : 'Не выполнено'}`}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className={styles.matrixRowHeader}>Аванс</td>
+                            {sortedStagesForDashboard.map(stage => {
+                              const hasAdvance = stage.advance_cost != null
+                              const confirmed = stage.advance_confirmed
+                              return (
+                                <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                                  {hasAdvance ? (
+                                    <span
+                                      className={`${styles.matrixDot} ${confirmed ? styles.dotCompleted : styles.dotPending}`}
+                                      title={`Аванс: ${stage.advance_cost?.toLocaleString()} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                                    />
+                                  ) : (
+                                    <span className={styles.dotNotRequired} title="Аванс не предусмотрен">-</span>
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                          <tr>
+                            <td className={styles.matrixRowHeader}>Стоимость</td>
+                            {sortedStagesForDashboard.map(stage => (
+                              <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                                <span
+                                  className={`${styles.matrixDot} ${stage.final_confirmed ? styles.dotCompleted : styles.dotPending}`}
+                                  title={`Окончательная стоимость: ${stage.final_cost != null ? `${stage.final_cost.toLocaleString()} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className={styles.matrixRowHeader}>Акт</td>
+                            {sortedStagesForDashboard.map(stage => (
+                              <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                                <span
+                                  className={`${styles.matrixDot} ${stage.has_act ? styles.dotCompleted : styles.dotPending}`}
+                                  title={`Акт сдачи-приемки: ${stage.has_act ? 'Загружен' : 'Не загружен'}`}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-
-                  {addingHere && (
-                    <div className={styles.subStageInputRow}>
-                      <span className={styles.subStageIndent} />
-                      <input
-                        autoFocus
-                        className={styles.subStageInput}
-                        placeholder="Новый подэтап…"
-                        value={subTitle}
-                        onChange={(e) => setSubTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSendSub(stage.position)
-                          if (e.key === 'Escape') { setAddingSubTo(null); setSubTitle('') }
-                        }}
-                        onBlur={() => { if (!subTitle.trim()) { setAddingSubTo(null) } }}
-                      />
-                      <button
-                        className={styles.sendBtn}
-                        onClick={() => handleSendSub(stage.position)}
-                        disabled={!canSendSub}
-                      >
-                        <SendIcon />
-                      </button>
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
-            </React.Fragment>
-          )
-        })}
-        <div ref={bottomRef} />
-      </div>
+            </div>
 
-      <div className={styles.inputRow}>
-        <input
-          className={styles.posInput}
-          type="number"
-          placeholder="№"
-          min={1}
-          value={position}
-          onChange={(e) => setPosition(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-        />
-        <input
-          className={styles.textInput}
-          placeholder="Новый этап…"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-        />
-        <button className={styles.sendBtn} onClick={handleSend} disabled={!canSend}>
-          <SendIcon />
-        </button>
-      </div>
+            {/* Panel 2: Budget Distribution */}
+            <div className={styles.dashboardContainer}>
+              <div className={styles.dashboardHeader} onClick={() => setBudgetOpen(o => !o)}>
+                <span className={styles.dashboardHeaderTitle}>Распределение бюджета</span>
+                <span className={styles.dashboardHeaderToggle}>
+                  {budgetOpen ? 'Свернуть ▲' : 'Развернуть ▼'}
+                </span>
+              </div>
+              {budgetOpen && (
+                <div className={styles.dashboardBody}>
+                  <div className={styles.chartWrapper}>
+                    {projectTotalCost > 0 ? (
+                      <>
+                        <div className={styles.chartContainer}>
+                          <svg viewBox="0 0 100 100" className={styles.pieSvg}>
+                            {/* Outer Ring: Stages */}
+                            {pieChartSlices.outer.map(slice => (
+                              <path
+                                key={slice.id}
+                                d={slice.d}
+                                fill={slice.color}
+                                className={styles.pieSlice}
+                                style={{ opacity: 0.3 }}
+                                onMouseEnter={() => setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })}
+                                onMouseLeave={() => setHoveredSlice(null)}
+                                onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
+                              />
+                            ))}
+                            
+                            {/* Separation Ring Gap (background color) */}
+                            <circle cx="50" cy="50" r="36.8" className={styles.pieHole} />
+
+                            {/* Inner Ring: Payments */}
+                            {pieChartSlices.inner.map(slice => (
+                              <path
+                                key={slice.id}
+                                d={slice.d}
+                                fill={slice.color}
+                                className={styles.pieSlice}
+                                onMouseEnter={() => setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })}
+                                onMouseLeave={() => setHoveredSlice(null)}
+                                onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
+                              />
+                            ))}
+
+                            {/* Doughnut Hole */}
+                            <circle cx="50" cy="50" r="24" className={styles.pieHole} />
+                          </svg>
+
+                        </div>
+                        
+                        {/* Hover details outside the chart */}
+                        <div className={styles.hoverInfo}>
+                          {hoveredSlice ? (
+                            <>
+                              <div className={styles.hoverTitle} title={hoveredSlice.title}>{hoveredSlice.title}</div>
+                              <div className={styles.hoverCost}>
+                                {hoveredSlice.cost.toLocaleString()} ₽ ({hoveredSlice.percent}%)
+                              </div>
+                            </>
+                          ) : (
+                            <div className={styles.hoverPlaceholder}>
+                              Наведите на сектор для деталей
+                            </div>
+                          )}
+                        </div>
+
+                        <div className={styles.chartStats}>
+                          Подтверждено: <span className={styles.statsPaid}>{projectConfirmedCost.toLocaleString()} ₽</span> из <span className={styles.statsTotal}>{projectTotalCost.toLocaleString()} ₽</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={styles.noChartData}>
+                        Стоимость этапов не указана
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
+        <>
+          <div className={styles.stageList}>
+            {stagesLoading && <div className={styles.loading}>Загрузка…</div>}
+            {!stagesLoading && topLevelStages.length === 0 && (
+              <div className={styles.noStages}>
+                <ListIcon />
+                <p>Нет этапов</p>
+                <span>Введите название ниже, чтобы добавить первый</span>
+              </div>
+            )}
+            {topLevelStages.map((stage) => {
+              const children  = childrenOf(stage.position)
+              const expanded  = expandedStages.has(stage.position)
+              const addingHere= addingSubTo === stage.position
+
+              return (
+                <React.Fragment key={stage.position}>
+                  <div
+                    className={`${styles.stageItem} ${stage.completed ? styles.stageCompleted : ''} ${dragPos === stage.position ? styles.stageDragging : ''} ${dragOverPos === stage.position ? styles.stageDragOver : ''}`}
+                    onClick={() => dispatch(selectStage({ parentPosition: 0, position: stage.position }))}
+                    draggable
+                    onDragStart={(e) => { e.stopPropagation(); setDragPos(stage.position) }}
+                    onDragOver={(e) => { if (dragPos !== null) { e.preventDefault(); setDragOverPos(stage.position) } }}
+                    onDragLeave={() => setDragOverPos((p) => (p === stage.position ? null : p))}
+                    onDrop={(e) => { e.preventDefault(); handleStageDrop(stage.position) }}
+                    onDragEnd={() => { setDragPos(null); setDragOverPos(null) }}
+                  >
+                    {(children.length > 0 || expanded) ? (
+                      <button
+                        className={`${styles.stageChevron} ${styles.stageChevronVisible} ${expanded ? styles.stageChevronOpen : ''}`}
+                        onClick={(e) => { e.stopPropagation(); toggleExpand(stage.position) }}
+                        title={expanded ? 'Свернуть' : 'Развернуть'}
+                      >
+                        <ChevronRightIcon />
+                      </button>
+                    ) : (
+                      <span className={styles.stageChevronSpacer} />
+                    )}
+                    <span className={styles.stageCheck} title={stage.completed ? 'Этап выполнен' : 'Этап не выполнен'}>
+                      {stage.completed ? <CheckCircleIcon /> : <CircleIcon />}
+                    </span>
+                    <div className={styles.stageInfo}>
+                      <span className={styles.stageTitle}>{stage.position}. {stage.title}</span>
+                      {stage.deadline && (
+                        <span className={styles.stageDeadline}>
+                          {new Date(stage.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className={styles.stageAddSub}
+                      onClick={(e) => { e.stopPropagation(); startAddSub(stage.position) }}
+                      title="Добавить подэтап"
+                    >
+                      <PlusIcon />
+                    </button>
+                    <button
+                      className={styles.stageDelete}
+                      onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'stage', pos: stage.position, stageTitle: stage.title }) }}
+                      title="Удалить этап"
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+
+                  {(expanded || addingHere) && (
+                    <div className={styles.subStageGroup}>
+                      {children.map((child) => (
+                        <div
+                          key={child.position}
+                          className={`${styles.stageItem} ${styles.subStageItem} ${child.completed ? styles.stageCompleted : ''} ${dragSub?.parent === stage.position && dragSub?.pos === child.position ? styles.stageDragging : ''} ${dragOverSub?.parent === stage.position && dragOverSub?.pos === child.position ? styles.stageDragOver : ''}`}
+                          onClick={() => dispatch(selectStage({ parentPosition: stage.position, position: child.position }))}
+                          draggable
+                          onDragStart={(e) => { e.stopPropagation(); setDragSub({ parent: stage.position, pos: child.position }) }}
+                          onDragOver={(e) => { if (dragSub?.parent === stage.position) { e.preventDefault(); setDragOverSub({ parent: stage.position, pos: child.position }) } }}
+                          onDragLeave={() => setDragOverSub((s) => (s?.parent === stage.position && s?.pos === child.position ? null : s))}
+                          onDrop={(e) => { e.preventDefault(); handleSubDrop(stage.position, child.position) }}
+                          onDragEnd={() => { setDragSub(null); setDragOverSub(null) }}
+                        >
+                          <span className={styles.subStageIndent} />
+                          <span className={styles.stageCheck} title={child.completed ? 'Выполнен' : 'Не выполнен'}>
+                            {child.completed ? <CheckCircleIcon /> : <CircleIcon />}
+                          </span>
+                          <div className={styles.stageInfo}>
+                            <span className={styles.stageTitle}>{stage.position}.{child.position}. {child.title}</span>
+                            {child.deadline && (
+                              <span className={styles.stageDeadline}>
+                                {new Date(child.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            className={styles.stageDelete}
+                            onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'sub', parentPos: stage.position, pos: child.position, stageTitle: child.title }) }}
+                            title="Удалить подэтап"
+                          >
+                            <CloseIcon />
+                          </button>
+                        </div>
+                      ))}
+
+                      {addingHere && (
+                        <div className={styles.subStageInputRow}>
+                          <span className={styles.subStageIndent} />
+                          <input
+                            autoFocus
+                            className={styles.subStageInput}
+                            placeholder="Новый подэтап…"
+                            value={subTitle}
+                            onChange={(e) => setSubTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSendSub(stage.position)
+                              if (e.key === 'Escape') { setAddingSubTo(null); setSubTitle('') }
+                            }}
+                            onBlur={() => { if (!subTitle.trim()) { setAddingSubTo(null) } }}
+                          />
+                          <button
+                            className={styles.sendBtn}
+                            onClick={() => handleSendSub(stage.position)}
+                            disabled={!canSendSub}
+                          >
+                            <SendIcon />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </React.Fragment>
+              )
+            })}
+            <div ref={bottomRef} />
+          </div>
+
+          <div className={styles.inputRow}>
+            <input
+              className={styles.posInput}
+              type="number"
+              placeholder="№"
+              min={1}
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+            />
+            <input
+              className={styles.textInput}
+              placeholder="Новый этап…"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+            />
+            <button className={styles.sendBtn} onClick={handleSend} disabled={!canSend}>
+              <SendIcon />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
