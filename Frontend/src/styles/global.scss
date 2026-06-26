@@ -25,6 +25,9 @@
   --shadow-popup:    rgba(0, 0, 0, 0.4);
   --shadow-modal:    rgba(0, 0, 0, 0.5);
 
+  --chart-confirmed:   #f1f5f9;
+  --chart-unconfirmed: #364354;
+
   color-scheme: dark;
 }
 
@@ -51,6 +54,9 @@
   --scrollbar-thumb: rgba(0, 0, 0, 0.15);
   --shadow-popup:    rgba(0, 0, 0, 0.12);
   --shadow-modal:    rgba(0, 0, 0, 0.18);
+
+  --chart-confirmed:   #f8fafc;
+  --chart-unconfirmed: #475569;
 
   color-scheme: light;
 }

@@ -925,3 +925,263 @@
 
   svg { width: 12px; height: 12px; }
 }
+
+.dashboardContainer {
+  margin: 12px 16px;
+  background: v.$bg-secondary;
+  border: 1px solid v.$divider;
+  border-radius: v.$radius-md;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: v.$bg-item-hover;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid v.$divider;
+  transition: background v.$transition-fast;
+
+  &:hover {
+    background: v.$divider;
+  }
+}
+
+.dashboardHeaderTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: v.$text-primary;
+}
+
+.dashboardHeaderToggle {
+  font-size: 12px;
+  color: v.$text-secondary;
+}
+
+.dashboardBody {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-width: 0;
+}
+
+.matrixWrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.matrixTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: v.$text-secondary;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.matrixScroll {
+  overflow-x: auto;
+  border: 1px solid v.$divider;
+  border-radius: v.$radius-sm;
+  background: v.$bg-primary;
+}
+
+.matrixTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: center;
+}
+
+.matrixRowHeader {
+  padding: 8px 12px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  text-align: left;
+  border-right: 1px solid v.$divider;
+  border-bottom: 1px solid v.$divider;
+  white-space: nowrap;
+  background: v.$bg-secondary;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.matrixColHeader {
+  padding: 8px 12px;
+  font-weight: 600;
+  color: v.$text-primary;
+  border-bottom: 1px solid v.$divider;
+  border-right: 1px solid v.$divider;
+  min-width: 48px;
+  cursor: help;
+  background: v.$bg-secondary;
+}
+
+.matrixCell {
+  padding: 8px;
+  border-bottom: 1px solid v.$divider;
+  border-right: 1px solid v.$divider;
+}
+
+.matrixDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dotCompleted {
+  background-color: #7bc862;
+  box-shadow: 0 0 4px rgba(123, 200, 98, 0.4);
+}
+
+.dotPending {
+  background-color: #b0b0b0;
+  box-shadow: 0 0 4px rgba(176, 176, 176, 0.4);
+}
+
+.dotNotRequired {
+  color: v.$text-secondary;
+  font-weight: bold;
+  opacity: 0.5;
+}
+
+.chartWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.chartContainer {
+  position: relative;
+  width: 240px;
+  height: 240px;
+}
+
+.pieSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.pieSlice {
+  cursor: pointer;
+  transition: transform v.$transition-fast, opacity v.$transition-fast;
+  transform-origin: 50px 50px;
+  stroke: v.$bg-secondary;
+  stroke-width: 0.6px;
+
+  &:hover {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+}
+
+.pieHole {
+  fill: v.$bg-secondary;
+}
+
+.pieTooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.tooltipLabel {
+  font-size: 11px;
+  color: v.$text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 85px;
+}
+
+.tooltipCost {
+  font-size: 12px;
+  font-weight: 700;
+  color: v.$text-primary;
+  margin: 1px 0;
+}
+
+.tooltipPercent {
+  font-size: 10px;
+  color: v.$accent;
+  font-weight: 500;
+}
+
+.noChartData {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$text-secondary;
+  font-size: 13px;
+  text-align: center;
+}
+
+.chartStats {
+  margin-top: 16px;
+  font-size: 14px;
+  color: v.$text-secondary;
+  text-align: center;
+}
+
+.statsPaid {
+  font-weight: 700;
+  color: #7bc862;
+}
+
+.statsTotal {
+  font-weight: 600;
+  color: v.$text-primary;
+}
+
+.hoverInfo {
+  margin-top: 12px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 16px;
+  max-width: 320px;
+}
+
+.hoverTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: v.$text-primary;
+  line-height: 1.35;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.hoverCost {
+  font-size: 12px;
+  font-weight: 500;
+  color: v.$accent;
+}
+
+.hoverPlaceholder {
+  font-size: 13px;
+  color: v.$text-secondary;
+  font-style: italic;
+  opacity: 0.8;
+}

@@ -31,9 +31,23 @@ impl List for StageSummaries {
             title: String,
             deadline: Option<DateTime<Utc>>,
             completed: bool,
+            gip_confirmed: bool,
+            advance_cost: Option<i32>,
+            advance_confirmed: bool,
+            final_cost: Option<i32>,
+            final_confirmed: bool,
+            has_act: bool,
         }
         let rows = sqlx::query_as::<_, Row>(
-            "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline, s.completed
+            "SELECT s.project_id, s.parent_position, s.position, s.title, s.deadline, s.completed,
+                    s.gip_confirmed, s.advance_cost, s.advance_confirmed, s.final_cost, s.final_confirmed,
+                    EXISTS(
+                       SELECT 1 FROM attachments a
+                       WHERE a.project_id = s.project_id
+                         AND a.parent_position = s.parent_position
+                         AND a.stage_position = s.position
+                         AND a.is_act = TRUE
+                    ) AS has_act
              FROM detailed_stages s
              WHERE s.project_id = $1 ORDER BY s.parent_position, s.position",
         )
