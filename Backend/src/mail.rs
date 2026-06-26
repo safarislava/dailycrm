@@ -17,8 +17,8 @@ impl Mailer {
 
     pub fn from_env() -> Self {
         let host = env::var("SMTP_HOST").expect("SMTP_HOST must be set");
-        let username = env::var("SMTP_USERNAME").expect("SMTP_USERNAME must be set");
-        let password = env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD must be set");
+        let username = env::var("SMTP_USERNAME").ok().unwrap_or_default();
+        let password = env::var("SMTP_PASSWORD").ok().unwrap_or_default();
         let port: u16 = env::var("SMTP_PORT")
             .unwrap_or_else(|_| "465".to_string())
             .parse()
@@ -27,16 +27,27 @@ impl Mailer {
             .expect("MAIL_FROM must be set")
             .parse::<Mailbox>()
             .expect("MAIL_FROM must be a valid address");
-        let transport = if port == 465 {
-            AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
-                .expect("valid SMTP relay")
-                .credentials(Credentials::new(username, password))
-                .build()
+
+        let credentials = if !username.is_empty() && !password.is_empty() {
+            Some(Credentials::new(username, password))
         } else {
-            AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host)
-                .port(port)
-                .credentials(Credentials::new(username, password))
-                .build()
+            None
+        };
+
+        let transport = if port == 465 {
+            let mut builder = AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
+                .expect("valid SMTP relay");
+            if let Some(creds) = credentials {
+                builder = builder.credentials(creds);
+            }
+            builder.build()
+        } else {
+            let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host)
+                .port(port);
+            if let Some(creds) = credentials {
+                builder = builder.credentials(creds);
+            }
+            builder.build()
         };
         Self::new(transport, from)
     }

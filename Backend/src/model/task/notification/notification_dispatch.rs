@@ -22,7 +22,8 @@ impl Task for NotificationDispatch {
     type Output = ();
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
-        for notification in NotificationDequeue::new(self.pool.clone()).done().await? {
+        let notifications = NotificationDequeue::new(self.pool.clone()).done().await?;
+        for notification in notifications {
             NotificationSend::new(self.pool.clone(), self.mailer.clone(), notification)
                 .done()
                 .await?;

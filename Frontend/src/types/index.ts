@@ -51,4 +51,5 @@ export interface Comment {
   author: string
   is_system: boolean
   created_at: string
+  is_pinned: boolean
 }

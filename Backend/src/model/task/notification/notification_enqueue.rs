@@ -27,11 +27,12 @@ impl Task for NotificationEnqueue {
     async fn done(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
             "INSERT INTO notification_queue (type, project_title, stage_title)
-             SELECT $3, p.title, s.title
+             SELECT $4, p.title, s.title
              FROM stages s JOIN projects p ON p.id = s.project_id
-             WHERE s.project_id = $1 AND s.position = $2",
+             WHERE s.project_id = $1 AND s.parent_position = $2 AND s.position = $3",
         )
         .bind(self.stage.project().id())
+        .bind(self.stage.parent_position())
         .bind(self.stage.position())
         .bind(&self.notification_type)
         .execute(self.pool.as_ref())

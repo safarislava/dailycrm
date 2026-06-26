@@ -44,7 +44,7 @@ async fn main() -> std::io::Result<()> {
         )),
     );
     let dispatch_schedule = Schedule::new(
-        Arc::new(PollInterval::new(Duration::from_mins(2))),
+        Arc::new(PollInterval::new(Duration::from_mins(1))),
         Arc::new(NotificationDispatch::new(pool, mailer)),
     );
     let timetable = Timetable::new(vec![deadline_schedule, dispatch_schedule]);

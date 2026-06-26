@@ -31,11 +31,12 @@ impl List for CommentSummaries {
             author: String,
             is_system: bool,
             created_at: DateTime<Utc>,
+            is_pinned: bool,
         }
         let mut rows = match self.before {
             None => {
                 sqlx::query_as::<_, Row>(
-                    "SELECT c.id, c.text, u.username AS author, c.is_system, c.created_at \
+                    "SELECT c.id, c.text, u.username AS author, c.is_system, c.created_at, c.is_pinned \
                      FROM stage_comments c \
                      JOIN users u ON u.id = c.author_id \
                      WHERE c.project_id = $1 AND c.parent_position = $2 AND c.stage_position = $3 \
@@ -50,7 +51,7 @@ impl List for CommentSummaries {
             }
             Some(before) => {
                 sqlx::query_as::<_, Row>(
-                    "SELECT c.id, c.text, u.username AS author, c.is_system, c.created_at \
+                    "SELECT c.id, c.text, u.username AS author, c.is_system, c.created_at, c.is_pinned \
                      FROM stage_comments c \
                      JOIN users u ON u.id = c.author_id \
                      WHERE c.project_id = $1 AND c.parent_position = $2 AND c.stage_position = $3 \

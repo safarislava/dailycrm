@@ -30,8 +30,10 @@ import {
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation,
   useListCommentsQuery,
+  useListPinnedCommentsQuery,
   useAddCommentMutation,
   useDeleteCommentMutation,
+  usePinCommentMutation,
   useAppendSubStageMutation,
   useDeleteSubStageMutation,
   useGetDetailedSubStageQuery,
@@ -49,8 +51,10 @@ import {
   useUploadSubStageAttachmentMutation,
   useDeleteSubStageAttachmentMutation,
   useListSubStageCommentsQuery,
+  useListPinnedSubStageCommentsQuery,
   useAddSubStageCommentMutation,
   useDeleteSubStageCommentMutation,
+  usePinSubStageCommentMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
@@ -97,6 +101,10 @@ export default function MainPanel() {
   const { data: topComments = [] }     = useListCommentsQuery(actArgs, { skip: skipTop })
   const { data: subComments = [] }     = useListSubStageCommentsQuery(subActArgs, { skip: skipSub })
   const comments = isSub ? subComments : topComments
+
+  const { data: topPinnedComments = [] } = useListPinnedCommentsQuery(actArgs, { skip: skipTop })
+  const { data: subPinnedComments = [] } = useListPinnedSubStageCommentsQuery(subActArgs, { skip: skipSub })
+  const initialPinnedComments = isSub ? subPinnedComments : topPinnedComments
 
   // ── Lazy-loaded older comments ─────────────────────────────
   const COMMENTS_PAGE = 25
@@ -213,6 +221,7 @@ export default function MainPanel() {
   const [deleteTopFile]    = useDeleteAttachmentMutation()
   const [addTopComment, { isLoading: addingTopComment }]       = useAddCommentMutation()
   const [deleteTopComment] = useDeleteCommentMutation()
+  const [pinTopComment] = usePinCommentMutation()
 
   // ── Detail mutations (sub-stage) ───────────────────────────
   const [updateSubTitle]   = useUpdateSubStageTitleMutation()
@@ -228,6 +237,7 @@ export default function MainPanel() {
   const [deleteSubFile]    = useDeleteSubStageAttachmentMutation()
   const [addSubComment, { isLoading: addingSubComment }]       = useAddSubStageCommentMutation()
   const [deleteSubComment] = useDeleteSubStageCommentMutation()
+  const [pinSubComment] = usePinSubStageCommentMutation()
 
   // Unified helpers
   const uploadingAct  = isSub ? uploadingSubAct  : uploadingTopAct
@@ -387,6 +397,18 @@ export default function MainPanel() {
       deleteTopComment({ projectId, position: selectedStage.position, commentId })
     }
     setOlderComments((prev) => prev.filter((c) => c.id !== commentId))
+  }
+
+  const handleTogglePinComment = async (commentId: string, pinned: boolean) => {
+    if (!projectId || !selectedStage) return
+    if (isSub) {
+      await pinSubComment({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, commentId, pinned })
+    } else {
+      await pinTopComment({ projectId, position: selectedStage.position, commentId, pinned })
+    }
+    setOlderComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, is_pinned: pinned } : c))
+    )
   }
 
   // ── Stage list state ───────────────────────────────────────
@@ -681,10 +703,41 @@ export default function MainPanel() {
                 <div className={styles.attachmentsHeader}>
                   <span className={styles.attachmentsSectionLabel}>Комментарии</span>
                 </div>
+
+                {/* Pinned comments */}
+                {initialPinnedComments.length > 0 && (
+                  <div className={styles.pinnedCommentsContainer}>
+                    <div className={styles.pinnedScroll}>
+                      {initialPinnedComments.map((c) => (
+                        <div key={`pinned-${c.id}`} className={styles.pinnedComment}>
+                          <PinIcon filled className={styles.pinnedCommentIcon} />
+                          <div className={styles.pinnedCommentBody}>
+                            <div className={styles.commentBubbleHeader}>
+                              <span className={styles.commentAuthor}>{c.author}</span>
+                              <span className={styles.commentDate}>
+                                {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <button className={`${styles.commentPinBtn} ${styles.commentPinned}`} title="Открепить" onClick={() => handleTogglePinComment(c.id, false)}>
+                                <PinIcon filled />
+                              </button>
+                              <button className={styles.commentDeleteBtn} title="Удалить" onClick={() => handleDeleteComment(c.id)}>
+                                <CloseIcon />
+                              </button>
+                            </div>
+                            <p className={styles.commentText}>{c.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className={styles.commentsScroll} ref={commentsScrollRef} onScroll={handleCommentsScroll}>
                   {loadingOlderComments && <div className={styles.commentsLoading}>Загрузка…</div>}
                   {allComments.length === 0 && <p className={styles.attachmentsEmpty}>Нет комментариев</p>}
-                  {allComments.map((c) => c.is_system ? (
+
+                  {/* Regular feed */}
+                  {allComments.filter((c) => !c.is_pinned).map((c) => c.is_system ? (
                     <div key={c.id} className={styles.systemComment}>
                       <span className={styles.systemCommentText}>
                         <span className={styles.systemCommentAuthor}>{c.author}</span>
@@ -701,6 +754,9 @@ export default function MainPanel() {
                         <span className={styles.commentDate}>
                           {new Date(c.created_at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </span>
+                        <button className={styles.commentPinBtn} title="Закрепить" onClick={() => handleTogglePinComment(c.id, true)}>
+                          <PinIcon />
+                        </button>
                         <button className={styles.commentDeleteBtn} title="Удалить" onClick={() => handleDeleteComment(c.id)}>
                           <CloseIcon />
                         </button>
@@ -1149,6 +1205,13 @@ function PlusIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
       <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+function PinIcon({ filled = false, className }: { filled?: boolean; className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"}>
+      <path d="M16 12V4H8v8L6 14v2h5v6l1 1 1-1v-6h5v-2l-2-2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
