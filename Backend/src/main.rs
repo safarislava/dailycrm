@@ -65,3 +65,8 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+
+// TODO Админка
+// TODO Frontend refactor
+// TODO Backend logger
+// TODO Backend tests
