@@ -23,6 +23,9 @@ impl Task for NotificationDispatch {
 
     async fn done(&self) -> Result<Self::Output, BoxError> {
         let notifications = NotificationDequeue::new(self.pool.clone()).done().await?;
+        if !notifications.is_empty() {
+            println!("Queue: Dequeued {} notification(s) for dispatching.", notifications.len());
+        }
         for notification in notifications {
             NotificationSend::new(self.pool.clone(), self.mailer.clone(), notification)
                 .done()

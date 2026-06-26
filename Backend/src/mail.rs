@@ -28,6 +28,8 @@ impl Mailer {
             .parse::<Mailbox>()
             .expect("MAIL_FROM must be a valid address");
 
+        println!("Mailer: Initializing with SMTP_HOST={}, SMTP_PORT={}, MAIL_FROM={:?}", host, port, from);
+
         let credentials = if !username.is_empty() && !password.is_empty() {
             Some(Credentials::new(username, password))
         } else {
@@ -53,13 +55,22 @@ impl Mailer {
     }
 
     pub async fn send(&self, to: &str, subject: &str, body: String) -> Result<(), BoxError> {
+        println!("Mailer: Sending email to '{}' with subject '{}'...", to, subject);
         let message = Message::builder()
             .from(self.from.clone())
             .to(to.parse()?)
             .subject(subject)
             .header(ContentType::TEXT_PLAIN)
             .body(body)?;
-        self.transport.send(message).await?;
-        Ok(())
+        match self.transport.send(message).await {
+            Ok(_) => {
+                println!("Mailer: Email to '{}' successfully sent.", to);
+                Ok(())
+            }
+            Err(err) => {
+                eprintln!("Mailer ERROR: Failed to send email to '{}': {:?}", to, err);
+                Err(err.into())
+            }
+        }
     }
 }
