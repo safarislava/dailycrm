@@ -755,7 +755,7 @@ export default function MainPanel() {
                   onSave={handleUpdateDeadline}
                 />
                 <div className={`${styles.field} ${styles.fieldEditable}`} onClick={handleToggleGip}>
-                  <span className={styles.fieldLabel}>Выполнение ГИП</span>
+                  <span className={styles.fieldLabel}>Выполнение</span>
                   <span className={styles.fieldValue}>
                     <span className={detail.gip_confirmed ? styles.completedBadge : styles.pendingBadge}>
                       {detail.gip_confirmed ? 'Выполнено' : 'Не выполнено'}
@@ -1007,11 +1007,16 @@ export default function MainPanel() {
                     <table className={styles.matrixTable}>
                       <thead>
                         <tr>
-                          <th className={styles.matrixRowHeader}>Параметр</th>
+                          <th className={styles.matrixRowHeader}>Стадия</th>
                           {sortedStagesForDashboard.map(stage => {
                             const label = getStageLabel(stage)
                             return (
-                              <th key={label} className={styles.matrixColHeader} title={`${label}. ${stage.title}`}>
+                              <th
+                                key={label}
+                                className={styles.matrixColHeader}
+                                title={`${label}. ${stage.title}`}
+                                onClick={() => dispatch(selectStage({ parentPosition: stage.parent_position, position: stage.position }))}
+                              >
                                 {label}
                               </th>
                             )
@@ -1020,12 +1025,12 @@ export default function MainPanel() {
                       </thead>
                       <tbody>
                         <tr>
-                          <td className={styles.matrixRowHeader}>ГИП</td>
+                          <td className={styles.matrixRowHeader}>Выполнение</td>
                           {sortedStagesForDashboard.map(stage => (
                             <td key={getStageLabel(stage)} className={styles.matrixCell}>
                               <span
                                 className={`${styles.matrixDot} ${stage.gip_confirmed ? styles.dotCompleted : styles.dotPending}`}
-                                title={`Согласование ГИП: ${stage.gip_confirmed ? 'Выполнено' : 'Не выполнено'}`}
+                                title={`Выполнение: ${stage.gip_confirmed ? 'Выполнено' : 'Не выполнено'}`}
                               />
                             </td>
                           ))}

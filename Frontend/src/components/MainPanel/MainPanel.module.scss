@@ -1017,9 +1017,15 @@
   border-bottom: 1px solid v.$divider;
   border-right: 1px solid v.$divider;
   min-width: 48px;
-  cursor: help;
+  cursor: pointer;
   background: v.$bg-secondary;
+  transition: background v.$transition-fast;
+
+  &:hover {
+    background: v.$bg-item-hover;
+  }
 }
+
 
 .matrixCell {
   padding: 8px;
