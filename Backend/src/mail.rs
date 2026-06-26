@@ -4,6 +4,7 @@ use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use std::env;
+use std::time::Duration;
 
 pub struct Mailer {
     transport: AsyncSmtpTransport<Tokio1Executor>,
@@ -38,14 +39,16 @@ impl Mailer {
 
         let transport = if port == 465 {
             let mut builder = AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
-                .expect("valid SMTP relay");
+                .expect("valid SMTP relay")
+                .timeout(Some(Duration::from_secs(10)));
             if let Some(creds) = credentials {
                 builder = builder.credentials(creds);
             }
             builder.build()
         } else {
             let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host)
-                .port(port);
+                .port(port)
+                .timeout(Some(Duration::from_secs(10)));
             if let Some(creds) = credentials {
                 builder = builder.credentials(creds);
             }
