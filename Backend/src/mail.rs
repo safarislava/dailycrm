@@ -18,8 +18,8 @@ impl Mailer {
 
     pub fn from_env() -> Self {
         let host = env::var("SMTP_HOST").expect("SMTP_HOST must be set");
-        let username = env::var("SMTP_USERNAME").ok().unwrap_or_default();
-        let password = env::var("SMTP_PASSWORD").ok().unwrap_or_default();
+        let username = env::var("SMTP_USERNAME").ok();
+        let password = env::var("SMTP_PASSWORD").ok();
         let port: u16 = env::var("SMTP_PORT")
             .unwrap_or_else(|_| "465".to_string())
             .parse()
@@ -31,30 +31,8 @@ impl Mailer {
 
         println!("Mailer: Initializing with SMTP_HOST={}, SMTP_PORT={}, MAIL_FROM={:?}", host, port, from);
 
-        let credentials = if !username.is_empty() && !password.is_empty() {
-            Some(Credentials::new(username, password))
-        } else {
-            None
-        };
-
-        let transport = if port == 465 {
-            let mut builder = AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
-                .expect("valid SMTP relay")
-                .timeout(Some(Duration::from_secs(10)));
-            if let Some(creds) = credentials {
-                builder = builder.credentials(creds);
-            }
-            builder.build()
-        } else {
-            let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host)
-                .port(port)
-                .timeout(Some(Duration::from_secs(10)));
-            if let Some(creds) = credentials {
-                builder = builder.credentials(creds);
-            }
-            builder.build()
-        };
-        Self::new(transport, from)
+        let settings = MailSettings::new(host, port, username, password);
+        Self::new(settings.transport(), from)
     }
 
     pub async fn send(&self, to: &str, subject: &str, body: String) -> Result<(), BoxError> {
@@ -78,6 +56,50 @@ impl Mailer {
                 eprintln!("Mailer ERROR: Sending email to '{}' timed out after 10 seconds.", to);
                 Err("SMTP send timed out".into())
             }
+        }
+    }
+}
+
+struct MailSettings {
+    host: String,
+    port: u16,
+    username: Option<String>,
+    password: Option<String>,
+}
+
+impl MailSettings {
+    fn new(
+        host: String,
+        port: u16,
+        username: Option<String>,
+        password: Option<String>,
+    ) -> Self {
+        Self { host, port, username, password }
+    }
+
+    fn transport(&self) -> AsyncSmtpTransport<Tokio1Executor> {
+        let mut builder = match self.port {
+            465 => AsyncSmtpTransport::<Tokio1Executor>::relay(&self.host)
+                .expect("valid SMTP relay"),
+            587 => AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&self.host)
+                .expect("valid SMTP relay"),
+            _ => AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&self.host)
+                .port(self.port),
+        };
+
+        builder = builder.timeout(Some(Duration::from_secs(10)));
+        if let Some(ref creds) = self.credentials() {
+            builder = builder.credentials(creds.clone());
+        }
+        builder.build()
+    }
+
+    fn credentials(&self) -> Option<Credentials> {
+        match (&self.username, &self.password) {
+            (Some(u), Some(p)) if !u.is_empty() && !p.is_empty() => {
+                Some(Credentials::new(u.clone(), p.clone()))
+            }
+            _ => None,
         }
     }
 }
