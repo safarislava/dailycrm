@@ -65,14 +65,18 @@ impl Mailer {
             .subject(subject)
             .header(ContentType::TEXT_PLAIN)
             .body(body)?;
-        match self.transport.send(message).await {
-            Ok(_) => {
+        match actix_web::rt::time::timeout(Duration::from_secs(10), self.transport.send(message)).await {
+            Ok(Ok(_)) => {
                 println!("Mailer: Email to '{}' successfully sent.", to);
                 Ok(())
             }
-            Err(err) => {
+            Ok(Err(err)) => {
                 eprintln!("Mailer ERROR: Failed to send email to '{}': {:?}", to, err);
                 Err(err.into())
+            }
+            Err(_) => {
+                eprintln!("Mailer ERROR: Sending email to '{}' timed out after 10 seconds.", to);
+                Err("SMTP send timed out".into())
             }
         }
     }
