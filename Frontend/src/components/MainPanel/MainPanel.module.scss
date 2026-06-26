@@ -1188,3 +1188,45 @@
   font-style: italic;
   opacity: 0.8;
 }
+
+.tabContentDashboard {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  background: v.$bg-primary;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid v.$divider;
+  gap: 2px;
+  margin: 0 8px;
+}
+
+.tab {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  transition: all v.$transition-fast;
+  cursor: pointer;
+
+  &:hover {
+    color: v.$text-primary;
+    background: v.$bg-item-hover;
+  }
+}
+
+.tabActive {
+  color: v.$accent !important;
+  background: v.$accent-light !important;
+  font-weight: 600;
+}
