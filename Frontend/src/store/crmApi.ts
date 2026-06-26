@@ -201,6 +201,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
         { type: 'Comment' as const, id: `${projectId}-${position}` },
         'Project',
       ],
@@ -214,6 +215,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+        { type: 'Stage' as const, id: projectId },
         { type: 'Comment' as const, id: `${projectId}-${position}` },
         'Project',
       ],
@@ -440,6 +442,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
+        { type: 'Stage' as const, id: projectId },
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
         'Project',
       ],
@@ -452,6 +455,7 @@ export const crmApi = createApi({
       }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
+        { type: 'Stage' as const, id: projectId },
         { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
         'Project',
       ],
