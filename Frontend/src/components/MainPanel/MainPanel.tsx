@@ -1072,12 +1072,12 @@ export default function MainPanel() {
                             })}
                           </tr>
                           <tr>
-                            <td className={styles.matrixRowHeader}>Стоимость</td>
+                            <td className={styles.matrixRowHeader}>Оплата</td>
                             {sortedStagesForDashboard.map(stage => (
                               <td key={getStageLabel(stage)} className={styles.matrixCell}>
                                 <span
                                   className={`${styles.matrixDot} ${stage.final_confirmed ? styles.dotCompleted : styles.dotPending}`}
-                                  title={`Окончательная стоимость: ${stage.final_cost != null ? `${stage.final_cost.toLocaleString()} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                                  title={`Оплата: ${stage.final_cost != null ? `${stage.final_cost.toLocaleString()} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
                                 />
                               </td>
                             ))}
