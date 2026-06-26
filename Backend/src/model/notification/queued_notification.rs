@@ -19,8 +19,8 @@ impl QueuedNotification {
 
     pub fn subject(&self) -> Option<&str> {
         match self.notification_type.as_str() {
-            "work_complete" => Some("DailyCRM: Работа выполнена"),
-            "act_uploaded" => Some("DailyCRM: Загружен акт"),
+            "work_complete" => Some("Работа выполнена"),
+            "act_uploaded" => Some("Загружен акт"),
             _ => None,
         }
     }
