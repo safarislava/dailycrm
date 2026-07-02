@@ -3,31 +3,6 @@
 version = 4
 
 [[package]]
-name = "CRM"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-governor",
- "actix-multipart",
- "actix-web",
- "async-trait",
- "aws-sdk-s3",
- "bcrypt",
- "bytes",
- "chrono",
- "dotenvy",
- "futures-util",
- "infer",
- "jsonwebtoken",
- "lettre",
- "serde",
- "serde_json",
- "sqlx",
- "tokio-util",
- "uuid",
-]
-
-[[package]]
 name = "actix-codec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1123,6 +1098,31 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "dailycrm"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-governor",
+ "actix-multipart",
+ "actix-web",
+ "async-trait",
+ "aws-sdk-s3",
+ "bcrypt",
+ "bytes",
+ "chrono",
+ "dotenvy",
+ "futures-util",
+ "infer",
+ "jsonwebtoken",
+ "lettre",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio-util",
+ "uuid",
 ]
 
 [[package]]
