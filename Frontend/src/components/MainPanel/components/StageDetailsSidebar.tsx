@@ -412,15 +412,15 @@ export default function StageDetailsSidebar({
 
   return (
     <>
-      <header className={styles.detailHeader}>
+      <header className={styles.header}>
         <button
           className={`${styles.backBtn} ${styles.mobileOnly}`}
           onClick={() => dispatch(selectStage(null))}
         >
           <ArrowLeftIcon />
         </button>
-        <div className={styles.detailHeaderInfo}>
-          <span className={styles.detailHeaderTitle}>
+        <div className={styles.headerInfo}>
+          <span className={styles.headerTitle}>
             {isSub ? `Детали подэтапа ${selectedStage.parentPosition}.${selectedStage.position}` : `Детали этапа ${selectedStage.position}`}
           </span>
         </div>
