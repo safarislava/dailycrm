@@ -69,7 +69,12 @@ const getDonutPath = (startPercent: number, endPercent: number, r_in: number, r_
   }
 
   if (percent >= 0.9999) {
-    return `M 50 ${50 - r_out} A ${r_out} ${r_out} 0 1 1 49.99 ${50 - r_out} Z M 50 ${50 - r_in} A ${r_in} ${r_in} 0 1 0 49.99 ${50 - r_in} Z`;
+    return `M 50 ${50 - r_out} ` +
+           `A ${r_out} ${r_out} 0 0 1 50 ${50 + r_out} ` +
+           `A ${r_out} ${r_out} 0 0 1 50 ${50 - r_out} Z ` +
+           `M 50 ${50 - r_in} ` +
+           `A ${r_in} ${r_in} 0 0 0 50 ${50 + r_in} ` +
+           `A ${r_in} ${r_in} 0 0 0 50 ${50 - r_in} Z`;
   }
 
   const [startX_out, startY_out] = getCoordinatesForPercent(startPercent, r_out)
