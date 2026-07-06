@@ -1082,11 +1082,26 @@
   stroke: v.$bg-secondary;
   stroke-width: 0.6px;
 
-  &:hover {
+  &:hover, &.hovered {
     transform: scale(1.04);
     opacity: 0.9;
   }
 }
+
+.pieSliceOuter {
+  cursor: pointer;
+  transition: transform v.$transition-fast, opacity v.$transition-fast;
+  transform-origin: 50px 50px;
+  stroke: v.$bg-secondary;
+  stroke-width: 0.6px;
+  opacity: 0.7;
+
+  &:hover, &.hovered {
+    transform: scale(1.04);
+    opacity: 0.95;
+  }
+}
+
 
 .pieHole {
   fill: v.$bg-secondary;

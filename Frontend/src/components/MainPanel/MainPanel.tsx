@@ -59,6 +59,33 @@ import {
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import styles from './MainPanel.module.scss'
 
+const getDonutPath = (startPercent: number, endPercent: number, r_in: number, r_out: number) => {
+  const percent = endPercent - startPercent;
+  
+  const getCoordinatesForPercent = (p: number, r: number) => {
+    const x = 50 + r * Math.cos(2 * Math.PI * (p - 0.25))
+    const y = 50 + r * Math.sin(2 * Math.PI * (p - 0.25))
+    return [x, y]
+  }
+
+  if (percent >= 0.9999) {
+    return `M 50 ${50 - r_out} A ${r_out} ${r_out} 0 1 1 49.99 ${50 - r_out} Z M 50 ${50 - r_in} A ${r_in} ${r_in} 0 1 0 49.99 ${50 - r_in} Z`;
+  }
+
+  const [startX_out, startY_out] = getCoordinatesForPercent(startPercent, r_out)
+  const [endX_out, endY_out] = getCoordinatesForPercent(endPercent, r_out)
+  const [startX_in, startY_in] = getCoordinatesForPercent(startPercent, r_in)
+  const [endX_in, endY_in] = getCoordinatesForPercent(endPercent, r_in)
+  
+  const largeArcFlag = percent > 0.5 ? 1 : 0
+
+  return `M ${startX_out} ${startY_out} ` +
+         `A ${r_out} ${r_out} 0 ${largeArcFlag} 1 ${endX_out} ${endY_out} ` +
+         `L ${endX_in} ${endY_in} ` +
+         `A ${r_in} ${r_in} 0 ${largeArcFlag} 0 ${startX_in} ${startY_in} ` +
+         `Z`;
+}
+
 export default function MainPanel() {
   const dispatch = useDispatch<AppDispatch>()
   const projectId     = useSelector((s: RootState) => s.ui.selectedProjectId)
@@ -75,6 +102,7 @@ export default function MainPanel() {
   const [matrixOpen, setMatrixOpen] = useState(true)
   const [budgetOpen, setBudgetOpen] = useState(true)
   const [hoveredSlice, setHoveredSlice] = useState<{ label: string; title: string; cost: number; percent: number } | null>(null)
+  const [hoveredSliceId, setHoveredSliceId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'stages' | 'dashboard'>('stages')
 
 
@@ -174,20 +202,7 @@ export default function MainPanel() {
       const endPercent = outerCumulative + percent
       outerCumulative = endPercent
 
-      const getCoordinatesForPercent = (p: number, r: number) => {
-        const x = 50 + r * Math.cos(2 * Math.PI * (p - 0.25))
-        const y = 50 + r * Math.sin(2 * Math.PI * (p - 0.25))
-        return [x, y]
-      }
-
-      const [startX, startY] = getCoordinatesForPercent(startPercent, 40)
-      const [endX, endY] = getCoordinatesForPercent(endPercent, 40)
-      const largeArcFlag = percent > 0.5 ? 1 : 0
-
-      const d = percent >= 0.9999
-        ? `M 50 10 A 40 40 0 1 1 49.99 10 Z`
-        : `M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
-
+      const d = getDonutPath(startPercent, endPercent, 38, 48)
       const color = item.isConfirmed ? 'var(--chart-confirmed)' : 'var(--chart-unconfirmed)'
 
       return {
@@ -206,21 +221,7 @@ export default function MainPanel() {
       const endPercent = innerCumulative + percent
       innerCumulative = endPercent
 
-      const getCoordinatesForPercent = (p: number, r: number) => {
-        const x = 50 + r * Math.cos(2 * Math.PI * (p - 0.25))
-        const y = 50 + r * Math.sin(2 * Math.PI * (p - 0.25))
-        return [x, y]
-      }
-
-      // Inner ring uses outer radius 36
-      const [startX, startY] = getCoordinatesForPercent(startPercent, 36)
-      const [endX, endY] = getCoordinatesForPercent(endPercent, 36)
-      const largeArcFlag = percent > 0.5 ? 1 : 0
-
-      const d = percent >= 0.9999
-        ? `M 50 14 A 36 36 0 1 1 49.99 14 Z`
-        : `M 50 50 L ${startX} ${startY} A 36 36 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
-
+      const d = getDonutPath(startPercent, endPercent, 24, 36)
       const stageKey = `${item.parent_position}-${item.position}`
       const baseColor = stageColorMap.get(stageKey) || '#ccc'
       const color = item.isConfirmed ? baseColor : 'var(--chart-unconfirmed)'
@@ -1117,34 +1118,51 @@ export default function MainPanel() {
                         <div className={styles.chartContainer}>
                           <svg viewBox="0 0 100 100" className={styles.pieSvg}>
                             {/* Outer Ring: Stages */}
-                            {pieChartSlices.outer.map(slice => (
-                              <path
-                                key={slice.id}
-                                d={slice.d}
-                                fill={slice.color}
-                                className={styles.pieSlice}
-                                style={{ opacity: 0.3 }}
-                                onMouseEnter={() => setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })}
-                                onMouseLeave={() => setHoveredSlice(null)}
-                                onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
-                              />
-                            ))}
+                            {pieChartSlices.outer.map(slice => {
+                              const isHovered = slice.id === hoveredSliceId || (hoveredSliceId && hoveredSliceId.startsWith(`${slice.parent_position}-${slice.position}-`))
+                              return (
+                                <path
+                                  key={slice.id}
+                                  d={slice.d}
+                                  fill={slice.color}
+                                  className={`${styles.pieSliceOuter} ${isHovered ? styles.hovered : ''}`}
+                                  onMouseEnter={() => {
+                                    setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })
+                                    setHoveredSliceId(slice.id)
+                                  }}
+                                  onMouseLeave={() => {
+                                    setHoveredSlice(null)
+                                    setHoveredSliceId(null)
+                                  }}
+                                  onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
+                                />
+                              )
+                            })}
                             
                             {/* Separation Ring Gap (background color) */}
-                            <circle cx="50" cy="50" r="36.8" className={styles.pieHole} />
+                            <circle cx="50" cy="50" r="38" className={styles.pieHole} />
 
                             {/* Inner Ring: Payments */}
-                            {pieChartSlices.inner.map(slice => (
-                              <path
-                                key={slice.id}
-                                d={slice.d}
-                                fill={slice.color}
-                                className={styles.pieSlice}
-                                onMouseEnter={() => setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })}
-                                onMouseLeave={() => setHoveredSlice(null)}
-                                onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
-                              />
-                            ))}
+                            {pieChartSlices.inner.map(slice => {
+                              const isHovered = slice.id === hoveredSliceId
+                              return (
+                                <path
+                                  key={slice.id}
+                                  d={slice.d}
+                                  fill={slice.color}
+                                  className={`${styles.pieSlice} ${isHovered ? styles.hovered : ''}`}
+                                  onMouseEnter={() => {
+                                    setHoveredSlice({ label: slice.label, title: slice.title, cost: slice.cost, percent: slice.percent })
+                                    setHoveredSliceId(slice.id)
+                                  }}
+                                  onMouseLeave={() => {
+                                    setHoveredSlice(null)
+                                    setHoveredSliceId(null)
+                                  }}
+                                  onClick={() => dispatch(selectStage({ parentPosition: slice.parent_position, position: slice.position }))}
+                                />
+                              )
+                            })}
 
                             {/* Doughnut Hole */}
                             <circle cx="50" cy="50" r="24" className={styles.pieHole} />
