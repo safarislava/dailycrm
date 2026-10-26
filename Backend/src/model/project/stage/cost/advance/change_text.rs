@@ -29,27 +29,20 @@ impl CommentText for AdvanceCostChangeText {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::project::stage::cost::valid_cost::ValidCost;
     use rust_decimal::Decimal;
     use std::str::FromStr;
 
     #[test]
     fn formats_advance_cost_change_and_removal() {
-        let change = AdvanceCostChangeText::new(
-            Box::new(ValidCost::new(Decimal::from(100000))),
-            Some(Box::new(ValidCost::new(Decimal::from(250000)))),
-        );
+        let change = AdvanceCostChangeText::new(100000.into(), Some(250000.into()));
         assert_eq!(change.text(), "Аванс изменён: 100 000 ₽ → 250 000 ₽");
 
-        let removal =
-            AdvanceCostChangeText::new(Box::new(ValidCost::new(Decimal::from(100000))), None);
+        let removal = AdvanceCostChangeText::new(100000.into(), None);
         assert_eq!(removal.text(), "Аванс удалён: 100 000 ₽");
 
         let kopecks_change = AdvanceCostChangeText::new(
-            Box::new(ValidCost::new(Decimal::from_str("100000.5").unwrap())),
-            Some(Box::new(ValidCost::new(
-                Decimal::from_str("250000.75").unwrap(),
-            ))),
+            Decimal::from_str("100000.5").unwrap().into(),
+            Some(Decimal::from_str("250000.75").unwrap().into()),
         );
         assert_eq!(
             kopecks_change.text(),

@@ -35,38 +35,29 @@ impl<'a> fmt::Display for FormattedCost<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::project::stage::cost::valid_cost::ValidCost;
     use std::str::FromStr;
 
     #[test]
     fn formats_cost_with_thousand_separators() {
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from(1000))).to_string(),
-            "1 000"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from(1000000))).to_string(),
-            "1 000 000"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from(500))).to_string(),
-            "500"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from(0))).to_string(),
-            "0"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from(-1000))).to_string(),
-            "-1 000"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from_str("1000.5").unwrap())).to_string(),
-            "1 000,50"
-        );
-        assert_eq!(
-            FormattedCost(&ValidCost::new(Decimal::from_str("1000.05").unwrap())).to_string(),
-            "1 000,05"
-        );
+        let cost_1000: Box<dyn Cost> = 1000.into();
+        assert_eq!(FormattedCost(cost_1000.as_ref()).to_string(), "1 000");
+
+        let cost_mil: Box<dyn Cost> = 1000000.into();
+        assert_eq!(FormattedCost(cost_mil.as_ref()).to_string(), "1 000 000");
+
+        let cost_500: Box<dyn Cost> = 500.into();
+        assert_eq!(FormattedCost(cost_500.as_ref()).to_string(), "500");
+
+        let cost_0: Box<dyn Cost> = 0.into();
+        assert_eq!(FormattedCost(cost_0.as_ref()).to_string(), "0");
+
+        let cost_neg: Box<dyn Cost> = (-1000).into();
+        assert_eq!(FormattedCost(cost_neg.as_ref()).to_string(), "-1 000");
+
+        let cost_dec1: Box<dyn Cost> = Decimal::from_str("1000.5").unwrap().into();
+        assert_eq!(FormattedCost(cost_dec1.as_ref()).to_string(), "1 000,50");
+
+        let cost_dec2: Box<dyn Cost> = Decimal::from_str("1000.05").unwrap().into();
+        assert_eq!(FormattedCost(cost_dec2.as_ref()).to_string(), "1 000,05");
     }
 }

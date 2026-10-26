@@ -22,6 +22,24 @@ impl Cost for Box<dyn Cost> {
     }
 }
 
+impl From<ValidCost> for Box<dyn Cost> {
+    fn from(cost: ValidCost) -> Self {
+        Box::new(cost)
+    }
+}
+
+impl From<Decimal> for Box<dyn Cost> {
+    fn from(decimal: Decimal) -> Self {
+        Box::new(ValidCost::new(decimal))
+    }
+}
+
+impl From<i32> for Box<dyn Cost> {
+    fn from(n: i32) -> Self {
+        Box::new(ValidCost::new(Decimal::from(n)))
+    }
+}
+
 impl PartialEq for dyn Cost {
     fn eq(&self, other: &Self) -> bool {
         self.as_decimal() == other.as_decimal()
@@ -48,7 +66,7 @@ impl<'de> serde::Deserialize<'de> for Box<dyn Cost> {
         let dec = <Decimal as serde::Deserialize>::deserialize(deserializer)?;
         let valid = ValidCost::new(dec);
         valid.as_decimal().map_err(serde::de::Error::custom)?;
-        Ok(Box::new(valid))
+        Ok(valid.into())
     }
 }
 
@@ -61,7 +79,7 @@ impl sqlx::Type<sqlx::Postgres> for Box<dyn Cost> {
 impl<'r> sqlx::Decode<'r, sqlx::Postgres> for Box<dyn Cost> {
     fn decode(value: sqlx::postgres::PgValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         let decimal = <Decimal as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
-        Ok(Box::new(ValidCost::new(decimal)))
+        Ok(decimal.into())
     }
 }
 

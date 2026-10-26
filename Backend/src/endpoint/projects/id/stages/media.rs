@@ -56,8 +56,6 @@ impl StageMedia for JsonStageMedia {
 mod tests {
     use super::*;
     use crate::model::project::id::ProjectId;
-    use crate::model::project::stage::cost::valid_cost::ValidCost;
-    use rust_decimal::Decimal;
 
     #[test]
     fn serializes_stage_media_to_json() {
@@ -75,9 +73,9 @@ mod tests {
                 has_act: true,
             },
             StageCosts {
-                advance_cost: Some(Box::new(ValidCost::new(Decimal::from(50000)))),
+                advance_cost: Some(50000.into()),
                 advance_confirmed: true,
-                final_cost: Some(Box::new(ValidCost::new(Decimal::from(100000)))),
+                final_cost: Some(100000.into()),
                 final_confirmed: false,
             },
         );
