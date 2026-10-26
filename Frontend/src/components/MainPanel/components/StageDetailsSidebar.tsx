@@ -33,6 +33,7 @@ import StageFinancials from './stageDetails/StageFinancials'
 import StageActsSection from './stageDetails/StageActsSection'
 import StageAttachmentsSection from './stageDetails/StageAttachmentsSection'
 import StageCommentsSection from './stageDetails/StageCommentsSection'
+import {parseCost, validateCost} from './Helpers'
 import styles from '../MainPanel.module.scss'
 
 interface StageDetailsSidebarProps {
@@ -118,20 +119,34 @@ export default function StageDetailsSidebar({
   }
 
   const handleUpdateAdvanceCost = async (v: string) => {
-      const cost = v ? parseInt(v.replace(/\s/g, ''), 10) : null
+    const err = validateCost(v)
+    if (err) throw new Error(err)
+    const cost = parseCost(v)
     if (isSub) {
-      await updateSubAdvanceCost({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+      await updateSubAdvanceCost({
+        projectId,
+        parentPosition: selectedStage.parentPosition,
+        position: selectedStage.position,
+        cost
+      }).unwrap()
     } else {
-      await updateTopAdvanceCost({ projectId, position: selectedStage.position, cost })
+      await updateTopAdvanceCost({projectId, position: selectedStage.position, cost}).unwrap()
     }
   }
 
   const handleUpdateFinalCost = async (v: string) => {
-      const cost = v ? parseInt(v.replace(/\s/g, ''), 10) : null
+    const err = validateCost(v)
+    if (err) throw new Error(err)
+    const cost = parseCost(v)
     if (isSub) {
-      await updateSubFinalCost({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, cost })
+      await updateSubFinalCost({
+        projectId,
+        parentPosition: selectedStage.parentPosition,
+        position: selectedStage.position,
+        cost
+      }).unwrap()
     } else {
-      await updateTopFinalCost({ projectId, position: selectedStage.position, cost })
+      await updateTopFinalCost({projectId, position: selectedStage.position, cost}).unwrap()
     }
   }
 

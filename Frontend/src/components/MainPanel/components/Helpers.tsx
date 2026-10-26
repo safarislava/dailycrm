@@ -70,6 +70,8 @@ export function EditableField({
   onSave,
   type = 'text',
   multiline = false,
+                                step,
+                                validate,
 }: {
   label: string
   displayValue: string
@@ -77,29 +79,69 @@ export function EditableField({
   onSave: (value: string) => Promise<void>
   type?: 'text' | 'number' | 'date'
   multiline?: boolean
+  step?: string
+  validate?: (value: string) => string | null
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const cancelled = useRef(false)
 
   const startEdit = () => {
     setDraft(rawValue)
+    setError(null)
     setEditing(true)
+  }
+
+  const handleChange = (val: string) => {
+    setDraft(val)
+    if (validate) {
+      setError(validate(val))
+    } else {
+      setError(null)
+    }
   }
 
   const handleBlur = async () => {
     if (cancelled.current) {
       cancelled.current = false
+      setError(null)
+      setEditing(false)
       return
     }
-    setEditing(false)
-    await onSave(draft)
+    if (validate) {
+      const err = validate(draft)
+      if (err) {
+        setError(err)
+        return
+      }
+    }
+    setError(null)
+    try {
+      await onSave(draft)
+      setEditing(false)
+    } catch (e: any) {
+      const msg = e?.data?.message || e?.message || 'Ошибка при сохранении'
+      setError(typeof msg === 'string' ? msg : 'Ошибка при сохранении')
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !multiline) (e.target as HTMLElement).blur()
+    if (e.key === 'Enter' && !multiline) {
+      if (validate) {
+        const err = validate(draft)
+        if (err) {
+          setError(err)
+          e.preventDefault()
+          return
+        }
+      }
+      ;(e.target as HTMLElement).blur()
+    }
     if (e.key === 'Escape') {
       cancelled.current = true
+      setError(null)
+      setEditing(false)
       ;(e.target as HTMLElement).blur()
     }
   }
@@ -114,9 +156,9 @@ export function EditableField({
         multiline ? (
           <textarea
             autoFocus
-            className={styles.fieldInput}
+            className={`${styles.fieldInput} ${error ? styles.fieldInputError : ''}`}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             rows={3}
@@ -125,9 +167,10 @@ export function EditableField({
           <input
             autoFocus
             type={type}
-            className={styles.fieldInput}
+            step={step}
+            className={`${styles.fieldInput} ${error ? styles.fieldInputError : ''}`}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
           />
@@ -135,6 +178,7 @@ export function EditableField({
       ) : (
         <span className={styles.fieldValue}>{displayValue}</span>
       )}
+      {error && <span className={styles.fieldErrorText}>{error}</span>}
     </div>
   )
 }
@@ -170,11 +214,61 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1_048_576).toFixed(1)} MB`
 }
 
-export function formatNumber(value: number | null | undefined): string {
-  if (value == null || isNaN(value)) return ''
-  const isNegative = value < 0
-  const absStr = Math.abs(value).toString()
-  const parts = absStr.split('.')
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  return (isNegative ? '-' : '') + parts.join('.')
+export function formatNumber(value: number | string | null | undefined): string {
+  if (value == null || value === '') return ''
+  const num = typeof value === 'string' ? parseFloat(value.replace(/\s/g, '').replace(',', '.')) : value
+  if (isNaN(num)) return ''
+  const isNegative = num < 0
+  const abs = Math.abs(num)
+  const totalKopecks = Math.round(abs * 100)
+  const rubles = Math.floor(totalKopecks / 100)
+  const kopecks = totalKopecks % 100
+  const rublesFormatted = rubles.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  if (kopecks > 0) {
+    const kopecksFormatted = kopecks.toString().padStart(2, '0')
+    return `${isNegative ? '-' : ''}${rublesFormatted},${kopecksFormatted}`
+  }
+  return `${isNegative ? '-' : ''}${rublesFormatted}`
+}
+
+export function validateCost(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const cleaned = trimmed.replace(/\s/g, '')
+
+  if (!/^\d+([.,]\d+)?$/.test(cleaned)) {
+    return 'Введите корректное неотрицательное число'
+  }
+
+  const parts = cleaned.split(/[.,]/)
+  if (parts.length > 2) {
+    return 'Допустим только один десятичный разделитель'
+  }
+
+  if (parts.length === 2 && parts[1].length > 2) {
+    return 'После запятой не должно быть более двух знаков'
+  }
+
+  const num = parseFloat(cleaned.replace(',', '.'))
+  if (isNaN(num)) {
+    return 'Некорректное число'
+  }
+
+  if (num < 0) {
+    return 'Сумма не может быть отрицательной'
+  }
+
+  return null
+}
+
+export function parseCost(value: string | number | null | undefined): number | null {
+  if (value == null) return null
+  if (typeof value === 'number') return isNaN(value) ? null : Math.round(value * 100) / 100
+  const trimmed = String(value).trim()
+  if (!trimmed) return null
+  const cleaned = trimmed.replace(/\s/g, '').replace(',', '.')
+  const num = parseFloat(cleaned)
+  if (isNaN(num)) return null
+  return Math.round(num * 100) / 100
 }

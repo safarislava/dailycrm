@@ -1,8 +1,10 @@
 import React, {useMemo, useState} from 'react'
 import type {Stage} from '../../../../types'
 import {selectStage} from '../../../../store/uiSlice'
-import {formatNumber} from '../Helpers'
+import {formatNumber, parseCost} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
+
+const toFloat = (val: number | string | null | undefined): number => parseCost(val) ?? 0
 
 const getDonutPath = (startPercent: number, endPercent: number, r_in: number, r_out: number) => {
   const percent = endPercent - startPercent
@@ -62,30 +64,36 @@ export default function BudgetDonutChart({
   const [hoveredSliceId, setHoveredSliceId] = useState<string | null>(null)
 
   const projectTotalCost = useMemo(() => {
-    return stages.reduce((acc, s) => acc + (s.advance_cost ?? 0) + (s.final_cost ?? 0), 0)
+    const sum = stages.reduce((acc, s) => acc + toFloat(s.advance_cost) + toFloat(s.final_cost), 0)
+    return Math.round(sum * 100) / 100
   }, [stages])
 
   const projectConfirmedCost = useMemo(() => {
-    return stages.reduce((acc, s) => {
-      const adv = s.advance_confirmed ? (s.advance_cost ?? 0) : 0
-      const fin = s.final_confirmed ? (s.final_cost ?? 0) : 0
+    const sum = stages.reduce((acc, s) => {
+      const adv = s.advance_confirmed ? toFloat(s.advance_cost) : 0
+      const fin = s.final_confirmed ? toFloat(s.final_cost) : 0
       return acc + adv + fin
     }, 0)
+    return Math.round(sum * 100) / 100
   }, [stages])
 
   const pieChartSlices = useMemo(() => {
     if (projectTotalCost === 0) return { outer: [], inner: [] }
 
     const stageItems = sortedStagesForDashboard
-      .map((s) => ({
-        id: `${s.parent_position}-${s.position}-stage`,
-        label: getStageLabel(s),
-        title: `${getStageLabel(s)}. ${s.title}`,
-        cost: (s.advance_cost ?? 0) + (s.final_cost ?? 0),
-        parent_position: s.parent_position,
-        position: s.position,
-        isConfirmed: (!s.advance_cost || s.advance_confirmed) && s.final_confirmed,
-      }))
+        .map((s) => {
+          const adv = toFloat(s.advance_cost)
+          const fin = toFloat(s.final_cost)
+          return {
+            id: `${s.parent_position}-${s.position}-stage`,
+            label: getStageLabel(s),
+            title: `${getStageLabel(s)}. ${s.title}`,
+            cost: Math.round((adv + fin) * 100) / 100,
+            parent_position: s.parent_position,
+            position: s.position,
+            isConfirmed: (!adv || s.advance_confirmed) && s.final_confirmed,
+          }
+        })
       .filter((item) => item.cost > 0)
 
     const paymentItems: Array<{
@@ -99,23 +107,25 @@ export default function BudgetDonutChart({
     }> = []
 
     for (const s of sortedStagesForDashboard) {
-      if (s.advance_cost && s.advance_cost > 0) {
+      const adv = toFloat(s.advance_cost)
+      if (adv > 0) {
         paymentItems.push({
           id: `${s.parent_position}-${s.position}-advance`,
           label: `${getStageLabel(s)} (аванс)`,
           title: `${getStageLabel(s)}. ${s.title} (аванс)`,
-          cost: s.advance_cost,
+          cost: adv,
           isConfirmed: s.advance_confirmed,
           parent_position: s.parent_position,
           position: s.position,
         })
       }
-      if (s.final_cost && s.final_cost > 0) {
+      const fin = toFloat(s.final_cost)
+      if (fin > 0) {
         paymentItems.push({
           id: `${s.parent_position}-${s.position}-final`,
           label: `${getStageLabel(s)} (стоимость)`,
           title: `${getStageLabel(s)}. ${s.title} (стоимость)`,
-          cost: s.final_cost,
+          cost: fin,
           isConfirmed: s.final_confirmed,
           parent_position: s.parent_position,
           position: s.position,

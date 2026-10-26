@@ -1,6 +1,6 @@
 import React from 'react'
 import type {DetailedStage} from '../../../../types'
-import {EditableField, formatNumber} from '../Helpers'
+import {EditableField, formatNumber, validateCost} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 interface StageFinancialsProps {
@@ -65,8 +65,9 @@ export default function StageFinancials({
             displayValue={
               detail.advance_cost != null ? `${formatNumber(detail.advance_cost)} ₽` : '—'
             }
-            rawValue={detail.advance_cost?.toString() ?? ''}
-            type="number"
+            rawValue={detail.advance_cost != null ? formatNumber(detail.advance_cost) : ''}
+            type="text"
+            validate={validateCost}
             onSave={onUpdateAdvanceCost}
           />
           <div
@@ -92,8 +93,9 @@ export default function StageFinancials({
             displayValue={
               detail.final_cost != null ? `${formatNumber(detail.final_cost)} ₽` : '—'
             }
-            rawValue={detail.final_cost?.toString() ?? ''}
-            type="number"
+            rawValue={detail.final_cost != null ? formatNumber(detail.final_cost) : ''}
+            type="text"
+            validate={validateCost}
             onSave={onUpdateFinalCost}
           />
           <div className={`${styles.field} ${styles.fieldEditable}`} onClick={onToggleFinalPayment}>
