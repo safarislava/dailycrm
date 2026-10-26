@@ -35,7 +35,8 @@ services:
       - minio_data:/data
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/crm-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-safarislava}/crm-backend:latest
+    pull_policy: always
     container_name: crm_backend
     restart: always
     depends_on:
@@ -62,7 +63,8 @@ services:
       MAIL_FROM: ${MAIL_FROM}
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/crm-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-safarislava}/crm-frontend:latest
+    pull_policy: always
     container_name: crm_frontend
     restart: always
     depends_on:
