@@ -46,6 +46,12 @@ pub async fn post(
     )
     .perform()
     .await
-    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    .map_err(|e| {
+        if let Some(ApiError::PayloadTooLarge) = e.downcast_ref::<ApiError>() {
+            return ApiError::PayloadTooLarge;
+        }
+        tracing::error!(error = %e, "Attachment upload task failed");
+        ApiError::Internal(e.to_string())
+    })?;
     Ok(HttpResponse::Created().json(serde_json::json!({ "id": id })))
 }
