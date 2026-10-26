@@ -23,7 +23,7 @@ impl Value<Option<bool>> for StageFinalPaymentConfirmedReceipt {
             final_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT final_confirmed FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+            "SELECT confirmed AS final_confirmed FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = 'final'",
         )
             .bind(self.stage_id.project_id().id())
             .bind(self.stage_id.parent_position())

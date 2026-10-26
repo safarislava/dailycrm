@@ -26,7 +26,10 @@ impl Task for AdvancePaymentConfirmation {
 
     async fn perform(&self) -> Result<Self::Output, BoxError> {
         sqlx::query(
-            "UPDATE stages SET advance_confirmed = $4 WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+            "INSERT INTO stage_payments (project_id, parent_position, stage_position, kind, cost, confirmed) \
+             VALUES ($1, $2, $3, 'first_advance', NULL, $4) \
+             ON CONFLICT (project_id, parent_position, stage_position, kind) \
+             DO UPDATE SET confirmed = EXCLUDED.confirmed",
         )
             .bind(self.stage_id.project_id().id())
             .bind(self.stage_id.parent_position())

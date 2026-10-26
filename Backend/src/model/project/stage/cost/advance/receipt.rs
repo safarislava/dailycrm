@@ -24,7 +24,7 @@ impl Value<Option<Box<dyn Cost>>> for StageAdvanceCostReceipt {
             advance_cost: Option<Box<dyn Cost>>,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT advance_cost FROM stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
+            "SELECT cost AS advance_cost FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = 'first_advance'",
         )
             .bind(self.stage_id.project_id().id())
             .bind(self.stage_id.parent_position())
