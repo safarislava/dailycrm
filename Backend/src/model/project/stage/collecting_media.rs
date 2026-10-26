@@ -1,5 +1,6 @@
 use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
 use crate::model::project::id::ProjectId;
+use crate::model::project::stage::cost::contract::cost::Cost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
@@ -14,9 +15,9 @@ pub struct StageSummaryItem {
     pub deadline: Option<DateTime<Utc>>,
     pub completed: bool,
     pub gip_confirmed: bool,
-    pub advance_cost: Option<i32>,
+    pub advance_cost: Option<Box<dyn Cost>>,
     pub advance_confirmed: bool,
-    pub final_cost: Option<i32>,
+    pub final_cost: Option<Box<dyn Cost>>,
     pub final_confirmed: bool,
     pub has_act: bool,
 }
@@ -38,9 +39,9 @@ impl StageSummaryItem {
                 has_act: self.has_act,
             },
             StageCosts {
-                advance_cost: self.advance_cost,
+                advance_cost: self.advance_cost.clone(),
                 advance_confirmed: self.advance_confirmed,
-                final_cost: self.final_cost,
+                final_cost: self.final_cost.clone(),
                 final_confirmed: self.final_confirmed,
             },
         );
@@ -91,6 +92,8 @@ impl StageMedia for CollectingStageMedia {
 mod tests {
     use super::*;
     use crate::model::project::id::ProjectId;
+    use crate::model::project::stage::cost::valid_cost::ValidCost;
+    use rust_decimal::Decimal;
 
     #[test]
     fn collects_added_stages_and_substages() {
@@ -109,9 +112,9 @@ mod tests {
                 has_act: true,
             },
             StageCosts {
-                advance_cost: Some(100),
+                advance_cost: Some(Box::new(ValidCost::new(Decimal::from(100)))),
                 advance_confirmed: true,
-                final_cost: Some(200),
+                final_cost: Some(Box::new(ValidCost::new(Decimal::from(200)))),
                 final_confirmed: false,
             },
         );
@@ -122,7 +125,10 @@ mod tests {
         assert_eq!(items[0].parent_position, 0);
         assert_eq!(items[0].position, 1);
         assert_eq!(items[0].title, "Stage 1");
-        assert_eq!(items[0].advance_cost, Some(100));
+        assert_eq!(
+            items[0].advance_cost.as_ref().map(|c| c.as_decimal()),
+            Some(Ok(Decimal::from(100)))
+        );
         assert_eq!(items[0].has_act, true);
     }
 }

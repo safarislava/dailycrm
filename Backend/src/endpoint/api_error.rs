@@ -1,6 +1,7 @@
 use crate::model::contract::box_error::BoxError;
 use crate::model::credential::contract::password::PasswordError;
 use crate::model::credential::contract::username::UsernameError;
+use crate::model::project::stage::cost::contract::cost::CostError;
 use crate::model::user::contract::user_verification::VerificationError;
 use actix_web::HttpResponse;
 use actix_web::http::StatusCode;
@@ -38,11 +39,20 @@ impl fmt::Display for ApiError {
 
 impl std::error::Error for ApiError {}
 
+impl From<CostError> for ApiError {
+    fn from(error: CostError) -> Self {
+        ApiError::BadRequest(error.to_string())
+    }
+}
+
 impl From<BoxError> for ApiError {
     fn from(error: BoxError) -> Self {
         let mut cause: Option<&(dyn std::error::Error + 'static)> = Some(error.as_ref());
         while let Some(current) = cause {
-            if current.is::<UsernameError>() || current.is::<PasswordError>() {
+            if current.is::<UsernameError>()
+                || current.is::<PasswordError>()
+                || current.is::<CostError>()
+            {
                 return ApiError::BadRequest(error.to_string());
             }
             if let Some(VerificationError::Wrong) = current.downcast_ref::<VerificationError>() {
@@ -124,6 +134,10 @@ mod tests {
         let pass_err: BoxError = Box::new(PasswordError::TooShort);
         let api_err2 = ApiError::from(pass_err);
         assert_eq!(api_err2.status_code(), StatusCode::BAD_REQUEST);
+
+        let cost_err: BoxError = Box::new(CostError::TooManyDecimalPlaces);
+        let api_err3 = ApiError::from(cost_err);
+        assert_eq!(api_err3.status_code(), StatusCode::BAD_REQUEST);
     }
 
     #[test]

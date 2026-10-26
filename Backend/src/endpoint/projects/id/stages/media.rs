@@ -1,4 +1,5 @@
 use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
+use crate::model::project::stage::cost::contract::cost::Cost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -13,9 +14,9 @@ struct JsonStageItem {
     deadline: Option<DateTime<Utc>>,
     completed: bool,
     gip_confirmed: bool,
-    advance_cost: Option<i32>,
+    advance_cost: Option<Box<dyn Cost>>,
     advance_confirmed: bool,
-    final_cost: Option<i32>,
+    final_cost: Option<Box<dyn Cost>>,
     final_confirmed: bool,
     has_act: bool,
 }
@@ -55,6 +56,8 @@ impl StageMedia for JsonStageMedia {
 mod tests {
     use super::*;
     use crate::model::project::id::ProjectId;
+    use crate::model::project::stage::cost::valid_cost::ValidCost;
+    use rust_decimal::Decimal;
 
     #[test]
     fn serializes_stage_media_to_json() {
@@ -72,16 +75,18 @@ mod tests {
                 has_act: true,
             },
             StageCosts {
-                advance_cost: Some(50000),
+                advance_cost: Some(Box::new(ValidCost::new(Decimal::from(50000)))),
                 advance_confirmed: true,
-                final_cost: Some(100000),
+                final_cost: Some(Box::new(ValidCost::new(Decimal::from(100000)))),
                 final_confirmed: false,
             },
         );
 
         let json = serde_json::to_string(&media).unwrap();
         assert!(json.contains("\"title\":\"Concept Design\""));
-        assert!(json.contains("\"advance_cost\":50000"));
+        assert!(
+            json.contains("\"advance_cost\":50000") || json.contains("\"advance_cost\":\"50000\"")
+        );
         assert!(json.contains("\"has_act\":true"));
     }
 }
