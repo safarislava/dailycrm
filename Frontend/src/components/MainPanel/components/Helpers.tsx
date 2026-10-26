@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react'
-import { store } from '../../../store'
-import { PencilIcon } from '../../ui/icons'
+import React, {useRef, useState} from 'react'
+import {store} from '../../../store'
+import {PencilIcon} from '../../ui/icons'
 import styles from '../MainPanel.module.scss'
 
 export * from '../../ui/icons'
@@ -168,4 +168,13 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / 1_048_576).toFixed(1)} MB`
+}
+
+export function formatNumber(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return ''
+  const isNegative = value < 0
+  const absStr = Math.abs(value).toString()
+  const parts = absStr.split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return (isNegative ? '-' : '') + parts.join('.')
 }

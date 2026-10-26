@@ -1,6 +1,7 @@
 import React from 'react'
-import type { Stage } from '../../../../types'
-import { selectStage } from '../../../../store/uiSlice'
+import type {Stage} from '../../../../types'
+import {selectStage} from '../../../../store/uiSlice'
+import {formatNumber} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 interface ExecutionMatrixProps {
@@ -65,7 +66,7 @@ export default function ExecutionMatrix({
                     {hasAdvance ? (
                       <span
                         className={`${styles.matrixDot} ${confirmed ? styles.dotCompleted : styles.dotPending}`}
-                        title={`Аванс: ${stage.advance_cost?.toLocaleString()} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                        title={`Аванс: ${formatNumber(stage.advance_cost)} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
                       />
                     ) : (
                       <span className={styles.dotNotRequired} title="Аванс не предусмотрен">
@@ -82,7 +83,7 @@ export default function ExecutionMatrix({
                 <td key={getStageLabel(stage)} className={styles.matrixCell}>
                   <span
                     className={`${styles.matrixDot} ${stage.final_confirmed ? styles.dotCompleted : styles.dotPending}`}
-                    title={`Оплата: ${stage.final_cost != null ? `${stage.final_cost.toLocaleString()} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                    title={`Оплата: ${stage.final_cost != null ? `${formatNumber(stage.final_cost)} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
                   />
                 </td>
               ))}

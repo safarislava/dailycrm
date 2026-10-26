@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react'
-import type { Stage } from '../../../../types'
-import { selectStage } from '../../../../store/uiSlice'
+import React, {useMemo, useState} from 'react'
+import type {Stage} from '../../../../types'
+import {selectStage} from '../../../../store/uiSlice'
+import {formatNumber} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 const getDonutPath = (startPercent: number, endPercent: number, r_in: number, r_out: number) => {
@@ -244,7 +245,7 @@ export default function BudgetDonutChart({
               {hoveredSlice.title}
             </div>
             <div className={styles.hoverCost}>
-              {hoveredSlice.cost.toLocaleString()} ₽ ({hoveredSlice.percent}%)
+              {formatNumber(hoveredSlice.cost)} ₽ ({hoveredSlice.percent}%)
             </div>
           </>
         ) : (
@@ -253,8 +254,8 @@ export default function BudgetDonutChart({
       </div>
 
       <div className={styles.chartStats}>
-        Подтверждено: <span className={styles.statsPaid}>{projectConfirmedCost.toLocaleString()} ₽</span> из{' '}
-        <span className={styles.statsTotal}>{projectTotalCost.toLocaleString()} ₽</span>
+        Подтверждено: <span className={styles.statsPaid}>{formatNumber(projectConfirmedCost)} ₽</span> из{' '}
+        <span className={styles.statsTotal}>{formatNumber(projectTotalCost)} ₽</span>
       </div>
     </div>
   )
