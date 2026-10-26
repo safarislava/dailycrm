@@ -1,11 +1,10 @@
-use aws_sdk_s3::Client;
-use aws_sdk_s3::config::{BehaviorVersion, Builder, Credentials, Region};
-use aws_sdk_s3::primitives::ByteStream;
 use bytes::Bytes;
 use futures_util::Stream;
+use futures_util::StreamExt;
+use opendal::Operator;
+use opendal::services::S3;
 use std::env;
 use std::pin::Pin;
-use tokio_util::io::ReaderStream;
 
 const BUCKET: &str = "crm-attachments";
 
@@ -15,84 +14,55 @@ pub type FileStream = Pin<Box<dyn Stream<Item = Result<Bytes, std::io::Error>> +
 
 #[derive(Clone)]
 pub struct Storage {
-    client: Client,
+    op: Operator,
 }
 
 impl Storage {
-    pub fn new(client: Client) -> Self {
-        Self { client }
+    pub fn new(op: Operator) -> Self {
+        Self { op }
     }
 
     pub async fn from_env() -> Self {
         let endpoint = env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set");
         let access_key = env::var("MINIO_ACCESS_KEY").expect("MINIO_ACCESS_KEY must be set");
         let secret_key = env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEY must be set");
-        let credentials = Credentials::new(&access_key, &secret_key, None, None, "minio");
-        let client = Client::from_conf(
-            Builder::new()
-                .behavior_version(BehaviorVersion::latest())
-                .endpoint_url(&endpoint)
-                .credentials_provider(credentials)
-                .region(Region::new("us-east-1"))
-                .force_path_style(true)
-                .build(),
-        );
-        let storage = Self::new(client);
+
+        let builder = S3::default()
+            .endpoint(&endpoint)
+            .bucket(BUCKET)
+            .access_key_id(&access_key)
+            .secret_access_key(&secret_key)
+            .region("us-east-1");
+
+        let op = Operator::new(builder).expect("Failed to initialize S3 builder");
+
+        let storage = Self::new(op);
         storage.ensure_bucket().await;
         storage
     }
 
     pub async fn ensure_bucket(&self) {
-        let _ = self.client.create_bucket().bucket(BUCKET).send().await;
+        let _ = self.op.create_dir("").await;
     }
 
     pub async fn check_health(&self) -> Result<(), BoxError> {
-        self.client.head_bucket().bucket(BUCKET).send().await?;
+        self.op.check().await?;
         Ok(())
     }
 
-    pub async fn upload_stream(
-        &self,
-        key: &str,
-        body: ByteStream,
-        content_type: &str,
-        filename: &str,
-        content_length: Option<i64>,
-    ) -> Result<(), BoxError> {
-        let disposition = format!("attachment; filename=\"{}\"", filename.replace('"', "\\\""));
-        let mut req = self
-            .client
-            .put_object()
-            .bucket(BUCKET)
-            .key(key)
-            .body(body)
-            .content_type(content_type)
-            .content_disposition(disposition);
-        if let Some(length) = content_length {
-            req = req.content_length(length);
-        }
-        req.send().await?;
-        Ok(())
+    pub async fn writer(&self, key: &str, content_type: &str) -> Result<opendal::Writer, BoxError> {
+        let writer = self.op.writer_with(key).content_type(content_type).await?;
+        Ok(writer)
     }
 
     pub async fn delete(&self, key: &str) -> Result<(), BoxError> {
-        self.client
-            .delete_object()
-            .bucket(BUCKET)
-            .key(key)
-            .send()
-            .await?;
+        self.op.delete(key).await?;
         Ok(())
     }
 
     pub async fn stream(&self, key: &str) -> Result<FileStream, BoxError> {
-        let output = self
-            .client
-            .get_object()
-            .bucket(BUCKET)
-            .key(key)
-            .send()
-            .await?;
-        Ok(Box::pin(ReaderStream::new(output.body.into_async_read())))
+        let stream = self.op.reader(key).await?.into_bytes_stream(..).await?;
+        let mapped = stream.map(|res| res.map_err(|e| std::io::Error::other(e.to_string())));
+        Ok(Box::pin(mapped))
     }
 }
