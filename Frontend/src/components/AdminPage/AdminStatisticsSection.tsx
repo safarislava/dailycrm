@@ -1,5 +1,6 @@
 import React from 'react'
-import { useGetAdminStatisticsQuery } from '../../store/api/adminApi'
+import {useGetAdminStatisticsQuery} from '../../store/api/adminApi'
+import {formatNumber} from '../MainPanel/components/Helpers'
 import styles from './AdminPage.module.scss'
 
 export default function AdminStatisticsSection() {
@@ -16,7 +17,7 @@ export default function AdminStatisticsSection() {
             <UsersIcon />
           </div>
           <div className={styles.statInfo}>
-            <span className={styles.statValue}>{stats.total_users}</span>
+            <span className={styles.statValue}>{formatNumber(stats.total_users)}</span>
             <span className={styles.statLabel}>Пользователей</span>
           </div>
         </div>
@@ -26,7 +27,7 @@ export default function AdminStatisticsSection() {
             <FolderIcon />
           </div>
           <div className={styles.statInfo}>
-            <span className={styles.statValue}>{stats.total_projects}</span>
+            <span className={styles.statValue}>{formatNumber(stats.total_projects)}</span>
             <span className={styles.statLabel}>Проектов</span>
           </div>
         </div>
@@ -36,7 +37,7 @@ export default function AdminStatisticsSection() {
             <LayersIcon />
           </div>
           <div className={styles.statInfo}>
-            <span className={styles.statValue}>{stats.total_stages}</span>
+            <span className={styles.statValue}>{formatNumber(stats.total_stages)}</span>
             <span className={styles.statLabel}>Этапов</span>
           </div>
         </div>
@@ -46,7 +47,7 @@ export default function AdminStatisticsSection() {
             <MailIcon />
           </div>
           <div className={styles.statInfo}>
-            <span className={styles.statValue}>{stats.pending_invitations}</span>
+            <span className={styles.statValue}>{formatNumber(stats.pending_invitations)}</span>
             <span className={styles.statLabel}>Активных приглашений</span>
           </div>
         </div>

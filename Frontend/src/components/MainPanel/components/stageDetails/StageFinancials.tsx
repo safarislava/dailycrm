@@ -1,6 +1,6 @@
 import React from 'react'
-import type { DetailedStage } from '../../../../types'
-import { EditableField } from '../Helpers'
+import type {DetailedStage} from '../../../../types'
+import {EditableField, formatNumber, validateCost} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 interface StageFinancialsProps {
@@ -63,10 +63,11 @@ export default function StageFinancials({
           <EditableField
             label="Аванс"
             displayValue={
-              detail.advance_cost != null ? `${detail.advance_cost.toLocaleString()} ₽` : '—'
+              detail.advance_cost != null ? `${formatNumber(detail.advance_cost)} ₽` : '—'
             }
-            rawValue={detail.advance_cost?.toString() ?? ''}
-            type="number"
+            rawValue={detail.advance_cost != null ? formatNumber(detail.advance_cost) : ''}
+            type="text"
+            validate={validateCost}
             onSave={onUpdateAdvanceCost}
           />
           <div
@@ -90,10 +91,11 @@ export default function StageFinancials({
           <EditableField
             label="Окончательная оплата"
             displayValue={
-              detail.final_cost != null ? `${detail.final_cost.toLocaleString()} ₽` : '—'
+              detail.final_cost != null ? `${formatNumber(detail.final_cost)} ₽` : '—'
             }
-            rawValue={detail.final_cost?.toString() ?? ''}
-            type="number"
+            rawValue={detail.final_cost != null ? formatNumber(detail.final_cost) : ''}
+            type="text"
+            validate={validateCost}
             onSave={onUpdateFinalCost}
           />
           <div className={`${styles.field} ${styles.fieldEditable}`} onClick={onToggleFinalPayment}>

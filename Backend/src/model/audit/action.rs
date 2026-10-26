@@ -1,3 +1,4 @@
+use crate::model::project::stage::cost::contract::cost::Cost;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -12,8 +13,8 @@ pub enum AuditAction {
     StageDelete,
     StageReorder { to: i32 },
     DeadlineUpdate { new_deadline: Option<String> },
-    AdvanceCostUpdate { new_cost: Option<i32> },
-    FinalCostUpdate { new_cost: Option<i32> },
+    AdvanceCostUpdate { new_cost: Option<Box<dyn Cost>> },
+    FinalCostUpdate { new_cost: Option<Box<dyn Cost>> },
     GipConfirm { confirmed: bool },
     ActUpload { filename: String },
     ActDelete,
@@ -46,13 +47,23 @@ impl fmt::Display for AuditAction {
             }
             Self::AdvanceCostUpdate { new_cost } => {
                 let c = new_cost
-                    .map(|v| v.to_string())
+                    .as_ref()
+                    .map(|v| {
+                        v.as_decimal()
+                            .map(|d| d.to_string())
+                            .unwrap_or_else(|_| "invalid".to_string())
+                    })
                     .unwrap_or_else(|| "none".to_string());
                 write!(f, "advance_cost_update(cost: {c})")
             }
             Self::FinalCostUpdate { new_cost } => {
                 let c = new_cost
-                    .map(|v| v.to_string())
+                    .as_ref()
+                    .map(|v| {
+                        v.as_decimal()
+                            .map(|d| d.to_string())
+                            .unwrap_or_else(|_| "invalid".to_string())
+                    })
                     .unwrap_or_else(|| "none".to_string());
                 write!(f, "final_cost_update(cost: {c})")
             }

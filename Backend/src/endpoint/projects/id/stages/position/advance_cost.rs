@@ -4,6 +4,7 @@ use crate::model::audit::AuditAction;
 use crate::model::audit::AuditedTask;
 use crate::model::contract::task::Task;
 use crate::model::project::stage::cost::advance::logged_update::LoggedAdvanceCostUpdate;
+use crate::model::project::stage::cost::contract::cost::Cost;
 use crate::model::project::stage::id::StageId;
 use crate::model::project::stage::invalidating_by_project_id::InvalidatingByProjectId;
 use crate::state::AppState;
@@ -13,7 +14,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct UpdateCostDto {
-    cost: Option<i32>,
+    cost: Option<Box<dyn Cost>>,
 }
 
 pub async fn patch(
@@ -25,16 +26,17 @@ pub async fn patch(
     let user = request
         .user()
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
+    let cost = body.into_inner().cost;
     let project_id = stage_id.project_id();
     let position = stage_id.position();
     AuditedTask::new(
         user,
         AuditAction::AdvanceCostUpdate {
-            new_cost: body.cost,
+            new_cost: cost.clone(),
         },
         format!("{project_id}:{position}"),
         InvalidatingByProjectId::new(
-            LoggedAdvanceCostUpdate::new(state.pool.clone(), stage_id, user, body.cost),
+            LoggedAdvanceCostUpdate::new(state.pool.clone(), stage_id, user, cost),
             state.stage_cache.clone(),
             project_id,
         ),
