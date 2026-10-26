@@ -9,10 +9,10 @@ COPY Cargo.toml Cargo.lock ./
 COPY migrations ./migrations
 RUN mkdir src && echo "fn main() {}" > src/main.rs \
     && cargo build --release \
-    && rm -rf src
+    && rm -rf src target/release/dailycrm* target/release/deps/dailycrm* target/release/.fingerprint/dailycrm*
 
 COPY src ./src
-RUN touch src/main.rs && cargo build --release
+RUN cargo build --release
 
 
 FROM debian:bookworm-slim
