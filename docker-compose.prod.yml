@@ -16,7 +16,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: minio/minio:latest
     container_name: crm_minio
     restart: always
     command: server /data --console-address ":9001"
