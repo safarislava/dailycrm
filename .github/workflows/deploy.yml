@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BACKEND: ghcr.io/${{ github.repository_owner }}/crm-backend
-  IMAGE_FRONTEND: ghcr.io/${{ github.repository_owner }}/crm-frontend
+  IMAGE_BACKEND: ghcr.io/safarislava/crm-backend
+  IMAGE_FRONTEND: ghcr.io/safarislava/crm-frontend
 
 jobs:
   verify:
@@ -74,22 +74,18 @@ jobs:
         with:
           context: ./Backend
           push: true
-          tags: |
-            ${{ env.IMAGE_BACKEND }}:latest
-            ${{ env.IMAGE_BACKEND }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.IMAGE_BACKEND }}:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_BACKEND }}:cache,mode=max
+          tags: ${{ env.IMAGE_BACKEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build & push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./Frontend
           push: true
-          tags: |
-            ${{ env.IMAGE_FRONTEND }}:latest
-            ${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.IMAGE_FRONTEND }}:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_FRONTEND }}:cache,mode=max
+          tags: ${{ env.IMAGE_FRONTEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to VPS
@@ -120,10 +116,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -euo pipefail
+            set -e
             cd /opt/crm
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
             docker compose -f docker-compose.prod.yml pull backend frontend
-            docker compose -f docker-compose.prod.yml up -d --force-recreate
+            docker compose -f docker-compose.prod.yml up -d backend frontend
+            docker compose -f docker-compose.prod.yml restart caddy
             docker image prune -f
