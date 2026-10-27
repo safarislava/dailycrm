@@ -17,6 +17,7 @@ services:
 
   minio:
     image: minio/minio:latest
+    pull_policy: never
     container_name: crm_minio
     restart: always
     command: server /data --console-address ":9001"
@@ -36,6 +37,7 @@ services:
 
   backend:
     image: ghcr.io/safarislava/crm-backend:latest
+    pull_policy: always
     container_name: crm_backend
     restart: always
     depends_on:
@@ -63,6 +65,7 @@ services:
 
   frontend:
     image: ghcr.io/safarislava/crm-frontend:latest
+    pull_policy: always
     container_name: crm_frontend
     restart: always
     depends_on:
