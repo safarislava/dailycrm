@@ -119,7 +119,7 @@ jobs:
             set -e
             cd /opt/crm
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose -f docker-compose.prod.yml pull backend frontend
-            docker compose -f docker-compose.prod.yml up -d backend frontend
-            docker compose -f docker-compose.prod.yml restart caddy
+            export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --force-recreate
             docker image prune -f

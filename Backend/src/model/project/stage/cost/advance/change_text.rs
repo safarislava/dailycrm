@@ -1,26 +1,27 @@
 use crate::model::contract::comment_text::CommentText;
+use crate::model::project::stage::cost::contract::cost::Cost;
 use crate::model::project::stage::cost::formatted_cost::FormattedCost;
 
 pub struct AdvanceCostChangeText {
-    old: i32,
-    new: Option<i32>,
+    old: Box<dyn Cost>,
+    new: Option<Box<dyn Cost>>,
 }
 
 impl AdvanceCostChangeText {
-    pub fn new(old: i32, new: Option<i32>) -> Self {
+    pub fn new(old: Box<dyn Cost>, new: Option<Box<dyn Cost>>) -> Self {
         Self { old, new }
     }
 }
 
 impl CommentText for AdvanceCostChangeText {
     fn text(&self) -> String {
-        match self.new {
+        match &self.new {
             Some(new) => format!(
                 "Аванс изменён: {} ₽ → {} ₽",
-                FormattedCost(self.old),
-                FormattedCost(new)
+                FormattedCost(self.old.as_ref()),
+                FormattedCost(new.as_ref())
             ),
-            None => format!("Аванс удалён: {} ₽", FormattedCost(self.old)),
+            None => format!("Аванс удалён: {} ₽", FormattedCost(self.old.as_ref())),
         }
     }
 }
@@ -28,13 +29,24 @@ impl CommentText for AdvanceCostChangeText {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_decimal::Decimal;
+    use std::str::FromStr;
 
     #[test]
     fn formats_advance_cost_change_and_removal() {
-        let change = AdvanceCostChangeText::new(100000, Some(250000));
+        let change = AdvanceCostChangeText::new(100000.into(), Some(250000.into()));
         assert_eq!(change.text(), "Аванс изменён: 100 000 ₽ → 250 000 ₽");
 
-        let removal = AdvanceCostChangeText::new(100000, None);
+        let removal = AdvanceCostChangeText::new(100000.into(), None);
         assert_eq!(removal.text(), "Аванс удалён: 100 000 ₽");
+
+        let kopecks_change = AdvanceCostChangeText::new(
+            Decimal::from_str("100000.5").unwrap().into(),
+            Some(Decimal::from_str("250000.75").unwrap().into()),
+        );
+        assert_eq!(
+            kopecks_change.text(),
+            "Аванс изменён: 100 000,50 ₽ → 250 000,75 ₽"
+        );
     }
 }
