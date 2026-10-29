@@ -3,7 +3,8 @@ use crate::endpoint::auth_header::AuthHeader;
 use crate::model::audit::AuditAction;
 use crate::model::audit::AuditedTask;
 use crate::model::contract::task::Task;
-use crate::model::project::stage::cost::advance::logged_update::LoggedAdvanceCostUpdate;
+use crate::model::project::stage::cost::logged_payment_cost_update::LoggedPaymentCostUpdate;
+use crate::model::project::stage::cost::text::AdvanceCostText;
 use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use crate::model::project::stage::invalidating_by_project_id::InvalidatingByProjectId;
@@ -31,12 +32,17 @@ pub async fn patch(
     let position = stage_id.position();
     AuditedTask::new(
         user,
-        AuditAction::AdvanceCostUpdate {
-            new_cost: cost,
-        },
+        AuditAction::AdvanceCostUpdate { new_cost: cost },
         format!("{project_id}:{position}"),
         InvalidatingByProjectId::new(
-            LoggedAdvanceCostUpdate::new(state.pool.clone(), stage_id, user, cost),
+            LoggedPaymentCostUpdate::new(
+                state.pool.clone(),
+                stage_id,
+                user,
+                "first_advance",
+                cost,
+                AdvanceCostText,
+            ),
             state.stage_cache.clone(),
             project_id,
         ),

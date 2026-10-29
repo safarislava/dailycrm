@@ -5,32 +5,38 @@ use crate::model::project::stage::id::StageId;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct StageAdvanceCostReceipt {
+pub struct StagePaymentCostReceipt {
     pool: Arc<PgPool>,
     stage_id: StageId,
+    kind: &'static str,
 }
 
-impl StageAdvanceCostReceipt {
-    pub fn new(pool: Arc<PgPool>, stage_id: StageId) -> Self {
-        Self { pool, stage_id }
+impl StagePaymentCostReceipt {
+    pub fn new(pool: Arc<PgPool>, stage_id: StageId, kind: &'static str) -> Self {
+        Self {
+            pool,
+            stage_id,
+            kind,
+        }
     }
 }
 
 #[async_trait::async_trait]
-impl Value<Option<ValidCost>> for StageAdvanceCostReceipt {
+impl Value<Option<ValidCost>> for StagePaymentCostReceipt {
     async fn value(&self) -> Result<Option<ValidCost>, BoxError> {
         #[derive(sqlx::FromRow)]
         struct Row {
-            advance_cost: Option<ValidCost>,
+            cost: Option<ValidCost>,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT cost AS advance_cost FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = 'first_advance'",
+            "SELECT cost FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = $4",
         )
             .bind(self.stage_id.project_id().id())
             .bind(self.stage_id.parent_position())
             .bind(self.stage_id.position())
+            .bind(self.kind)
         .fetch_optional(self.pool.as_ref())
         .await?;
-        Ok(row.and_then(|r| r.advance_cost))
+        Ok(row.and_then(|r| r.cost))
     }
 }

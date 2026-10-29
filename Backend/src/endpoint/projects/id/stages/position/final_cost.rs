@@ -3,7 +3,8 @@ use crate::endpoint::auth_header::AuthHeader;
 use crate::model::audit::AuditAction;
 use crate::model::audit::AuditedTask;
 use crate::model::contract::task::Task;
-use crate::model::project::stage::cost::r#final::logged_update::LoggedFinalCostUpdate;
+use crate::model::project::stage::cost::logged_payment_cost_update::LoggedPaymentCostUpdate;
+use crate::model::project::stage::cost::text::FinalCostText;
 use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use crate::model::project::stage::invalidating_by_project_id::InvalidatingByProjectId;
@@ -31,12 +32,17 @@ pub async fn patch(
     let position = stage_id.position();
     AuditedTask::new(
         user,
-        AuditAction::FinalCostUpdate {
-            new_cost: cost,
-        },
+        AuditAction::FinalCostUpdate { new_cost: cost },
         format!("{project_id}:{position}"),
         InvalidatingByProjectId::new(
-            LoggedFinalCostUpdate::new(state.pool.clone(), stage_id, user, cost),
+            LoggedPaymentCostUpdate::new(
+                state.pool.clone(),
+                stage_id,
+                user,
+                "final",
+                cost,
+                FinalCostText,
+            ),
             state.stage_cache.clone(),
             project_id,
         ),

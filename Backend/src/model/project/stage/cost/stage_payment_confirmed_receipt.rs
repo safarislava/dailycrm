@@ -4,32 +4,38 @@ use crate::model::project::stage::id::StageId;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub struct StageFinalPaymentConfirmedReceipt {
+pub struct StagePaymentConfirmedReceipt {
     pool: Arc<PgPool>,
     stage_id: StageId,
+    kind: &'static str,
 }
 
-impl StageFinalPaymentConfirmedReceipt {
-    pub fn new(pool: Arc<PgPool>, stage_id: StageId) -> Self {
-        Self { pool, stage_id }
+impl StagePaymentConfirmedReceipt {
+    pub fn new(pool: Arc<PgPool>, stage_id: StageId, kind: &'static str) -> Self {
+        Self {
+            pool,
+            stage_id,
+            kind,
+        }
     }
 }
 
 #[async_trait::async_trait]
-impl Value<Option<bool>> for StageFinalPaymentConfirmedReceipt {
+impl Value<Option<bool>> for StagePaymentConfirmedReceipt {
     async fn value(&self) -> Result<Option<bool>, BoxError> {
         #[derive(sqlx::FromRow)]
         struct Row {
-            final_confirmed: bool,
+            confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT confirmed AS final_confirmed FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = 'final'",
+            "SELECT confirmed FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = $4",
         )
             .bind(self.stage_id.project_id().id())
             .bind(self.stage_id.parent_position())
             .bind(self.stage_id.position())
+            .bind(self.kind)
         .fetch_optional(self.pool.as_ref())
         .await?;
-        Ok(row.map(|r| r.final_confirmed))
+        Ok(row.map(|r| r.confirmed))
     }
 }
