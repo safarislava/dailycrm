@@ -95,6 +95,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::advance_cost::patch),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/second-advance-cost")
+                                    .patch(endpoint::projects::id::stages::position::second_advance_cost::patch),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/final-cost")
                                     .patch(endpoint::projects::id::stages::position::final_cost::patch),
                             )
@@ -105,6 +109,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/advance-confirmed")
                                     .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/second-advance-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/final-confirmed")
@@ -179,6 +187,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::advance_cost::patch),
                             )
                             .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-cost")
+                                    .patch(endpoint::projects::id::stages::position::second_advance_cost::patch),
+                            )
+                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-cost")
                                     .patch(endpoint::projects::id::stages::position::final_cost::patch),
                             )
@@ -189,6 +201,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-confirmed")
                                     .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-confirmed")
+                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-confirmed")
