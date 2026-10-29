@@ -56,8 +56,15 @@ jobs:
         with:
           components: clippy
 
-      - name: Install clippy-sarif
-        run: cargo install clippy-sarif sarif-fmt
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Backend
+
+      - name: Install clippy-sarif & sarif-fmt
+        uses: taiki-e/install-action@v2
+        with:
+          tool: clippy-sarif,sarif-fmt
 
       - name: Run Clippy and generate SARIF & JSON
         run: |
