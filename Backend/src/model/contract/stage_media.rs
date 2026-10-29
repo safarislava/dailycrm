@@ -6,6 +6,8 @@ use chrono::{DateTime, Utc};
 pub struct StageCosts {
     pub advance_cost: Option<ValidCost>,
     pub advance_confirmed: bool,
+    pub second_advance_cost: Option<ValidCost>,
+    pub second_advance_confirmed: bool,
     pub final_cost: Option<ValidCost>,
     pub final_confirmed: bool,
 }

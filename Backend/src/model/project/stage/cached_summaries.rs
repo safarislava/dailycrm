@@ -76,6 +76,8 @@ mod tests {
                 gip_confirmed: true,
                 advance_cost: None,
                 advance_confirmed: false,
+                second_advance_cost: None,
+                second_advance_confirmed: false,
                 final_cost: None,
                 final_confirmed: false,
                 has_act: false,

@@ -14,6 +14,7 @@ pub enum AuditAction {
     StageReorder { to: i32 },
     DeadlineUpdate { new_deadline: Option<String> },
     AdvanceCostUpdate { new_cost: Option<ValidCost> },
+    SecondAdvanceCostUpdate { new_cost: Option<ValidCost> },
     FinalCostUpdate { new_cost: Option<ValidCost> },
     GipConfirm { confirmed: bool },
     ActUpload { filename: String },
@@ -55,6 +56,17 @@ impl fmt::Display for AuditAction {
                     })
                     .unwrap_or_else(|| "none".to_string());
                 write!(f, "advance_cost_update(cost: {c})")
+            }
+            Self::SecondAdvanceCostUpdate { new_cost } => {
+                let c = new_cost
+                    .as_ref()
+                    .map(|v| {
+                        v.as_decimal()
+                            .map(|d| d.to_string())
+                            .unwrap_or_else(|_| "invalid".to_string())
+                    })
+                    .unwrap_or_else(|| "none".to_string());
+                write!(f, "second_advance_cost_update(cost: {c})")
             }
             Self::FinalCostUpdate { new_cost } => {
                 let c = new_cost
@@ -120,6 +132,33 @@ mod tests {
         assert_eq!(
             format!("{}", AuditAction::DeadlineUpdate { new_deadline: None }),
             "deadline_update(deadline: 'none')"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::AdvanceCostUpdate {
+                    new_cost: Some(100.into())
+                }
+            ),
+            "advance_cost_update(cost: 100)"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::SecondAdvanceCostUpdate {
+                    new_cost: Some(250.into())
+                }
+            ),
+            "second_advance_cost_update(cost: 250)"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::FinalCostUpdate {
+                    new_cost: Some(500.into())
+                }
+            ),
+            "final_cost_update(cost: 500)"
         );
         assert_eq!(
             format!("{}", AuditAction::GipConfirm { confirmed: true }),

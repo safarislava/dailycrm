@@ -39,6 +39,35 @@ impl PaymentConfirmationText for AdvanceConfirmationText {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
+pub struct SecondAdvanceCostText;
+
+impl PaymentCostText for SecondAdvanceCostText {
+    fn text(&self, old: ValidCost, new: Option<ValidCost>) -> String {
+        match new {
+            Some(new) => format!(
+                "Второй аванс изменён: {} ₽ → {} ₽",
+                FormattedCost(old),
+                FormattedCost(new)
+            ),
+            None => format!("Второй аванс удалён: {} ₽", FormattedCost(old)),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SecondAdvanceConfirmationText;
+
+impl PaymentConfirmationText for SecondAdvanceConfirmationText {
+    fn text(&self, confirmed: bool) -> String {
+        if confirmed {
+            "Второй аванс подтверждён".to_string()
+        } else {
+            "Подтверждение второго аванса снято".to_string()
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
 pub struct FinalCostText;
 
 impl PaymentCostText for FinalCostText {
@@ -96,6 +125,34 @@ mod tests {
         let formatter = AdvanceConfirmationText;
         assert_eq!(formatter.text(true), "Аванс подтверждён");
         assert_eq!(formatter.text(false), "Подтверждение аванса снято");
+    }
+
+    #[test]
+    fn formats_second_advance_cost_change_and_removal() {
+        let formatter = SecondAdvanceCostText;
+        assert_eq!(
+            formatter.text(100000.into(), Some(250000.into())),
+            "Второй аванс изменён: 100 000 ₽ → 250 000 ₽"
+        );
+        assert_eq!(
+            formatter.text(100000.into(), None),
+            "Второй аванс удалён: 100 000 ₽"
+        );
+        let kopecks_change = formatter.text(
+            Decimal::from_str("100000.5").unwrap().into(),
+            Some(Decimal::from_str("250000.75").unwrap().into()),
+        );
+        assert_eq!(
+            kopecks_change,
+            "Второй аванс изменён: 100 000,50 ₽ → 250 000,75 ₽"
+        );
+    }
+
+    #[test]
+    fn formats_second_advance_payment_confirmation() {
+        let formatter = SecondAdvanceConfirmationText;
+        assert_eq!(formatter.text(true), "Второй аванс подтверждён");
+        assert_eq!(formatter.text(false), "Подтверждение второго аванса снято");
     }
 
     #[test]

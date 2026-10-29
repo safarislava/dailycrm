@@ -16,6 +16,8 @@ struct JsonStageItem {
     gip_confirmed: bool,
     advance_cost: Option<ValidCost>,
     advance_confirmed: bool,
+    second_advance_cost: Option<ValidCost>,
+    second_advance_confirmed: bool,
     final_cost: Option<ValidCost>,
     final_confirmed: bool,
     has_act: bool,
@@ -45,6 +47,8 @@ impl StageMedia for JsonStageMedia {
             gip_confirmed: status.gip_confirmed,
             advance_cost: costs.advance_cost,
             advance_confirmed: costs.advance_confirmed,
+            second_advance_cost: costs.second_advance_cost,
+            second_advance_confirmed: costs.second_advance_confirmed,
             final_cost: costs.final_cost,
             final_confirmed: costs.final_confirmed,
             has_act: status.has_act,
@@ -75,6 +79,8 @@ mod tests {
             StageCosts {
                 advance_cost: Some(50000.into()),
                 advance_confirmed: true,
+                second_advance_cost: Some(75000.into()),
+                second_advance_confirmed: false,
                 final_cost: Some(100000.into()),
                 final_confirmed: false,
             },
@@ -85,6 +91,11 @@ mod tests {
         assert!(
             json.contains("\"advance_cost\":50000") || json.contains("\"advance_cost\":\"50000\"")
         );
+        assert!(
+            json.contains("\"second_advance_cost\":75000")
+                || json.contains("\"second_advance_cost\":\"75000\"")
+        );
+        assert!(json.contains("\"second_advance_confirmed\":false"));
         assert!(json.contains("\"has_act\":true"));
     }
 }

@@ -32,18 +32,22 @@ impl Json for DetailedStage {
             completed: bool,
             advance_cost: Option<ValidCost>,
             advance_confirmed: bool,
+            second_advance_cost: Option<ValidCost>,
+            second_advance_confirmed: bool,
             final_cost: Option<ValidCost>,
             final_confirmed: bool,
             gip_confirmed: bool,
         }
         let row = sqlx::query_as::<_, Row>(
             "SELECT project_id, parent_position, position, title, deadline,
-                    completed, advance_cost, advance_confirmed, final_cost, final_confirmed, gip_confirmed
+                    completed, advance_cost, advance_confirmed,
+                    second_advance_cost, second_advance_confirmed,
+                    final_cost, final_confirmed, gip_confirmed
              FROM detailed_stages WHERE project_id = $1 AND parent_position = $2 AND position = $3",
         )
-            .bind(self.stage_id.project_id().id())
-            .bind(self.stage_id.parent_position())
-            .bind(self.stage_id.position())
+        .bind(self.stage_id.project_id().id())
+        .bind(self.stage_id.parent_position())
+        .bind(self.stage_id.position())
         .fetch_one(self.pool.as_ref())
         .await?;
         Ok(serde_json::to_value(row)?)

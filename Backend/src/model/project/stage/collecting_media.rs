@@ -17,6 +17,8 @@ pub struct StageSummaryItem {
     pub gip_confirmed: bool,
     pub advance_cost: Option<ValidCost>,
     pub advance_confirmed: bool,
+    pub second_advance_cost: Option<ValidCost>,
+    pub second_advance_confirmed: bool,
     pub final_cost: Option<ValidCost>,
     pub final_confirmed: bool,
     pub has_act: bool,
@@ -41,6 +43,8 @@ impl StageSummaryItem {
             StageCosts {
                 advance_cost: self.advance_cost,
                 advance_confirmed: self.advance_confirmed,
+                second_advance_cost: self.second_advance_cost,
+                second_advance_confirmed: self.second_advance_confirmed,
                 final_cost: self.final_cost,
                 final_confirmed: self.final_confirmed,
             },
@@ -81,6 +85,8 @@ impl StageMedia for CollectingStageMedia {
             gip_confirmed: status.gip_confirmed,
             advance_cost: costs.advance_cost,
             advance_confirmed: costs.advance_confirmed,
+            second_advance_cost: costs.second_advance_cost,
+            second_advance_confirmed: costs.second_advance_confirmed,
             final_cost: costs.final_cost,
             final_confirmed: costs.final_confirmed,
             has_act: status.has_act,
@@ -113,6 +119,8 @@ mod tests {
             StageCosts {
                 advance_cost: Some(100.into()),
                 advance_confirmed: true,
+                second_advance_cost: Some(150.into()),
+                second_advance_confirmed: false,
                 final_cost: Some(200.into()),
                 final_confirmed: false,
             },
@@ -128,6 +136,14 @@ mod tests {
             items[0].advance_cost.as_ref().map(|c| c.as_decimal()),
             Some(Ok(Decimal::from(100)))
         );
+        assert_eq!(
+            items[0]
+                .second_advance_cost
+                .as_ref()
+                .map(|c| c.as_decimal()),
+            Some(Ok(Decimal::from(150)))
+        );
+        assert_eq!(items[0].second_advance_confirmed, false);
         assert_eq!(items[0].has_act, true);
     }
 }
