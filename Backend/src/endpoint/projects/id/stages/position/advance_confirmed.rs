@@ -1,7 +1,8 @@
 use crate::endpoint::api_error::ApiError;
 use crate::endpoint::auth_header::AuthHeader;
 use crate::model::contract::task::Task;
-use crate::model::project::stage::cost::advance::logged_payment_confirmation::LoggedAdvancePaymentConfirmation;
+use crate::model::project::stage::cost::logged_payment_confirmation::LoggedPaymentConfirmation;
+use crate::model::project::stage::cost::text::AdvanceConfirmationText;
 use crate::model::project::stage::id::StageId;
 use crate::model::project::stage::invalidating_by_project_id::InvalidatingByProjectId;
 use crate::state::AppState;
@@ -24,7 +25,14 @@ pub async fn patch(
         .user()
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     InvalidatingByProjectId::new(
-        LoggedAdvancePaymentConfirmation::new(state.pool.clone(), stage_id, user, body.confirmed),
+        LoggedPaymentConfirmation::new(
+            state.pool.clone(),
+            stage_id,
+            user,
+            "first_advance",
+            body.confirmed,
+            AdvanceConfirmationText,
+        ),
         state.stage_cache.clone(),
         stage_id.project_id(),
     )

@@ -74,10 +74,7 @@ mod tests {
                 deadline: None,
                 completed: false,
                 gip_confirmed: true,
-                advance_cost: None,
-                advance_confirmed: false,
-                final_cost: None,
-                final_confirmed: false,
+                payments: vec![],
                 has_act: false,
             }
             .print(media);

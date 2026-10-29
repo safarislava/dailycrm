@@ -1,0 +1,51 @@
+use crate::model::contract::box_error::BoxError;
+use crate::model::contract::task::Task;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
+use crate::model::project::stage::id::StageId;
+use sqlx::PgPool;
+use std::sync::Arc;
+
+pub struct PaymentCostUpdate {
+    pool: Arc<PgPool>,
+    stage_id: StageId,
+    kind: &'static str,
+    cost: Option<ValidCost>,
+}
+
+impl PaymentCostUpdate {
+    pub fn new(
+        pool: Arc<PgPool>,
+        stage_id: StageId,
+        kind: &'static str,
+        cost: Option<ValidCost>,
+    ) -> Self {
+        Self {
+            pool,
+            stage_id,
+            kind,
+            cost,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl Task for PaymentCostUpdate {
+    type Output = ();
+
+    async fn perform(&self) -> Result<Self::Output, BoxError> {
+        sqlx::query(
+            "INSERT INTO stage_payments (project_id, parent_position, stage_position, kind, cost, confirmed) \
+             VALUES ($1, $2, $3, $4, $5, FALSE) \
+             ON CONFLICT (project_id, parent_position, stage_position, kind) \
+             DO UPDATE SET cost = EXCLUDED.cost",
+        )
+            .bind(self.stage_id.project_id().id())
+            .bind(self.stage_id.parent_position())
+            .bind(self.stage_id.position())
+            .bind(self.kind)
+            .bind(self.cost.map(|c| c.as_decimal()).transpose()?)
+            .execute(self.pool.as_ref())
+            .await?;
+        Ok(())
+    }
+}

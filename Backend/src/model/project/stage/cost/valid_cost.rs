@@ -1,8 +1,24 @@
-use crate::model::project::stage::cost::contract::cost::{Cost, CostError};
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, PartialEq, Eq)]
+pub enum CostError {
+    TooManyDecimalPlaces,
+}
+
+impl std::fmt::Display for CostError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TooManyDecimalPlaces => {
+                f.write_str("Cost cannot have more than 2 decimal places")
+            }
+        }
+    }
+}
+
+impl std::error::Error for CostError {}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, sqlx::Type)]
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct ValidCost(Decimal);
@@ -11,18 +27,39 @@ impl ValidCost {
     pub fn new(decimal: Decimal) -> Self {
         Self(decimal)
     }
-}
 
-impl Cost for ValidCost {
-    fn as_decimal(&self) -> Result<Decimal, CostError> {
+    pub fn as_decimal(&self) -> Result<Decimal, CostError> {
         if self.0.scale() > 2 {
             return Err(CostError::TooManyDecimalPlaces);
         }
         Ok(self.0)
     }
+}
 
-    fn clone_box(&self) -> Box<dyn Cost> {
-        Box::new(*self)
+impl From<ValidCost> for Decimal {
+    fn from(cost: ValidCost) -> Self {
+        cost.0
+    }
+}
+
+impl From<Decimal> for ValidCost {
+    fn from(decimal: Decimal) -> Self {
+        Self::new(decimal)
+    }
+}
+
+impl From<i32> for ValidCost {
+    fn from(n: i32) -> Self {
+        Self::new(Decimal::from(n))
+    }
+}
+
+impl<'de> Deserialize<'de> for ValidCost {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let dec = <Decimal as Deserialize>::deserialize(deserializer)?;
+        let valid = ValidCost::new(dec);
+        valid.as_decimal().map_err(serde::de::Error::custom)?;
+        Ok(valid)
     }
 }
 
@@ -69,5 +106,17 @@ mod tests {
             ValidCost::new(Decimal::from_str("1000.555").unwrap()).as_decimal(),
             Err(CostError::TooManyDecimalPlaces)
         );
+    }
+
+    #[test]
+    fn deserializes_valid_cost_json() {
+        let cost: ValidCost = serde_json::from_str("100.50").unwrap();
+        assert_eq!(cost.as_decimal().unwrap(), Decimal::from_str("100.50").unwrap());
+    }
+
+    #[test]
+    fn rejects_deserializing_too_many_decimals() {
+        let res: Result<ValidCost, _> = serde_json::from_str("100.555");
+        assert!(res.is_err());
     }
 }

@@ -1,4 +1,4 @@
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -6,21 +6,41 @@ pub enum AuditAction {
     UserCreate,
     InviteCreate,
     ProjectCreate,
-    ProjectRename { new_title: String },
+    ProjectRename {
+        new_title: String,
+    },
     ProjectDelete,
     StageCreate,
-    StageRename { new_title: String },
+    StageRename {
+        new_title: String,
+    },
     StageDelete,
-    StageReorder { to: i32 },
-    DeadlineUpdate { new_deadline: Option<String> },
-    AdvanceCostUpdate { new_cost: Option<Box<dyn Cost>> },
-    FinalCostUpdate { new_cost: Option<Box<dyn Cost>> },
-    GipConfirm { confirmed: bool },
-    ActUpload { filename: String },
+    StageReorder {
+        to: i32,
+    },
+    DeadlineUpdate {
+        new_deadline: Option<String>,
+    },
+    CostUpdate {
+        kind: &'static str,
+        new_cost: Option<ValidCost>,
+    },
+    GipConfirm {
+        confirmed: bool,
+    },
+    ActUpload {
+        filename: String,
+    },
     ActDelete,
-    AttachmentUpload { filename: String },
-    AttachmentDelete { filename: String },
-    CommentCreate { text: String },
+    AttachmentUpload {
+        filename: String,
+    },
+    AttachmentDelete {
+        filename: String,
+    },
+    CommentCreate {
+        text: String,
+    },
     CommentDelete,
 }
 
@@ -45,7 +65,7 @@ impl fmt::Display for AuditAction {
                 let d = new_deadline.as_deref().unwrap_or("none");
                 write!(f, "deadline_update(deadline: '{d}')")
             }
-            Self::AdvanceCostUpdate { new_cost } => {
+            Self::CostUpdate { kind, new_cost } => {
                 let c = new_cost
                     .as_ref()
                     .map(|v| {
@@ -54,18 +74,7 @@ impl fmt::Display for AuditAction {
                             .unwrap_or_else(|_| "invalid".to_string())
                     })
                     .unwrap_or_else(|| "none".to_string());
-                write!(f, "advance_cost_update(cost: {c})")
-            }
-            Self::FinalCostUpdate { new_cost } => {
-                let c = new_cost
-                    .as_ref()
-                    .map(|v| {
-                        v.as_decimal()
-                            .map(|d| d.to_string())
-                            .unwrap_or_else(|_| "invalid".to_string())
-                    })
-                    .unwrap_or_else(|| "none".to_string());
-                write!(f, "final_cost_update(cost: {c})")
+                write!(f, "cost_update(kind: '{kind}', cost: {c})")
             }
             Self::GipConfirm { confirmed } => {
                 write!(f, "gip_confirm(confirmed: {confirmed})")
@@ -120,6 +129,36 @@ mod tests {
         assert_eq!(
             format!("{}", AuditAction::DeadlineUpdate { new_deadline: None }),
             "deadline_update(deadline: 'none')"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::CostUpdate {
+                    kind: "first_advance",
+                    new_cost: Some(100.into())
+                }
+            ),
+            "cost_update(kind: 'first_advance', cost: 100)"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::CostUpdate {
+                    kind: "second_advance",
+                    new_cost: Some(250.into())
+                }
+            ),
+            "cost_update(kind: 'second_advance', cost: 250)"
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                AuditAction::CostUpdate {
+                    kind: "final",
+                    new_cost: None
+                }
+            ),
+            "cost_update(kind: 'final', cost: none)"
         );
         assert_eq!(
             format!("{}", AuditAction::GipConfirm { confirmed: true }),

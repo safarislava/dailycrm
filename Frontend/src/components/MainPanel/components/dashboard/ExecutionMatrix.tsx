@@ -59,17 +59,40 @@ export default function ExecutionMatrix({
             <tr>
               <td className={styles.matrixRowHeader}>Аванс</td>
               {sortedStagesForDashboard.map((stage) => {
-                const hasAdvance = stage.advance_cost != null
-                const confirmed = stage.advance_confirmed
+                  const payment = stage.payments?.find((p) => p.kind === 'first_advance')
+                  const hasCost = payment?.cost != null
+                  const confirmed = payment?.confirmed ?? false
                 return (
                   <td key={getStageLabel(stage)} className={styles.matrixCell}>
-                    {hasAdvance ? (
+                      {hasCost ? (
                       <span
                         className={`${styles.matrixDot} ${confirmed ? styles.dotCompleted : styles.dotPending}`}
-                        title={`Аванс: ${formatNumber(stage.advance_cost)} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                        title={`Аванс: ${formatNumber(payment.cost)} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
                       />
                     ) : (
                       <span className={styles.dotNotRequired} title="Аванс не предусмотрен">
+                        -
+                      </span>
+                      )}
+                  </td>
+                )
+              })}
+            </tr>
+            <tr>
+                <td className={styles.matrixRowHeader}>Второй аванс</td>
+                {sortedStagesForDashboard.map((stage) => {
+                    const payment = stage.payments?.find((p) => p.kind === 'second_advance')
+                    const hasCost = payment?.cost != null
+                    const confirmed = payment?.confirmed ?? false
+                    return (
+                        <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                            {hasCost ? (
+                                <span
+                                    className={`${styles.matrixDot} ${confirmed ? styles.dotCompleted : styles.dotPending}`}
+                                    title={`Второй аванс: ${formatNumber(payment.cost)} ₽ - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                                />
+                            ) : (
+                                <span className={styles.dotNotRequired} title="Второй аванс не предусмотрен">
                         -
                       </span>
                     )}
@@ -79,14 +102,18 @@ export default function ExecutionMatrix({
             </tr>
             <tr>
               <td className={styles.matrixRowHeader}>Оплата</td>
-              {sortedStagesForDashboard.map((stage) => (
-                <td key={getStageLabel(stage)} className={styles.matrixCell}>
-                  <span
-                    className={`${styles.matrixDot} ${stage.final_confirmed ? styles.dotCompleted : styles.dotPending}`}
-                    title={`Оплата: ${stage.final_cost != null ? `${formatNumber(stage.final_cost)} ₽` : '—'} - ${stage.final_confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
-                  />
-                </td>
-              ))}
+                {sortedStagesForDashboard.map((stage) => {
+                    const payment = stage.payments?.find((p) => p.kind === 'final')
+                    const confirmed = payment?.confirmed ?? false
+                    return (
+                        <td key={getStageLabel(stage)} className={styles.matrixCell}>
+                    <span
+                        className={`${styles.matrixDot} ${confirmed ? styles.dotCompleted : styles.dotPending}`}
+                        title={`Оплата: ${payment?.cost != null ? `${formatNumber(payment.cost)} ₽` : '—'} - ${confirmed ? 'Подтвержден' : 'Не подтвержден'}`}
+                    />
+                        </td>
+                    )
+                })}
             </tr>
             <tr>
               <td className={styles.matrixRowHeader}>Акт</td>

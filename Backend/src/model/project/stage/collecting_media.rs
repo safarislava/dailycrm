@@ -1,12 +1,11 @@
-use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
+use crate::model::contract::stage_media::{StageMedia, StageStatus};
 use crate::model::project::id::ProjectId;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::payment::StagePayment;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
-use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
 pub struct StageSummaryItem {
     pub project_id: Uuid,
     pub parent_position: i32,
@@ -15,10 +14,8 @@ pub struct StageSummaryItem {
     pub deadline: Option<DateTime<Utc>>,
     pub completed: bool,
     pub gip_confirmed: bool,
-    pub advance_cost: Option<Box<dyn Cost>>,
-    pub advance_confirmed: bool,
-    pub final_cost: Option<Box<dyn Cost>>,
-    pub final_confirmed: bool,
+    #[sqlx(json)]
+    pub payments: Vec<StagePayment>,
     pub has_act: bool,
 }
 
@@ -38,12 +35,7 @@ impl StageSummaryItem {
                 gip_confirmed: self.gip_confirmed,
                 has_act: self.has_act,
             },
-            StageCosts {
-                advance_cost: self.advance_cost.clone(),
-                advance_confirmed: self.advance_confirmed,
-                final_cost: self.final_cost.clone(),
-                final_confirmed: self.final_confirmed,
-            },
+            self.payments.clone(),
         );
     }
 }
@@ -69,7 +61,7 @@ impl StageMedia for CollectingStageMedia {
         stage_id: StageId,
         title: &str,
         status: StageStatus,
-        costs: StageCosts,
+        payments: Vec<StagePayment>,
     ) {
         self.items.push(StageSummaryItem {
             project_id: stage_id.project_id().id(),
@@ -79,10 +71,7 @@ impl StageMedia for CollectingStageMedia {
             deadline: status.deadline,
             completed: status.completed,
             gip_confirmed: status.gip_confirmed,
-            advance_cost: costs.advance_cost,
-            advance_confirmed: costs.advance_confirmed,
-            final_cost: costs.final_cost,
-            final_confirmed: costs.final_confirmed,
+            payments,
             has_act: status.has_act,
         });
     }
@@ -92,7 +81,6 @@ impl StageMedia for CollectingStageMedia {
 mod tests {
     use super::*;
     use crate::model::project::id::ProjectId;
-    use rust_decimal::Decimal;
 
     #[test]
     fn collects_added_stages_and_substages() {
@@ -110,12 +98,11 @@ mod tests {
                 gip_confirmed: true,
                 has_act: true,
             },
-            StageCosts {
-                advance_cost: Some(100.into()),
-                advance_confirmed: true,
-                final_cost: Some(200.into()),
-                final_confirmed: false,
-            },
+            vec![
+                StagePayment::new("first_advance", Some(100.into()), true),
+                StagePayment::new("second_advance", Some(150.into()), false),
+                StagePayment::new("final", Some(200.into()), false),
+            ],
         );
 
         let items = media.items();
@@ -124,10 +111,11 @@ mod tests {
         assert_eq!(items[0].parent_position, 0);
         assert_eq!(items[0].position, 1);
         assert_eq!(items[0].title, "Stage 1");
-        assert_eq!(
-            items[0].advance_cost.as_ref().map(|c| c.as_decimal()),
-            Some(Ok(Decimal::from(100)))
-        );
+        assert_eq!(items[0].payments.len(), 3);
+        assert_eq!(items[0].payments[0].kind, "first_advance");
+        assert_eq!(items[0].payments[0].confirmed, true);
+        assert_eq!(items[0].payments[1].kind, "second_advance");
+        assert_eq!(items[0].payments[1].confirmed, false);
         assert_eq!(items[0].has_act, true);
     }
 }

@@ -1,10 +1,10 @@
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use rust_decimal::Decimal;
 use std::fmt;
 
-pub struct FormattedCost<'a>(pub &'a dyn Cost);
+pub struct FormattedCost(pub ValidCost);
 
-impl<'a> fmt::Display for FormattedCost<'a> {
+impl fmt::Display for FormattedCost {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let decimal = self.0.as_decimal().unwrap_or(Decimal::ZERO);
         let is_negative = decimal.is_sign_negative();
@@ -39,25 +39,25 @@ mod tests {
 
     #[test]
     fn formats_cost_with_thousand_separators() {
-        let cost_1000: Box<dyn Cost> = 1000.into();
-        assert_eq!(FormattedCost(cost_1000.as_ref()).to_string(), "1 000");
+        let cost_1000: ValidCost = 1000.into();
+        assert_eq!(FormattedCost(cost_1000).to_string(), "1 000");
 
-        let cost_mil: Box<dyn Cost> = 1000000.into();
-        assert_eq!(FormattedCost(cost_mil.as_ref()).to_string(), "1 000 000");
+        let cost_mil: ValidCost = 1000000.into();
+        assert_eq!(FormattedCost(cost_mil).to_string(), "1 000 000");
 
-        let cost_500: Box<dyn Cost> = 500.into();
-        assert_eq!(FormattedCost(cost_500.as_ref()).to_string(), "500");
+        let cost_500: ValidCost = 500.into();
+        assert_eq!(FormattedCost(cost_500).to_string(), "500");
 
-        let cost_0: Box<dyn Cost> = 0.into();
-        assert_eq!(FormattedCost(cost_0.as_ref()).to_string(), "0");
+        let cost_0: ValidCost = 0.into();
+        assert_eq!(FormattedCost(cost_0).to_string(), "0");
 
-        let cost_neg: Box<dyn Cost> = (-1000).into();
-        assert_eq!(FormattedCost(cost_neg.as_ref()).to_string(), "-1 000");
+        let cost_neg: ValidCost = (-1000).into();
+        assert_eq!(FormattedCost(cost_neg).to_string(), "-1 000");
 
-        let cost_dec1: Box<dyn Cost> = Decimal::from_str("1000.5").unwrap().into();
-        assert_eq!(FormattedCost(cost_dec1.as_ref()).to_string(), "1 000,50");
+        let cost_dec1: ValidCost = Decimal::from_str("1000.5").unwrap().into();
+        assert_eq!(FormattedCost(cost_dec1).to_string(), "1 000,50");
 
-        let cost_dec2: Box<dyn Cost> = Decimal::from_str("1000.05").unwrap().into();
-        assert_eq!(FormattedCost(cost_dec2.as_ref()).to_string(), "1 000,05");
+        let cost_dec2: ValidCost = Decimal::from_str("1000.05").unwrap().into();
+        assert_eq!(FormattedCost(cost_dec2).to_string(), "1 000,05");
     }
 }
