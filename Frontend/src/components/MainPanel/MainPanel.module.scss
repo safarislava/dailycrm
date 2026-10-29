@@ -562,6 +562,66 @@
   color: v.$text-secondary;
 }
 
+.addPaymentBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px dashed v.$divider;
+  border-radius: v.$radius-md;
+  color: v.$accent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all v.$transition-fast;
+
+  &:hover {
+    background: v.$accent-light;
+    border-color: v.$accent;
+  }
+}
+
+.paymentBlock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.paymentBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.paymentBlockTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: v.$text-secondary;
+  font-weight: 600;
+}
+
+.removePaymentBtn {
+  background: transparent;
+  border: none;
+  color: v.$text-secondary;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: v.$radius-sm;
+  transition: all v.$transition-fast;
+
+  &:hover {
+    color: #ff5252;
+    background: rgba(255, 82, 82, 0.08);
+  }
+}
+
 // ── Attachments ───────────────────────────────────────
 .attachmentsSection {
   background: v.$bg-secondary;

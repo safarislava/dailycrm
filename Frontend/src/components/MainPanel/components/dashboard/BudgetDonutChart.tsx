@@ -112,7 +112,7 @@ export default function BudgetDonutChart({
               case 'second_advance':
                   return '2-й аванс'
               case 'final':
-                  return 'стоимость'
+                  return 'оплата'
               default:
                   return kind
           }
