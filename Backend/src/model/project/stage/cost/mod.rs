@@ -1,6 +1,7 @@
 pub mod formatted_cost;
 pub mod logged_payment_confirmation;
 pub mod logged_payment_cost_update;
+pub mod payment;
 pub mod payment_confirmation;
 pub mod payment_cost_update;
 pub mod stage_payment_confirmed_receipt;

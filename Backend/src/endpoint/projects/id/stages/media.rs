@@ -1,5 +1,5 @@
-use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
-use crate::model::project::stage::cost::valid_cost::ValidCost;
+use crate::model::contract::stage_media::{StageMedia, StageStatus};
+use crate::model::project::stage::cost::payment::StagePayment;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -14,12 +14,7 @@ struct JsonStageItem {
     deadline: Option<DateTime<Utc>>,
     completed: bool,
     gip_confirmed: bool,
-    advance_cost: Option<ValidCost>,
-    advance_confirmed: bool,
-    second_advance_cost: Option<ValidCost>,
-    second_advance_confirmed: bool,
-    final_cost: Option<ValidCost>,
-    final_confirmed: bool,
+    payments: Vec<StagePayment>,
     has_act: bool,
 }
 
@@ -35,7 +30,7 @@ impl StageMedia for JsonStageMedia {
         stage_id: StageId,
         title: &str,
         status: StageStatus,
-        costs: StageCosts,
+        payments: Vec<StagePayment>,
     ) {
         self.items.push(JsonStageItem {
             project_id: stage_id.project_id().id(),
@@ -45,12 +40,7 @@ impl StageMedia for JsonStageMedia {
             deadline: status.deadline,
             completed: status.completed,
             gip_confirmed: status.gip_confirmed,
-            advance_cost: costs.advance_cost,
-            advance_confirmed: costs.advance_confirmed,
-            second_advance_cost: costs.second_advance_cost,
-            second_advance_confirmed: costs.second_advance_confirmed,
-            final_cost: costs.final_cost,
-            final_confirmed: costs.final_confirmed,
+            payments,
             has_act: status.has_act,
         });
     }
@@ -76,26 +66,23 @@ mod tests {
                 gip_confirmed: true,
                 has_act: true,
             },
-            StageCosts {
-                advance_cost: Some(50000.into()),
-                advance_confirmed: true,
-                second_advance_cost: Some(75000.into()),
-                second_advance_confirmed: false,
-                final_cost: Some(100000.into()),
-                final_confirmed: false,
-            },
+            vec![
+                StagePayment::new("first_advance", Some(50000.into()), true),
+                StagePayment::new("second_advance", Some(75000.into()), false),
+                StagePayment::new("final", Some(100000.into()), false),
+            ],
         );
 
         let json = serde_json::to_string(&media).unwrap();
         assert!(json.contains("\"title\":\"Concept Design\""));
         assert!(
-            json.contains("\"advance_cost\":50000") || json.contains("\"advance_cost\":\"50000\"")
+            json.contains(r#"{"kind":"first_advance","cost":50000,"confirmed":true}"#)
+                || json.contains(r#"{"kind":"first_advance","cost":"50000","confirmed":true}"#)
         );
         assert!(
-            json.contains("\"second_advance_cost\":75000")
-                || json.contains("\"second_advance_cost\":\"75000\"")
+            json.contains(r#"{"kind":"second_advance","cost":75000,"confirmed":false}"#)
+                || json.contains(r#"{"kind":"second_advance","cost":"75000","confirmed":false}"#)
         );
-        assert!(json.contains("\"second_advance_confirmed\":false"));
         assert!(json.contains("\"has_act\":true"));
     }
 }
