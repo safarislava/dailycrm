@@ -1,12 +1,12 @@
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct StageCosts {
-    pub advance_cost: Option<Box<dyn Cost>>,
+    pub advance_cost: Option<ValidCost>,
     pub advance_confirmed: bool,
-    pub final_cost: Option<Box<dyn Cost>>,
+    pub final_cost: Option<ValidCost>,
     pub final_confirmed: bool,
 }
 

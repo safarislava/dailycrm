@@ -1,14 +1,14 @@
 use crate::model::contract::comment_text::CommentText;
-use crate::model::project::stage::cost::contract::cost::Cost;
 use crate::model::project::stage::cost::formatted_cost::FormattedCost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 
 pub struct FinalCostChangeText {
-    old: Box<dyn Cost>,
-    new: Option<Box<dyn Cost>>,
+    old: ValidCost,
+    new: Option<ValidCost>,
 }
 
 impl FinalCostChangeText {
-    pub fn new(old: Box<dyn Cost>, new: Option<Box<dyn Cost>>) -> Self {
+    pub fn new(old: ValidCost, new: Option<ValidCost>) -> Self {
         Self { old, new }
     }
 }
@@ -18,12 +18,12 @@ impl CommentText for FinalCostChangeText {
         match &self.new {
             Some(new) => format!(
                 "Окончательная оплата изменена: {} ₽ → {} ₽",
-                FormattedCost(self.old.as_ref()),
-                FormattedCost(new.as_ref())
+                FormattedCost(self.old),
+                FormattedCost(*new)
             ),
             None => format!(
                 "Окончательная оплата удалена: {} ₽",
-                FormattedCost(self.old.as_ref())
+                FormattedCost(self.old)
             ),
         }
     }

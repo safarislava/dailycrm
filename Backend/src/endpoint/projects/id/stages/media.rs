@@ -1,5 +1,5 @@
 use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -14,9 +14,9 @@ struct JsonStageItem {
     deadline: Option<DateTime<Utc>>,
     completed: bool,
     gip_confirmed: bool,
-    advance_cost: Option<Box<dyn Cost>>,
+    advance_cost: Option<ValidCost>,
     advance_confirmed: bool,
-    final_cost: Option<Box<dyn Cost>>,
+    final_cost: Option<ValidCost>,
     final_confirmed: bool,
     has_act: bool,
 }

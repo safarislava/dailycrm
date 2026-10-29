@@ -1,4 +1,4 @@
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -13,8 +13,8 @@ pub enum AuditAction {
     StageDelete,
     StageReorder { to: i32 },
     DeadlineUpdate { new_deadline: Option<String> },
-    AdvanceCostUpdate { new_cost: Option<Box<dyn Cost>> },
-    FinalCostUpdate { new_cost: Option<Box<dyn Cost>> },
+    AdvanceCostUpdate { new_cost: Option<ValidCost> },
+    FinalCostUpdate { new_cost: Option<ValidCost> },
     GipConfirm { confirmed: bool },
     ActUpload { filename: String },
     ActDelete,

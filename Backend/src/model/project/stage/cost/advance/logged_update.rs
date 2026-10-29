@@ -6,7 +6,7 @@ use crate::model::project::stage::comment::system_creation::SystemCommentCreatio
 use crate::model::project::stage::cost::advance::change_text::AdvanceCostChangeText;
 use crate::model::project::stage::cost::advance::receipt::StageAdvanceCostReceipt;
 use crate::model::project::stage::cost::advance::update::AdvanceCostUpdate;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use crate::model::user::id::UserId;
 use sqlx::PgPool;
@@ -16,7 +16,7 @@ pub struct LoggedAdvanceCostUpdate {
     pool: Arc<PgPool>,
     stage_id: StageId,
     user_id: UserId,
-    cost: Option<Box<dyn Cost>>,
+    cost: Option<ValidCost>,
 }
 
 impl LoggedAdvanceCostUpdate {
@@ -24,7 +24,7 @@ impl LoggedAdvanceCostUpdate {
         pool: Arc<PgPool>,
         stage_id: StageId,
         user_id: UserId,
-        cost: Option<Box<dyn Cost>>,
+        cost: Option<ValidCost>,
     ) -> Self {
         Self {
             pool,
@@ -43,13 +43,13 @@ impl Task for LoggedAdvanceCostUpdate {
         let old = StageAdvanceCostReceipt::new(self.pool.clone(), self.stage_id)
             .value()
             .await?;
-        AdvanceCostUpdate::new(self.pool.clone(), self.stage_id, self.cost.clone())
+        AdvanceCostUpdate::new(self.pool.clone(), self.stage_id, self.cost)
             .perform()
             .await?;
         if let Some(old_cost) = old
-            && self.cost != Some(old_cost.clone())
+            && self.cost != Some(old_cost)
         {
-            let text = AdvanceCostChangeText::new(old_cost, self.cost.clone()).text();
+            let text = AdvanceCostChangeText::new(old_cost, self.cost).text();
             let _ =
                 SystemCommentCreation::new(self.pool.clone(), self.stage_id, self.user_id, text)
                     .perform()

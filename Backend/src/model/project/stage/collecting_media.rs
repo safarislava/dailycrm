@@ -1,6 +1,6 @@
 use crate::model::contract::stage_media::{StageCosts, StageMedia, StageStatus};
 use crate::model::project::id::ProjectId;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
@@ -15,9 +15,9 @@ pub struct StageSummaryItem {
     pub deadline: Option<DateTime<Utc>>,
     pub completed: bool,
     pub gip_confirmed: bool,
-    pub advance_cost: Option<Box<dyn Cost>>,
+    pub advance_cost: Option<ValidCost>,
     pub advance_confirmed: bool,
-    pub final_cost: Option<Box<dyn Cost>>,
+    pub final_cost: Option<ValidCost>,
     pub final_confirmed: bool,
     pub has_act: bool,
 }
@@ -39,9 +39,9 @@ impl StageSummaryItem {
                 has_act: self.has_act,
             },
             StageCosts {
-                advance_cost: self.advance_cost.clone(),
+                advance_cost: self.advance_cost,
                 advance_confirmed: self.advance_confirmed,
-                final_cost: self.final_cost.clone(),
+                final_cost: self.final_cost,
                 final_confirmed: self.final_confirmed,
             },
         );

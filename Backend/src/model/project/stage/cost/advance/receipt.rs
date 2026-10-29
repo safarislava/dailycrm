@@ -1,6 +1,6 @@
 use crate::model::contract::box_error::BoxError;
 use crate::model::contract::value::Value;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -17,11 +17,11 @@ impl StageAdvanceCostReceipt {
 }
 
 #[async_trait::async_trait]
-impl Value<Option<Box<dyn Cost>>> for StageAdvanceCostReceipt {
-    async fn value(&self) -> Result<Option<Box<dyn Cost>>, BoxError> {
+impl Value<Option<ValidCost>> for StageAdvanceCostReceipt {
+    async fn value(&self) -> Result<Option<ValidCost>, BoxError> {
         #[derive(sqlx::FromRow)]
         struct Row {
-            advance_cost: Option<Box<dyn Cost>>,
+            advance_cost: Option<ValidCost>,
         }
         let row = sqlx::query_as::<_, Row>(
             "SELECT cost AS advance_cost FROM stage_payments WHERE project_id = $1 AND parent_position = $2 AND stage_position = $3 AND kind = 'first_advance'",

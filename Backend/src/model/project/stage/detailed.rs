@@ -1,6 +1,6 @@
 use crate::model::contract::box_error::BoxError;
 use crate::model::project::contract::json::Json;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -30,9 +30,9 @@ impl Json for DetailedStage {
             title: String,
             deadline: Option<DateTime<Utc>>,
             completed: bool,
-            advance_cost: Option<Box<dyn Cost>>,
+            advance_cost: Option<ValidCost>,
             advance_confirmed: bool,
-            final_cost: Option<Box<dyn Cost>>,
+            final_cost: Option<ValidCost>,
             final_confirmed: bool,
             gip_confirmed: bool,
         }

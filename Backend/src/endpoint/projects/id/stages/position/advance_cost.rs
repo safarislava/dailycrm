@@ -4,7 +4,7 @@ use crate::model::audit::AuditAction;
 use crate::model::audit::AuditedTask;
 use crate::model::contract::task::Task;
 use crate::model::project::stage::cost::advance::logged_update::LoggedAdvanceCostUpdate;
-use crate::model::project::stage::cost::contract::cost::Cost;
+use crate::model::project::stage::cost::valid_cost::ValidCost;
 use crate::model::project::stage::id::StageId;
 use crate::model::project::stage::invalidating_by_project_id::InvalidatingByProjectId;
 use crate::state::AppState;
@@ -14,7 +14,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct UpdateCostDto {
-    cost: Option<Box<dyn Cost>>,
+    cost: Option<ValidCost>,
 }
 
 pub async fn patch(
@@ -32,7 +32,7 @@ pub async fn patch(
     AuditedTask::new(
         user,
         AuditAction::AdvanceCostUpdate {
-            new_cost: cost.clone(),
+            new_cost: cost,
         },
         format!("{project_id}:{position}"),
         InvalidatingByProjectId::new(
