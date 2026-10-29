@@ -32,7 +32,10 @@ pub async fn patch(
     let position = stage_id.position();
     AuditedTask::new(
         user,
-        AuditAction::AdvanceCostUpdate { new_cost: cost },
+        AuditAction::CostUpdate {
+            kind: "first_advance",
+            new_cost: cost,
+        },
         format!("{project_id}:{position}"),
         InvalidatingByProjectId::new(
             LoggedPaymentCostUpdate::new(

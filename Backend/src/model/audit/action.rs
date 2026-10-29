@@ -6,22 +6,41 @@ pub enum AuditAction {
     UserCreate,
     InviteCreate,
     ProjectCreate,
-    ProjectRename { new_title: String },
+    ProjectRename {
+        new_title: String,
+    },
     ProjectDelete,
     StageCreate,
-    StageRename { new_title: String },
+    StageRename {
+        new_title: String,
+    },
     StageDelete,
-    StageReorder { to: i32 },
-    DeadlineUpdate { new_deadline: Option<String> },
-    AdvanceCostUpdate { new_cost: Option<ValidCost> },
-    SecondAdvanceCostUpdate { new_cost: Option<ValidCost> },
-    FinalCostUpdate { new_cost: Option<ValidCost> },
-    GipConfirm { confirmed: bool },
-    ActUpload { filename: String },
+    StageReorder {
+        to: i32,
+    },
+    DeadlineUpdate {
+        new_deadline: Option<String>,
+    },
+    CostUpdate {
+        kind: &'static str,
+        new_cost: Option<ValidCost>,
+    },
+    GipConfirm {
+        confirmed: bool,
+    },
+    ActUpload {
+        filename: String,
+    },
     ActDelete,
-    AttachmentUpload { filename: String },
-    AttachmentDelete { filename: String },
-    CommentCreate { text: String },
+    AttachmentUpload {
+        filename: String,
+    },
+    AttachmentDelete {
+        filename: String,
+    },
+    CommentCreate {
+        text: String,
+    },
     CommentDelete,
 }
 
@@ -46,7 +65,7 @@ impl fmt::Display for AuditAction {
                 let d = new_deadline.as_deref().unwrap_or("none");
                 write!(f, "deadline_update(deadline: '{d}')")
             }
-            Self::AdvanceCostUpdate { new_cost } => {
+            Self::CostUpdate { kind, new_cost } => {
                 let c = new_cost
                     .as_ref()
                     .map(|v| {
@@ -55,29 +74,7 @@ impl fmt::Display for AuditAction {
                             .unwrap_or_else(|_| "invalid".to_string())
                     })
                     .unwrap_or_else(|| "none".to_string());
-                write!(f, "advance_cost_update(cost: {c})")
-            }
-            Self::SecondAdvanceCostUpdate { new_cost } => {
-                let c = new_cost
-                    .as_ref()
-                    .map(|v| {
-                        v.as_decimal()
-                            .map(|d| d.to_string())
-                            .unwrap_or_else(|_| "invalid".to_string())
-                    })
-                    .unwrap_or_else(|| "none".to_string());
-                write!(f, "second_advance_cost_update(cost: {c})")
-            }
-            Self::FinalCostUpdate { new_cost } => {
-                let c = new_cost
-                    .as_ref()
-                    .map(|v| {
-                        v.as_decimal()
-                            .map(|d| d.to_string())
-                            .unwrap_or_else(|_| "invalid".to_string())
-                    })
-                    .unwrap_or_else(|| "none".to_string());
-                write!(f, "final_cost_update(cost: {c})")
+                write!(f, "cost_update(kind: '{kind}', cost: {c})")
             }
             Self::GipConfirm { confirmed } => {
                 write!(f, "gip_confirm(confirmed: {confirmed})")
@@ -136,29 +133,32 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                AuditAction::AdvanceCostUpdate {
+                AuditAction::CostUpdate {
+                    kind: "first_advance",
                     new_cost: Some(100.into())
                 }
             ),
-            "advance_cost_update(cost: 100)"
+            "cost_update(kind: 'first_advance', cost: 100)"
         );
         assert_eq!(
             format!(
                 "{}",
-                AuditAction::SecondAdvanceCostUpdate {
+                AuditAction::CostUpdate {
+                    kind: "second_advance",
                     new_cost: Some(250.into())
                 }
             ),
-            "second_advance_cost_update(cost: 250)"
+            "cost_update(kind: 'second_advance', cost: 250)"
         );
         assert_eq!(
             format!(
                 "{}",
-                AuditAction::FinalCostUpdate {
-                    new_cost: Some(500.into())
+                AuditAction::CostUpdate {
+                    kind: "final",
+                    new_cost: None
                 }
             ),
-            "final_cost_update(cost: 500)"
+            "cost_update(kind: 'final', cost: none)"
         );
         assert_eq!(
             format!("{}", AuditAction::GipConfirm { confirmed: true }),
