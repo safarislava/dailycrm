@@ -3,30 +3,34 @@ import {useDispatch} from 'react-redux'
 import type {AppDispatch} from '../../../store'
 import {selectStage} from '../../../store/uiSlice'
 import {
-  useGetDetailedStageQuery,
-  useGetDetailedSubStageQuery,
-  useListActsQuery,
-  useListAttachmentsQuery,
-  useListCommentsQuery,
-  useListPinnedCommentsQuery,
-  useListPinnedSubStageCommentsQuery,
-  useListSubStageActsQuery,
-  useListSubStageAttachmentsQuery,
-  useListSubStageCommentsQuery,
-  useUpdateAdvanceConfirmedMutation,
-  useUpdateAdvanceCostMutation,
-  useUpdateFinalConfirmedMutation,
-  useUpdateFinalCostMutation,
-  useUpdateGipConfirmedMutation,
-  useUpdateStageDeadlineMutation,
-  useUpdateStageTitleMutation,
-  useUpdateSubStageAdvanceConfirmedMutation,
-  useUpdateSubStageAdvanceCostMutation,
-  useUpdateSubStageDeadlineMutation,
-  useUpdateSubStageFinalConfirmedMutation,
-  useUpdateSubStageFinalCostMutation,
-  useUpdateSubStageGipConfirmedMutation,
-  useUpdateSubStageTitleMutation,
+    useGetDetailedStageQuery,
+    useGetDetailedSubStageQuery,
+    useListActsQuery,
+    useListAttachmentsQuery,
+    useListCommentsQuery,
+    useListPinnedCommentsQuery,
+    useListPinnedSubStageCommentsQuery,
+    useListSubStageActsQuery,
+    useListSubStageAttachmentsQuery,
+    useListSubStageCommentsQuery,
+    useUpdateAdvanceConfirmedMutation,
+    useUpdateAdvanceCostMutation,
+    useUpdateFinalConfirmedMutation,
+    useUpdateFinalCostMutation,
+    useUpdateGipConfirmedMutation,
+    useUpdateSecondAdvanceConfirmedMutation,
+    useUpdateSecondAdvanceCostMutation,
+    useUpdateStageDeadlineMutation,
+    useUpdateStageTitleMutation,
+    useUpdateSubStageAdvanceConfirmedMutation,
+    useUpdateSubStageAdvanceCostMutation,
+    useUpdateSubStageDeadlineMutation,
+    useUpdateSubStageFinalConfirmedMutation,
+    useUpdateSubStageFinalCostMutation,
+    useUpdateSubStageGipConfirmedMutation,
+    useUpdateSubStageSecondAdvanceConfirmedMutation,
+    useUpdateSubStageSecondAdvanceCostMutation,
+    useUpdateSubStageTitleMutation,
 } from '../../../store/crmApi'
 import StageHeader from './stageDetails/StageHeader'
 import StageFinancials from './stageDetails/StageFinancials'
@@ -86,17 +90,21 @@ export default function StageDetailsSidebar({
   const [updateTopTitle] = useUpdateStageTitleMutation()
   const [updateTopDeadline] = useUpdateStageDeadlineMutation()
   const [updateTopAdvanceCost] = useUpdateAdvanceCostMutation()
+    const [updateTopSecondAdvanceCost] = useUpdateSecondAdvanceCostMutation()
   const [updateTopFinalCost] = useUpdateFinalCostMutation()
   const [updateTopGip] = useUpdateGipConfirmedMutation()
   const [updateTopAdvanceConfirmed] = useUpdateAdvanceConfirmedMutation()
+    const [updateTopSecondAdvanceConfirmed] = useUpdateSecondAdvanceConfirmedMutation()
   const [updateTopFinalConfirmed] = useUpdateFinalConfirmedMutation()
 
   const [updateSubTitle] = useUpdateSubStageTitleMutation()
   const [updateSubDeadline] = useUpdateSubStageDeadlineMutation()
   const [updateSubAdvanceCost] = useUpdateSubStageAdvanceCostMutation()
+    const [updateSubSecondAdvanceCost] = useUpdateSubStageSecondAdvanceCostMutation()
   const [updateSubFinalCost] = useUpdateSubStageFinalCostMutation()
   const [updateSubGip] = useUpdateSubStageGipConfirmedMutation()
   const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
+    const [updateSubSecondAdvanceConfirmed] = useUpdateSubStageSecondAdvanceConfirmedMutation()
   const [updateSubFinalConfirmed] = useUpdateSubStageFinalConfirmedMutation()
 
   // Handlers
@@ -134,6 +142,22 @@ export default function StageDetailsSidebar({
     }
   }
 
+    const handleUpdateSecondAdvanceCost = async (v: string) => {
+        const err = validateCost(v)
+        if (err) throw new Error(err)
+        const cost = parseCost(v)
+        if (isSub) {
+            await updateSubSecondAdvanceCost({
+                projectId,
+                parentPosition: selectedStage.parentPosition,
+                position: selectedStage.position,
+                cost
+            }).unwrap()
+        } else {
+            await updateTopSecondAdvanceCost({projectId, position: selectedStage.position, cost}).unwrap()
+        }
+    }
+
   const handleUpdateFinalCost = async (v: string) => {
     const err = validateCost(v)
     if (err) throw new Error(err)
@@ -161,19 +185,49 @@ export default function StageDetailsSidebar({
 
   const handleToggleAdvancePayment = async () => {
     if (!detail) return
+      const payment = detail.payments?.find((p) => p.kind === 'first_advance')
+      const confirmed = payment?.confirmed ?? false
     if (isSub) {
-      await updateSubAdvanceConfirmed({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.advance_confirmed })
+        await updateSubAdvanceConfirmed({
+            projectId,
+            parentPosition: selectedStage.parentPosition,
+            position: selectedStage.position,
+            confirmed: !confirmed
+        })
     } else {
-      await updateTopAdvanceConfirmed({ projectId, position: selectedStage.position, confirmed: !detail.advance_confirmed })
+        await updateTopAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
+    }
+  }
+
+    const handleToggleSecondAdvancePayment = async () => {
+        if (!detail) return
+        const payment = detail.payments?.find((p) => p.kind === 'second_advance')
+        const confirmed = payment?.confirmed ?? false
+        if (isSub) {
+            await updateSubSecondAdvanceConfirmed({
+                projectId,
+                parentPosition: selectedStage.parentPosition,
+                position: selectedStage.position,
+                confirmed: !confirmed
+            })
+        } else {
+            await updateTopSecondAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
     }
   }
 
   const handleToggleFinalPayment = async () => {
     if (!detail) return
+      const payment = detail.payments?.find((p) => p.kind === 'final')
+      const confirmed = payment?.confirmed ?? false
     if (isSub) {
-      await updateSubFinalConfirmed({ projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position, confirmed: !detail.final_confirmed })
+        await updateSubFinalConfirmed({
+            projectId,
+            parentPosition: selectedStage.parentPosition,
+            position: selectedStage.position,
+            confirmed: !confirmed
+        })
     } else {
-      await updateTopFinalConfirmed({ projectId, position: selectedStage.position, confirmed: !detail.final_confirmed })
+        await updateTopFinalConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
     }
   }
 
@@ -198,6 +252,8 @@ export default function StageDetailsSidebar({
               onToggleGip={handleToggleGip}
               onUpdateAdvanceCost={handleUpdateAdvanceCost}
               onToggleAdvancePayment={handleToggleAdvancePayment}
+              onUpdateSecondAdvanceCost={handleUpdateSecondAdvanceCost}
+              onToggleSecondAdvancePayment={handleToggleSecondAdvancePayment}
               onUpdateFinalCost={handleUpdateFinalCost}
               onToggleFinalPayment={handleToggleFinalPayment}
             />

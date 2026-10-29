@@ -1,5 +1,5 @@
-import { baseApi } from './baseApi'
-import type { DetailedStage } from '../../types'
+import {baseApi} from './baseApi'
+import type {DetailedStage} from '../../types'
 
 export const stageFieldsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -44,6 +44,19 @@ export const stageFieldsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
+          {type: 'Stage' as const, id: projectId},
+          {type: 'Comment' as const, id: `${projectId}-${position}`},
+          'Project',
+      ],
+    }),
+      updateSecondAdvanceCost: builder.mutation<void, { projectId: string; position: number; cost: number | null }>({
+          query: ({projectId, position, cost}) => ({
+              url: `/projects/${projectId}/stages/${position}/second-advance-cost`,
+              method: 'PATCH',
+              body: {cost},
+          }),
+          invalidatesTags: (_r, _e, {projectId, position}) => [
+              {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
         { type: 'Stage' as const, id: projectId },
         { type: 'Comment' as const, id: `${projectId}-${position}` },
         'Project',
@@ -81,6 +94,23 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         url: `/projects/${projectId}/stages/${position}/advance-confirmed`,
         method: 'PATCH',
         body: { confirmed },
+      }),
+        invalidatesTags: (_r, _e, {projectId, position}) => [
+            {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
+            {type: 'Stage' as const, id: projectId},
+            {type: 'Comment' as const, id: `${projectId}-${position}`},
+            'Project',
+        ],
+    }),
+      updateSecondAdvanceConfirmed: builder.mutation<void, {
+          projectId: string;
+          position: number;
+          confirmed: boolean
+      }>({
+          query: ({projectId, position, confirmed}) => ({
+              url: `/projects/${projectId}/stages/${position}/second-advance-confirmed`,
+              method: 'PATCH',
+              body: {confirmed},
       }),
       invalidatesTags: (_r, _e, { projectId, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
@@ -143,6 +173,24 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: { cost },
       }),
+        invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+            {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`},
+            {type: 'Stage' as const, id: projectId},
+            {type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}`},
+            'Project',
+        ],
+    }),
+      updateSubStageSecondAdvanceCost: builder.mutation<void, {
+          projectId: string;
+          parentPosition: number;
+          position: number;
+          cost: number | null
+      }>({
+          query: ({projectId, parentPosition, position, cost}) => ({
+              url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/second-advance-cost`,
+              method: 'PATCH',
+              body: {cost},
+      }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
         { type: 'Stage' as const, id: projectId },
@@ -183,6 +231,24 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: { confirmed },
       }),
+        invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+            {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`},
+            {type: 'Stage' as const, id: projectId},
+            {type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}`},
+            'Project',
+        ],
+    }),
+      updateSubStageSecondAdvanceConfirmed: builder.mutation<void, {
+          projectId: string;
+          parentPosition: number;
+          position: number;
+          confirmed: boolean
+      }>({
+          query: ({projectId, parentPosition, position, confirmed}) => ({
+              url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/second-advance-confirmed`,
+              method: 'PATCH',
+              body: {confirmed},
+      }),
       invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
         { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
         { type: 'Stage' as const, id: projectId },
@@ -211,16 +277,20 @@ export const {
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
   useUpdateAdvanceCostMutation,
+    useUpdateSecondAdvanceCostMutation,
   useUpdateFinalCostMutation,
   useUpdateGipConfirmedMutation,
   useUpdateAdvanceConfirmedMutation,
+    useUpdateSecondAdvanceConfirmedMutation,
   useUpdateFinalConfirmedMutation,
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,
   useUpdateSubStageAdvanceCostMutation,
+    useUpdateSubStageSecondAdvanceCostMutation,
   useUpdateSubStageFinalCostMutation,
   useUpdateSubStageGipConfirmedMutation,
   useUpdateSubStageAdvanceConfirmedMutation,
+    useUpdateSubStageSecondAdvanceConfirmedMutation,
   useUpdateSubStageFinalConfirmedMutation,
 } = stageFieldsApi

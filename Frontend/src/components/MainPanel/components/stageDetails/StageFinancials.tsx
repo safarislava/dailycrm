@@ -10,6 +10,8 @@ interface StageFinancialsProps {
   onToggleGip: () => void
   onUpdateAdvanceCost: (cost: string) => Promise<void>
   onToggleAdvancePayment: () => void
+  onUpdateSecondAdvanceCost: (cost: string) => Promise<void>
+  onToggleSecondAdvancePayment: () => void
   onUpdateFinalCost: (cost: string) => Promise<void>
   onToggleFinalPayment: () => void
 }
@@ -21,9 +23,15 @@ export default function StageFinancials({
   onToggleGip,
   onUpdateAdvanceCost,
   onToggleAdvancePayment,
+                                          onUpdateSecondAdvanceCost,
+                                          onToggleSecondAdvancePayment,
   onUpdateFinalCost,
   onToggleFinalPayment,
 }: StageFinancialsProps) {
+  const firstAdvance = detail.payments?.find((p) => p.kind === 'first_advance')
+  const secondAdvance = detail.payments?.find((p) => p.kind === 'second_advance')
+  const finalPayment = detail.payments?.find((p) => p.kind === 'final')
+
   return (
     <>
       <div className={styles.fields}>
@@ -63,24 +71,60 @@ export default function StageFinancials({
           <EditableField
             label="Аванс"
             displayValue={
-              detail.advance_cost != null ? `${formatNumber(detail.advance_cost)} ₽` : '—'
+              firstAdvance?.cost != null ? `${formatNumber(firstAdvance.cost)} ₽` : '—'
             }
-            rawValue={detail.advance_cost != null ? formatNumber(detail.advance_cost) : ''}
+            rawValue={firstAdvance?.cost != null ? formatNumber(firstAdvance.cost) : ''}
             type="text"
             validate={validateCost}
             onSave={onUpdateAdvanceCost}
           />
           <div
-            className={`${styles.field} ${detail.advance_cost != null ? styles.fieldEditable : ''}`}
-            onClick={detail.advance_cost != null ? onToggleAdvancePayment : undefined}
+              className={`${styles.field} ${firstAdvance?.cost != null ? styles.fieldEditable : ''}`}
+              onClick={firstAdvance?.cost != null ? onToggleAdvancePayment : undefined}
           >
             <span className={styles.fieldLabel}>Подтверждение аванса</span>
             <span className={styles.fieldValue}>
-              {detail.advance_cost == null ? (
+              {firstAdvance?.cost == null ? (
+                  <span className={styles.pendingBadge}>Не требуется</span>
+              ) : (
+                  <span
+                      className={
+                        firstAdvance.confirmed ? styles.completedBadge : styles.pendingBadge
+                      }
+                  >
+                  {firstAdvance.confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.splitRow}>
+          <EditableField
+              label="Второй аванс"
+              displayValue={
+                secondAdvance?.cost != null ? `${formatNumber(secondAdvance.cost)} ₽` : '—'
+              }
+              rawValue={secondAdvance?.cost != null ? formatNumber(secondAdvance.cost) : ''}
+              type="text"
+              validate={validateCost}
+              onSave={onUpdateSecondAdvanceCost}
+          />
+          <div
+              className={`${styles.field} ${secondAdvance?.cost != null ? styles.fieldEditable : ''}`}
+              onClick={secondAdvance?.cost != null ? onToggleSecondAdvancePayment : undefined}
+          >
+            <span className={styles.fieldLabel}>Подтверждение второго аванса</span>
+            <span className={styles.fieldValue}>
+              {secondAdvance?.cost == null ? (
                 <span className={styles.pendingBadge}>Не требуется</span>
               ) : (
-                <span className={detail.advance_confirmed ? styles.completedBadge : styles.pendingBadge}>
-                  {detail.advance_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+                  <span
+                      className={
+                        secondAdvance.confirmed ? styles.completedBadge : styles.pendingBadge
+                      }
+                  >
+                  {secondAdvance.confirmed ? 'Подтверждено' : 'Не подтверждено'}
                 </span>
               )}
             </span>
@@ -91,9 +135,9 @@ export default function StageFinancials({
           <EditableField
             label="Окончательная оплата"
             displayValue={
-              detail.final_cost != null ? `${formatNumber(detail.final_cost)} ₽` : '—'
+              finalPayment?.cost != null ? `${formatNumber(finalPayment.cost)} ₽` : '—'
             }
-            rawValue={detail.final_cost != null ? formatNumber(detail.final_cost) : ''}
+            rawValue={finalPayment?.cost != null ? formatNumber(finalPayment.cost) : ''}
             type="text"
             validate={validateCost}
             onSave={onUpdateFinalCost}
@@ -101,8 +145,12 @@ export default function StageFinancials({
           <div className={`${styles.field} ${styles.fieldEditable}`} onClick={onToggleFinalPayment}>
             <span className={styles.fieldLabel}>Подтверждение оплаты</span>
             <span className={styles.fieldValue}>
-              <span className={detail.final_confirmed ? styles.completedBadge : styles.pendingBadge}>
-                {detail.final_confirmed ? 'Подтверждено' : 'Не подтверждено'}
+              <span
+                  className={
+                    finalPayment?.confirmed ? styles.completedBadge : styles.pendingBadge
+                  }
+              >
+                {finalPayment?.confirmed ? 'Подтверждено' : 'Не подтверждено'}
               </span>
             </span>
           </div>

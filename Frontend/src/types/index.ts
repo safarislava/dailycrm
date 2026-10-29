@@ -6,6 +6,12 @@ export interface Project {
   updated_at: string
 }
 
+export interface StagePayment {
+  kind: string
+  cost: number | string | null
+  confirmed: boolean
+}
+
 export interface Stage {
   project_id: string
   parent_position: number
@@ -14,10 +20,7 @@ export interface Stage {
   deadline: string | null
   completed: boolean
   gip_confirmed: boolean
-  advance_cost: number | string | null
-  advance_confirmed: boolean
-  final_cost: number | string | null
-  final_confirmed: boolean
+  payments: StagePayment[]
   has_act: boolean
 }
 
@@ -28,10 +31,7 @@ export interface DetailedStage {
   title: string
   deadline: string | null
   completed: boolean
-  advance_cost: number | string | null
-  advance_confirmed: boolean
-  final_cost: number | string | null
-  final_confirmed: boolean
+  payments: StagePayment[]
   gip_confirmed: boolean
 }
 

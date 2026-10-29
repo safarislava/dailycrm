@@ -64,16 +64,23 @@ export default function BudgetDonutChart({
   const [hoveredSliceId, setHoveredSliceId] = useState<string | null>(null)
 
   const projectTotalCost = useMemo(() => {
-    const sum = stages.reduce((acc, s) => acc + toFloat(s.advance_cost) + toFloat(s.final_cost), 0)
+      const sum = stages.reduce(
+          (acc, s) => acc + (s.payments ?? []).reduce((pAcc, p) => pAcc + toFloat(p.cost), 0),
+          0
+      )
     return Math.round(sum * 100) / 100
   }, [stages])
 
   const projectConfirmedCost = useMemo(() => {
-    const sum = stages.reduce((acc, s) => {
-      const adv = s.advance_confirmed ? toFloat(s.advance_cost) : 0
-      const fin = s.final_confirmed ? toFloat(s.final_cost) : 0
-      return acc + adv + fin
-    }, 0)
+      const sum = stages.reduce(
+          (acc, s) =>
+              acc +
+              (s.payments ?? []).reduce(
+                  (pAcc, p) => pAcc + (p.confirmed ? toFloat(p.cost) : 0),
+                  0
+              ),
+          0
+      )
     return Math.round(sum * 100) / 100
   }, [stages])
 
@@ -82,19 +89,34 @@ export default function BudgetDonutChart({
 
     const stageItems = sortedStagesForDashboard
         .map((s) => {
-          const adv = toFloat(s.advance_cost)
-          const fin = toFloat(s.final_cost)
-          return {
-            id: `${s.parent_position}-${s.position}-stage`,
-            label: getStageLabel(s),
-            title: `${getStageLabel(s)}. ${s.title}`,
-            cost: Math.round((adv + fin) * 100) / 100,
-            parent_position: s.parent_position,
-            position: s.position,
-            isConfirmed: (!adv || s.advance_confirmed) && s.final_confirmed,
-          }
+            const payments = s.payments ?? []
+            const total = payments.reduce((acc, p) => acc + toFloat(p.cost), 0)
+            const isConfirmed =
+                payments.length > 0 && payments.every((p) => !toFloat(p.cost) || p.confirmed)
+            return {
+                id: `${s.parent_position}-${s.position}-stage`,
+                label: getStageLabel(s),
+                title: `${getStageLabel(s)}. ${s.title}`,
+                cost: Math.round(total * 100) / 100,
+                parent_position: s.parent_position,
+                position: s.position,
+                isConfirmed,
+            }
         })
       .filter((item) => item.cost > 0)
+
+      const paymentLabel = (kind: string) => {
+          switch (kind) {
+              case 'first_advance':
+                  return 'аванс'
+              case 'second_advance':
+                  return '2-й аванс'
+              case 'final':
+                  return 'стоимость'
+              default:
+                  return kind
+          }
+      }
 
     const paymentItems: Array<{
       id: string
@@ -107,29 +129,20 @@ export default function BudgetDonutChart({
     }> = []
 
     for (const s of sortedStagesForDashboard) {
-      const adv = toFloat(s.advance_cost)
-      if (adv > 0) {
-        paymentItems.push({
-          id: `${s.parent_position}-${s.position}-advance`,
-          label: `${getStageLabel(s)} (аванс)`,
-          title: `${getStageLabel(s)}. ${s.title} (аванс)`,
-          cost: adv,
-          isConfirmed: s.advance_confirmed,
-          parent_position: s.parent_position,
-          position: s.position,
-        })
-      }
-      const fin = toFloat(s.final_cost)
-      if (fin > 0) {
-        paymentItems.push({
-          id: `${s.parent_position}-${s.position}-final`,
-          label: `${getStageLabel(s)} (стоимость)`,
-          title: `${getStageLabel(s)}. ${s.title} (стоимость)`,
-          cost: fin,
-          isConfirmed: s.final_confirmed,
-          parent_position: s.parent_position,
-          position: s.position,
-        })
+        for (const p of s.payments ?? []) {
+            const cost = toFloat(p.cost)
+            if (cost > 0) {
+                const suffix = paymentLabel(p.kind)
+                paymentItems.push({
+                    id: `${s.parent_position}-${s.position}-${p.kind}`,
+                    label: `${getStageLabel(s)} (${suffix})`,
+                    title: `${getStageLabel(s)}. ${s.title} (${suffix})`,
+                    cost,
+                    isConfirmed: p.confirmed,
+                    parent_position: s.parent_position,
+                    position: s.position,
+                })
+            }
       }
     }
 
