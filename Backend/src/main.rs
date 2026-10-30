@@ -1,3 +1,5 @@
+#![allow(clippy::double_must_use)]
+
 use actix_web::{App, HttpServer, web};
 use dailycrm::cors;
 use dailycrm::db;

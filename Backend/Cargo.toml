@@ -3,6 +3,9 @@ name = "dailycrm"
 version = "0.1.0"
 edition = "2024"
 
+[lints.clippy]
+double_must_use = "allow"
+
 [dependencies]
 actix-web = "4.13.0"
 actix-cors = "0.7.1"

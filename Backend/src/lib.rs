@@ -1,3 +1,5 @@
+#![allow(clippy::double_must_use)]
+
 pub mod cors;
 pub mod db;
 pub mod endpoint;

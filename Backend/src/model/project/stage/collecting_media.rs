@@ -113,9 +113,9 @@ mod tests {
         assert_eq!(items[0].title, "Stage 1");
         assert_eq!(items[0].payments.len(), 3);
         assert_eq!(items[0].payments[0].kind, "first_advance");
-        assert_eq!(items[0].payments[0].confirmed, true);
+        assert!(items[0].payments[0].confirmed);
         assert_eq!(items[0].payments[1].kind, "second_advance");
-        assert_eq!(items[0].payments[1].confirmed, false);
-        assert_eq!(items[0].has_act, true);
+        assert!(!items[0].payments[1].confirmed);
+        assert!(items[0].has_act);
     }
 }
