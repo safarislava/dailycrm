@@ -15,22 +15,16 @@ import {
     useListSubStageActsQuery,
     useListSubStageAttachmentsQuery,
     useListSubStageCommentsQuery,
-    useUpdateAdvanceConfirmedMutation,
     useUpdateAdvanceCostMutation,
-    useUpdateFinalConfirmedMutation,
     useUpdateFinalCostMutation,
     useUpdateGipConfirmedMutation,
-    useUpdateSecondAdvanceConfirmedMutation,
     useUpdateSecondAdvanceCostMutation,
     useUpdateStageDeadlineMutation,
     useUpdateStageTitleMutation,
-    useUpdateSubStageAdvanceConfirmedMutation,
     useUpdateSubStageAdvanceCostMutation,
     useUpdateSubStageDeadlineMutation,
-    useUpdateSubStageFinalConfirmedMutation,
     useUpdateSubStageFinalCostMutation,
     useUpdateSubStageGipConfirmedMutation,
-    useUpdateSubStageSecondAdvanceConfirmedMutation,
     useUpdateSubStageSecondAdvanceCostMutation,
     useUpdateSubStageTitleMutation,
 } from '../../../store/crmApi'
@@ -95,9 +89,6 @@ export default function StageDetailsSidebar({
     const [updateTopSecondAdvanceCost] = useUpdateSecondAdvanceCostMutation()
   const [updateTopFinalCost] = useUpdateFinalCostMutation()
   const [updateTopGip] = useUpdateGipConfirmedMutation()
-  const [updateTopAdvanceConfirmed] = useUpdateAdvanceConfirmedMutation()
-    const [updateTopSecondAdvanceConfirmed] = useUpdateSecondAdvanceConfirmedMutation()
-  const [updateTopFinalConfirmed] = useUpdateFinalConfirmedMutation()
 
   const [updateSubTitle] = useUpdateSubStageTitleMutation()
   const [updateSubDeadline] = useUpdateSubStageDeadlineMutation()
@@ -105,9 +96,6 @@ export default function StageDetailsSidebar({
     const [updateSubSecondAdvanceCost] = useUpdateSubStageSecondAdvanceCostMutation()
   const [updateSubFinalCost] = useUpdateSubStageFinalCostMutation()
   const [updateSubGip] = useUpdateSubStageGipConfirmedMutation()
-  const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
-    const [updateSubSecondAdvanceConfirmed] = useUpdateSubStageSecondAdvanceConfirmedMutation()
-  const [updateSubFinalConfirmed] = useUpdateSubStageFinalConfirmedMutation()
 
     const [addTranche] = useAddPaymentTrancheMutation()
     const [deleteTranche] = useDeletePaymentTrancheMutation()
@@ -188,54 +176,6 @@ export default function StageDetailsSidebar({
     }
   }
 
-  const handleToggleAdvancePayment = async () => {
-    if (!detail) return
-      const payment = detail.payments?.find((p) => p.kind === 'first_advance')
-      const confirmed = payment?.confirmed ?? false
-    if (isSub) {
-        await updateSubAdvanceConfirmed({
-            projectId,
-            parentPosition: selectedStage.parentPosition,
-            position: selectedStage.position,
-            confirmed: !confirmed
-        })
-    } else {
-        await updateTopAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
-    }
-  }
-
-    const handleToggleSecondAdvancePayment = async () => {
-        if (!detail) return
-        const payment = detail.payments?.find((p) => p.kind === 'second_advance')
-        const confirmed = payment?.confirmed ?? false
-        if (isSub) {
-            await updateSubSecondAdvanceConfirmed({
-                projectId,
-                parentPosition: selectedStage.parentPosition,
-                position: selectedStage.position,
-                confirmed: !confirmed
-            })
-        } else {
-            await updateTopSecondAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
-    }
-  }
-
-  const handleToggleFinalPayment = async () => {
-    if (!detail) return
-      const payment = detail.payments?.find((p) => p.kind === 'final')
-      const confirmed = payment?.confirmed ?? false
-    if (isSub) {
-        await updateSubFinalConfirmed({
-            projectId,
-            parentPosition: selectedStage.parentPosition,
-            position: selectedStage.position,
-            confirmed: !confirmed
-        })
-    } else {
-        await updateTopFinalConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
-    }
-  }
-
     const handleAddTranche = async (kind: 'first_advance' | 'second_advance' | 'final', amount: number) => {
         if (isSub) {
             await addTranche({
@@ -294,11 +234,8 @@ export default function StageDetailsSidebar({
               onUpdateDeadline={handleUpdateDeadline}
               onToggleGip={handleToggleGip}
               onUpdateAdvanceCost={handleUpdateAdvanceCost}
-              onToggleAdvancePayment={handleToggleAdvancePayment}
               onUpdateSecondAdvanceCost={handleUpdateSecondAdvanceCost}
-              onToggleSecondAdvancePayment={handleToggleSecondAdvancePayment}
               onUpdateFinalCost={handleUpdateFinalCost}
-              onToggleFinalPayment={handleToggleFinalPayment}
               onAddTranche={handleAddTranche}
               onDeleteTranche={handleDeleteTranche}
             />

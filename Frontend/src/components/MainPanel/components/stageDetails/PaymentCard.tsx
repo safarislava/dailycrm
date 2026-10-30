@@ -10,7 +10,6 @@ interface PaymentCardProps {
     onRemovePayment?: () => Promise<void>
     onAddTranche: (amount: number) => Promise<void>
     onDeleteTranche: (trancheId: string) => Promise<void>
-    onToggleConfirmed?: () => void
 }
 
 export default function PaymentCard({
@@ -20,7 +19,6 @@ export default function PaymentCard({
                                         onRemovePayment,
                                         onAddTranche,
                                         onDeleteTranche,
-                                        onToggleConfirmed,
                                     }: PaymentCardProps) {
     const [showPartForm, setShowPartForm] = useState(false)
     const [partAmount, setPartAmount] = useState('')

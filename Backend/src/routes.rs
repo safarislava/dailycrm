@@ -107,18 +107,6 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/second-advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/final-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::final_confirmed::patch),
-                            )
-                            .service(
                                 web::resource("/{project_id}/stages/{stage_id}/advance-tranches")
                                     .post(endpoint::projects::id::stages::position::advance_tranches::post::post),
                             )
@@ -221,18 +209,6 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/gip-confirmed")
                                     .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
-                            )
-                            .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::final_confirmed::patch),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-tranches")

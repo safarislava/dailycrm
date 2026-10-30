@@ -10,11 +10,8 @@ interface StageFinancialsProps {
   onUpdateDeadline: (deadline: string) => Promise<void>
   onToggleGip: () => void
   onUpdateAdvanceCost: (cost: string) => Promise<void>
-  onToggleAdvancePayment: () => void
   onUpdateSecondAdvanceCost: (cost: string) => Promise<void>
-  onToggleSecondAdvancePayment: () => void
   onUpdateFinalCost: (cost: string) => Promise<void>
-  onToggleFinalPayment: () => void
   onAddTranche: (kind: 'first_advance' | 'second_advance' | 'final', amount: number) => Promise<void>
   onDeleteTranche: (kind: 'first_advance' | 'second_advance' | 'final', trancheId: string) => Promise<void>
 }
@@ -25,11 +22,8 @@ export default function StageFinancials({
   onUpdateDeadline,
   onToggleGip,
   onUpdateAdvanceCost,
-  onToggleAdvancePayment,
                                           onUpdateSecondAdvanceCost,
-                                          onToggleSecondAdvancePayment,
   onUpdateFinalCost,
-  onToggleFinalPayment,
                                           onAddTranche,
                                           onDeleteTranche,
 }: StageFinancialsProps) {
@@ -68,17 +62,11 @@ export default function StageFinancials({
 
   const handleRemoveFirstAdvance = async () => {
     setAddingFirstAdvance(false)
-    if (firstAdvance?.confirmed) {
-      onToggleAdvancePayment()
-    }
     await onUpdateAdvanceCost('')
   }
 
   const handleRemoveSecondAdvance = async () => {
     setAddingSecondAdvance(false)
-    if (secondAdvance?.confirmed) {
-      onToggleSecondAdvancePayment()
-    }
     await onUpdateSecondAdvanceCost('')
   }
 
@@ -159,7 +147,6 @@ export default function StageFinancials({
                 onRemovePayment={!hasSecondAdvance ? handleRemoveFirstAdvance : undefined}
                 onAddTranche={(amount) => onAddTranche('first_advance', amount)}
                 onDeleteTranche={(id) => onDeleteTranche('first_advance', id)}
-                onToggleConfirmed={onToggleAdvancePayment}
             />
         )}
 
@@ -171,7 +158,6 @@ export default function StageFinancials({
                 onRemovePayment={handleRemoveSecondAdvance}
                 onAddTranche={(amount) => onAddTranche('second_advance', amount)}
                 onDeleteTranche={(id) => onDeleteTranche('second_advance', id)}
-                onToggleConfirmed={onToggleSecondAdvancePayment}
             />
         )}
 
@@ -201,7 +187,6 @@ export default function StageFinancials({
             onUpdateCost={onUpdateFinalCost}
             onAddTranche={(amount) => onAddTranche('final', amount)}
             onDeleteTranche={(id) => onDeleteTranche('final', id)}
-            onToggleConfirmed={onToggleFinalPayment}
         />
       </div>
     </>
