@@ -107,16 +107,28 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/advance-tranches")
+                                    .post(endpoint::projects::id::stages::position::advance_tranches::post::post),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/second-advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/advance-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::advance_tranches::id::delete::delete),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/final-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::final_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/second-advance-tranches")
+                                    .post(endpoint::projects::id::stages::position::second_advance_tranches::post::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/second-advance-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::second_advance_tranches::id::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/final-tranches")
+                                    .post(endpoint::projects::id::stages::position::final_tranches::post::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/final-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::final_tranches::id::delete::delete),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/act")
@@ -199,16 +211,28 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .patch(endpoint::projects::id::stages::position::gip_confirmed::patch),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::advance_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-tranches")
+                                    .post(endpoint::projects::id::stages::position::advance_tranches::post::post),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::second_advance_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/advance-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::advance_tranches::id::delete::delete),
                             )
                             .service(
-                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-confirmed")
-                                    .patch(endpoint::projects::id::stages::position::final_confirmed::patch),
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-tranches")
+                                    .post(endpoint::projects::id::stages::position::second_advance_tranches::post::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/second-advance-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::second_advance_tranches::id::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-tranches")
+                                    .post(endpoint::projects::id::stages::position::final_tranches::post::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/final-tranches/{tranche_id}")
+                                    .delete(endpoint::projects::id::stages::position::final_tranches::id::delete::delete),
                             )
                             .service(
                                 web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act")

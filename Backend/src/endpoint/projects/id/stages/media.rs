@@ -76,12 +76,18 @@ mod tests {
         let json = serde_json::to_string(&media).unwrap();
         assert!(json.contains("\"title\":\"Concept Design\""));
         assert!(
-            json.contains(r#"{"kind":"first_advance","cost":50000,"confirmed":true}"#)
-                || json.contains(r#"{"kind":"first_advance","cost":"50000","confirmed":true}"#)
+            json.contains(
+                r#"{"kind":"first_advance","cost":50000,"confirmed":true,"tranches":[]}"#
+            ) || json.contains(
+                r#"{"kind":"first_advance","cost":"50000","confirmed":true,"tranches":[]}"#
+            )
         );
         assert!(
-            json.contains(r#"{"kind":"second_advance","cost":75000,"confirmed":false}"#)
-                || json.contains(r#"{"kind":"second_advance","cost":"75000","confirmed":false}"#)
+            json.contains(
+                r#"{"kind":"second_advance","cost":75000,"confirmed":false,"tranches":[]}"#
+            ) || json.contains(
+                r#"{"kind":"second_advance","cost":"75000","confirmed":false,"tranches":[]}"#
+            )
         );
         assert!(json.contains("\"has_act\":true"));
     }

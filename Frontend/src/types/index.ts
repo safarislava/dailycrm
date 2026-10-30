@@ -6,10 +6,18 @@ export interface Project {
   updated_at: string
 }
 
+export interface StagePaymentTranche {
+  id: string
+  amount: number | string
+  created_at: string
+  created_by?: string | null
+}
+
 export interface StagePayment {
   kind: string
   cost: number | string | null
   confirmed: boolean
+  tranches?: StagePaymentTranche[]
 }
 
 export interface Stage {

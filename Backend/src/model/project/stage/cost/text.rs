@@ -5,8 +5,9 @@ pub trait PaymentCostText: Send + Sync {
     fn text(&self, old: ValidCost, new: Option<ValidCost>) -> String;
 }
 
-pub trait PaymentConfirmationText: Send + Sync {
-    fn text(&self, confirmed: bool) -> String;
+pub trait PaymentTrancheText: Send + Sync {
+    fn creation_text(&self, amount: ValidCost) -> String;
+    fn deletion_text(&self, amount: ValidCost) -> String;
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -21,19 +22,6 @@ impl PaymentCostText for AdvanceCostText {
                 FormattedCost(new)
             ),
             None => format!("Аванс удалён: {} ₽", FormattedCost(old)),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct AdvanceConfirmationText;
-
-impl PaymentConfirmationText for AdvanceConfirmationText {
-    fn text(&self, confirmed: bool) -> String {
-        if confirmed {
-            "Аванс подтверждён".to_string()
-        } else {
-            "Подтверждение аванса снято".to_string()
         }
     }
 }
@@ -55,19 +43,6 @@ impl PaymentCostText for SecondAdvanceCostText {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct SecondAdvanceConfirmationText;
-
-impl PaymentConfirmationText for SecondAdvanceConfirmationText {
-    fn text(&self, confirmed: bool) -> String {
-        if confirmed {
-            "Второй аванс подтверждён".to_string()
-        } else {
-            "Подтверждение второго аванса снято".to_string()
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default)]
 pub struct FinalCostText;
 
 impl PaymentCostText for FinalCostText {
@@ -84,15 +59,41 @@ impl PaymentCostText for FinalCostText {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct FinalConfirmationText;
+pub struct AdvanceTrancheText;
 
-impl PaymentConfirmationText for FinalConfirmationText {
-    fn text(&self, confirmed: bool) -> String {
-        if confirmed {
-            "Окончательная оплата подтверждена".to_string()
-        } else {
-            "Подтверждение окончательной оплаты снято".to_string()
-        }
+impl PaymentTrancheText for AdvanceTrancheText {
+    fn creation_text(&self, amount: ValidCost) -> String {
+        format!("Внесена оплата аванса: {} ₽", FormattedCost(amount))
+    }
+
+    fn deletion_text(&self, amount: ValidCost) -> String {
+        format!("Удалена оплата аванса: {} ₽", FormattedCost(amount))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SecondAdvanceTrancheText;
+
+impl PaymentTrancheText for SecondAdvanceTrancheText {
+    fn creation_text(&self, amount: ValidCost) -> String {
+        format!("Внесена оплата второго аванса: {} ₽", FormattedCost(amount))
+    }
+
+    fn deletion_text(&self, amount: ValidCost) -> String {
+        format!("Удалена оплата второго аванса: {} ₽", FormattedCost(amount))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FinalTrancheText;
+
+impl PaymentTrancheText for FinalTrancheText {
+    fn creation_text(&self, amount: ValidCost) -> String {
+        format!("Внесена окончательная оплата: {} ₽", FormattedCost(amount))
+    }
+
+    fn deletion_text(&self, amount: ValidCost) -> String {
+        format!("Удалена окончательная оплата: {} ₽", FormattedCost(amount))
     }
 }
 
@@ -121,13 +122,6 @@ mod tests {
     }
 
     #[test]
-    fn formats_advance_payment_confirmation() {
-        let formatter = AdvanceConfirmationText;
-        assert_eq!(formatter.text(true), "Аванс подтверждён");
-        assert_eq!(formatter.text(false), "Подтверждение аванса снято");
-    }
-
-    #[test]
     fn formats_second_advance_cost_change_and_removal() {
         let formatter = SecondAdvanceCostText;
         assert_eq!(
@@ -146,13 +140,6 @@ mod tests {
             kopecks_change,
             "Второй аванс изменён: 100 000,50 ₽ → 250 000,75 ₽"
         );
-    }
-
-    #[test]
-    fn formats_second_advance_payment_confirmation() {
-        let formatter = SecondAdvanceConfirmationText;
-        assert_eq!(formatter.text(true), "Второй аванс подтверждён");
-        assert_eq!(formatter.text(false), "Подтверждение второго аванса снято");
     }
 
     #[test]
@@ -177,12 +164,35 @@ mod tests {
     }
 
     #[test]
-    fn formats_final_payment_confirmation() {
-        let formatter = FinalConfirmationText;
-        assert_eq!(formatter.text(true), "Окончательная оплата подтверждена");
+    fn formats_tranche_creation_and_deletion() {
+        let advance = AdvanceTrancheText;
         assert_eq!(
-            formatter.text(false),
-            "Подтверждение окончательной оплаты снято"
+            advance.creation_text(30000.into()),
+            "Внесена оплата аванса: 30 000 ₽"
+        );
+        assert_eq!(
+            advance.deletion_text(30000.into()),
+            "Удалена оплата аванса: 30 000 ₽"
+        );
+
+        let second_advance = SecondAdvanceTrancheText;
+        assert_eq!(
+            second_advance.creation_text(15000.into()),
+            "Внесена оплата второго аванса: 15 000 ₽"
+        );
+        assert_eq!(
+            second_advance.deletion_text(15000.into()),
+            "Удалена оплата второго аванса: 15 000 ₽"
+        );
+
+        let final_text = FinalTrancheText;
+        assert_eq!(
+            final_text.creation_text(50000.into()),
+            "Внесена окончательная оплата: 50 000 ₽"
+        );
+        assert_eq!(
+            final_text.deletion_text(50000.into()),
+            "Удалена окончательная оплата: 50 000 ₽"
         );
     }
 }

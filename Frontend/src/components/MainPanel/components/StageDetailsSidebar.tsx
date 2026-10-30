@@ -3,6 +3,8 @@ import {useDispatch} from 'react-redux'
 import type {AppDispatch} from '../../../store'
 import {selectStage} from '../../../store/uiSlice'
 import {
+    useAddPaymentTrancheMutation,
+    useDeletePaymentTrancheMutation,
     useGetDetailedStageQuery,
     useGetDetailedSubStageQuery,
     useListActsQuery,
@@ -13,22 +15,16 @@ import {
     useListSubStageActsQuery,
     useListSubStageAttachmentsQuery,
     useListSubStageCommentsQuery,
-    useUpdateAdvanceConfirmedMutation,
     useUpdateAdvanceCostMutation,
-    useUpdateFinalConfirmedMutation,
     useUpdateFinalCostMutation,
     useUpdateGipConfirmedMutation,
-    useUpdateSecondAdvanceConfirmedMutation,
     useUpdateSecondAdvanceCostMutation,
     useUpdateStageDeadlineMutation,
     useUpdateStageTitleMutation,
-    useUpdateSubStageAdvanceConfirmedMutation,
     useUpdateSubStageAdvanceCostMutation,
     useUpdateSubStageDeadlineMutation,
-    useUpdateSubStageFinalConfirmedMutation,
     useUpdateSubStageFinalCostMutation,
     useUpdateSubStageGipConfirmedMutation,
-    useUpdateSubStageSecondAdvanceConfirmedMutation,
     useUpdateSubStageSecondAdvanceCostMutation,
     useUpdateSubStageTitleMutation,
 } from '../../../store/crmApi'
@@ -93,9 +89,6 @@ export default function StageDetailsSidebar({
     const [updateTopSecondAdvanceCost] = useUpdateSecondAdvanceCostMutation()
   const [updateTopFinalCost] = useUpdateFinalCostMutation()
   const [updateTopGip] = useUpdateGipConfirmedMutation()
-  const [updateTopAdvanceConfirmed] = useUpdateAdvanceConfirmedMutation()
-    const [updateTopSecondAdvanceConfirmed] = useUpdateSecondAdvanceConfirmedMutation()
-  const [updateTopFinalConfirmed] = useUpdateFinalConfirmedMutation()
 
   const [updateSubTitle] = useUpdateSubStageTitleMutation()
   const [updateSubDeadline] = useUpdateSubStageDeadlineMutation()
@@ -103,9 +96,9 @@ export default function StageDetailsSidebar({
     const [updateSubSecondAdvanceCost] = useUpdateSubStageSecondAdvanceCostMutation()
   const [updateSubFinalCost] = useUpdateSubStageFinalCostMutation()
   const [updateSubGip] = useUpdateSubStageGipConfirmedMutation()
-  const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
-    const [updateSubSecondAdvanceConfirmed] = useUpdateSubStageSecondAdvanceConfirmedMutation()
-  const [updateSubFinalConfirmed] = useUpdateSubStageFinalConfirmedMutation()
+
+    const [addTranche] = useAddPaymentTrancheMutation()
+    const [deleteTranche] = useDeletePaymentTrancheMutation()
 
   // Handlers
   const handleUpdateTitle = async (v: string) => {
@@ -183,53 +176,43 @@ export default function StageDetailsSidebar({
     }
   }
 
-  const handleToggleAdvancePayment = async () => {
-    if (!detail) return
-      const payment = detail.payments?.find((p) => p.kind === 'first_advance')
-      const confirmed = payment?.confirmed ?? false
-    if (isSub) {
-        await updateSubAdvanceConfirmed({
-            projectId,
-            parentPosition: selectedStage.parentPosition,
-            position: selectedStage.position,
-            confirmed: !confirmed
-        })
-    } else {
-        await updateTopAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
-    }
-  }
-
-    const handleToggleSecondAdvancePayment = async () => {
-        if (!detail) return
-        const payment = detail.payments?.find((p) => p.kind === 'second_advance')
-        const confirmed = payment?.confirmed ?? false
+    const handleAddTranche = async (kind: 'first_advance' | 'second_advance' | 'final', amount: number) => {
         if (isSub) {
-            await updateSubSecondAdvanceConfirmed({
+            await addTranche({
                 projectId,
                 parentPosition: selectedStage.parentPosition,
                 position: selectedStage.position,
-                confirmed: !confirmed
-            })
+                kind,
+                amount,
+            }).unwrap()
         } else {
-            await updateTopSecondAdvanceConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
+            await addTranche({
+                projectId,
+                position: selectedStage.position,
+                kind,
+                amount,
+            }).unwrap()
+        }
     }
-  }
 
-  const handleToggleFinalPayment = async () => {
-    if (!detail) return
-      const payment = detail.payments?.find((p) => p.kind === 'final')
-      const confirmed = payment?.confirmed ?? false
-    if (isSub) {
-        await updateSubFinalConfirmed({
-            projectId,
-            parentPosition: selectedStage.parentPosition,
-            position: selectedStage.position,
-            confirmed: !confirmed
-        })
-    } else {
-        await updateTopFinalConfirmed({projectId, position: selectedStage.position, confirmed: !confirmed})
+    const handleDeleteTranche = async (kind: 'first_advance' | 'second_advance' | 'final', trancheId: string) => {
+        if (isSub) {
+            await deleteTranche({
+                projectId,
+                parentPosition: selectedStage.parentPosition,
+                position: selectedStage.position,
+                kind,
+                trancheId,
+            }).unwrap()
+        } else {
+            await deleteTranche({
+                projectId,
+                position: selectedStage.position,
+                kind,
+                trancheId,
+            }).unwrap()
+        }
     }
-  }
 
   return (
     <>
@@ -251,11 +234,10 @@ export default function StageDetailsSidebar({
               onUpdateDeadline={handleUpdateDeadline}
               onToggleGip={handleToggleGip}
               onUpdateAdvanceCost={handleUpdateAdvanceCost}
-              onToggleAdvancePayment={handleToggleAdvancePayment}
               onUpdateSecondAdvanceCost={handleUpdateSecondAdvanceCost}
-              onToggleSecondAdvancePayment={handleToggleSecondAdvancePayment}
               onUpdateFinalCost={handleUpdateFinalCost}
-              onToggleFinalPayment={handleToggleFinalPayment}
+              onAddTranche={handleAddTranche}
+              onDeleteTranche={handleDeleteTranche}
             />
 
             <StageActsSection

@@ -89,49 +89,6 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         'Project',
       ],
     }),
-    updateAdvanceConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
-      query: ({ projectId, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${position}/advance-confirmed`,
-        method: 'PATCH',
-        body: { confirmed },
-      }),
-        invalidatesTags: (_r, _e, {projectId, position}) => [
-            {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
-            {type: 'Stage' as const, id: projectId},
-            {type: 'Comment' as const, id: `${projectId}-${position}`},
-            'Project',
-        ],
-    }),
-      updateSecondAdvanceConfirmed: builder.mutation<void, {
-          projectId: string;
-          position: number;
-          confirmed: boolean
-      }>({
-          query: ({projectId, position, confirmed}) => ({
-              url: `/projects/${projectId}/stages/${position}/second-advance-confirmed`,
-              method: 'PATCH',
-              body: {confirmed},
-      }),
-      invalidatesTags: (_r, _e, { projectId, position }) => [
-        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
-        { type: 'Stage' as const, id: projectId },
-        { type: 'Comment' as const, id: `${projectId}-${position}` },
-        'Project',
-      ],
-    }),
-    updateFinalConfirmed: builder.mutation<void, { projectId: string; position: number; confirmed: boolean }>({
-      query: ({ projectId, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${position}/final-confirmed`,
-        method: 'PATCH',
-        body: { confirmed },
-      }),
-      invalidatesTags: (_r, _e, { projectId, position }) => [
-        { type: 'Stage' as const, id: `detail-${projectId}-${position}` },
-        { type: 'Stage' as const, id: projectId },
-        { type: 'Comment' as const, id: `${projectId}-${position}` },
-        'Project',
-      ],
-    }),
 
     // Sub-stage fields
     getDetailedSubStage: builder.query<DetailedStage, { projectId: string; parentPosition: number; position: number }>({
@@ -225,47 +182,80 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         'Project',
       ],
     }),
-    updateSubStageAdvanceConfirmed: builder.mutation<void, { projectId: string; parentPosition: number; position: number; confirmed: boolean }>({
-      query: ({ projectId, parentPosition, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/advance-confirmed`,
-        method: 'PATCH',
-        body: { confirmed },
-      }),
-        invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
-            {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`},
-            {type: 'Stage' as const, id: projectId},
-            {type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}`},
-            'Project',
-        ],
-    }),
-      updateSubStageSecondAdvanceConfirmed: builder.mutation<void, {
-          projectId: string;
-          parentPosition: number;
-          position: number;
-          confirmed: boolean
-      }>({
-          query: ({projectId, parentPosition, position, confirmed}) => ({
-              url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/second-advance-confirmed`,
-              method: 'PATCH',
-              body: {confirmed},
-      }),
-      invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
-        { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
-        { type: 'Stage' as const, id: projectId },
-        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+    addPaymentTranche: builder.mutation<
+        { id: string },
+        {
+          projectId: string
+          parentPosition?: number | null
+          position: number
+          kind: 'first_advance' | 'second_advance' | 'final'
+          amount: number
+        }
+    >({
+      query: ({projectId, parentPosition, position, kind, amount}) => {
+        const endpoint =
+            kind === 'first_advance'
+                ? 'advance-tranches'
+                : kind === 'second_advance'
+                    ? 'second-advance-tranches'
+                    : 'final-tranches'
+        const url =
+            parentPosition != null
+                ? `/projects/${projectId}/stages/${parentPosition}/sub/${position}/${endpoint}`
+                : `/projects/${projectId}/stages/${position}/${endpoint}`
+        return {
+          url,
+          method: 'POST',
+          body: {amount},
+        }
+      },
+      invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+        parentPosition != null
+            ? {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`}
+            : {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
+        {type: 'Stage' as const, id: projectId},
+        {
+          type: 'Comment' as const,
+          id: parentPosition != null ? `${projectId}-sub-${parentPosition}-${position}` : `${projectId}-${position}`,
+        },
         'Project',
       ],
     }),
-    updateSubStageFinalConfirmed: builder.mutation<void, { projectId: string; parentPosition: number; position: number; confirmed: boolean }>({
-      query: ({ projectId, parentPosition, position, confirmed }) => ({
-        url: `/projects/${projectId}/stages/${parentPosition}/sub/${position}/final-confirmed`,
-        method: 'PATCH',
-        body: { confirmed },
-      }),
-      invalidatesTags: (_r, _e, { projectId, parentPosition, position }) => [
-        { type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}` },
-        { type: 'Stage' as const, id: projectId },
-        { type: 'Comment' as const, id: `${projectId}-sub-${parentPosition}-${position}` },
+    deletePaymentTranche: builder.mutation<
+        void,
+        {
+          projectId: string
+          parentPosition?: number | null
+          position: number
+          kind: 'first_advance' | 'second_advance' | 'final'
+          trancheId: string
+        }
+    >({
+      query: ({projectId, parentPosition, position, kind, trancheId}) => {
+        const endpoint =
+            kind === 'first_advance'
+                ? 'advance-tranches'
+                : kind === 'second_advance'
+                    ? 'second-advance-tranches'
+                    : 'final-tranches'
+        const url =
+            parentPosition != null
+                ? `/projects/${projectId}/stages/${parentPosition}/sub/${position}/${endpoint}/${trancheId}`
+                : `/projects/${projectId}/stages/${position}/${endpoint}/${trancheId}`
+        return {
+          url,
+          method: 'DELETE',
+        }
+      },
+      invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+        parentPosition != null
+            ? {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`}
+            : {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
+        {type: 'Stage' as const, id: projectId},
+        {
+          type: 'Comment' as const,
+          id: parentPosition != null ? `${projectId}-sub-${parentPosition}-${position}` : `${projectId}-${position}`,
+        },
         'Project',
       ],
     }),
@@ -277,20 +267,16 @@ export const {
   useUpdateStageTitleMutation,
   useUpdateStageDeadlineMutation,
   useUpdateAdvanceCostMutation,
-    useUpdateSecondAdvanceCostMutation,
+  useUpdateSecondAdvanceCostMutation,
   useUpdateFinalCostMutation,
   useUpdateGipConfirmedMutation,
-  useUpdateAdvanceConfirmedMutation,
-    useUpdateSecondAdvanceConfirmedMutation,
-  useUpdateFinalConfirmedMutation,
   useGetDetailedSubStageQuery,
   useUpdateSubStageTitleMutation,
   useUpdateSubStageDeadlineMutation,
   useUpdateSubStageAdvanceCostMutation,
-    useUpdateSubStageSecondAdvanceCostMutation,
+  useUpdateSubStageSecondAdvanceCostMutation,
   useUpdateSubStageFinalCostMutation,
   useUpdateSubStageGipConfirmedMutation,
-  useUpdateSubStageAdvanceConfirmedMutation,
-    useUpdateSubStageSecondAdvanceConfirmedMutation,
-  useUpdateSubStageFinalConfirmedMutation,
+  useAddPaymentTrancheMutation,
+  useDeletePaymentTrancheMutation,
 } = stageFieldsApi
