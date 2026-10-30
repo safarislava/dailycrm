@@ -22,12 +22,12 @@ impl<T, C> InvalidatingByProjectId<T, C> {
 #[async_trait]
 impl<T, C> Task for InvalidatingByProjectId<T, C>
 where
-    T: Task<Output = ()> + Send + Sync,
+    T: Task + Send + Sync,
     C: Cache<StageCacheKey, Vec<StageSummaryItem>> + Send + Sync,
 {
-    type Output = ();
+    type Output = T::Output;
 
-    async fn perform(&self) -> Result<(), BoxError> {
+    async fn perform(&self) -> Result<Self::Output, BoxError> {
         self.task.perform().await
     }
 }

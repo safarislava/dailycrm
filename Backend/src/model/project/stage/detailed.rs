@@ -43,7 +43,25 @@ impl Json for DetailedStage {
                                 json_build_object(
                                     'kind', p.kind,
                                     'cost', p.cost,
-                                    'confirmed', p.confirmed
+                                    'confirmed', p.confirmed,
+                                    'tranches', COALESCE(
+                                        (
+                                            SELECT json_agg(
+                                                json_build_object(
+                                                    'id', t.id,
+                                                    'amount', t.amount,
+                                                    'created_at', t.created_at,
+                                                    'created_by', t.created_by
+                                                ) ORDER BY t.created_at
+                                            )
+                                            FROM stage_payment_tranches t
+                                            WHERE t.project_id = p.project_id
+                                              AND t.parent_position = p.parent_position
+                                              AND t.stage_position = p.stage_position
+                                              AND t.kind = p.kind
+                                        ),
+                                        '[]'::json
+                                    )
                                 )
                             )
                             FROM stage_payments p
