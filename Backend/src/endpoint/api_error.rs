@@ -1,6 +1,7 @@
 use crate::model::contract::box_error::BoxError;
 use crate::model::credential::contract::password::PasswordError;
 use crate::model::credential::contract::username::UsernameError;
+use crate::model::project::stage::cost::tranche::TrancheError;
 use crate::model::project::stage::cost::valid_cost::CostError;
 use crate::model::user::contract::user_verification::VerificationError;
 use actix_web::HttpResponse;
@@ -52,6 +53,7 @@ impl From<BoxError> for ApiError {
             if current.is::<UsernameError>()
                 || current.is::<PasswordError>()
                 || current.is::<CostError>()
+                || current.is::<TrancheError>()
             {
                 return ApiError::BadRequest(error.to_string());
             }
