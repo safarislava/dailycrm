@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import type {DetailedStage} from '../../../../types'
-import {EditableField, formatNumber, parseCost, validateCost} from '../Helpers'
+import {EditableField, formatNumber, formatRawCost, parseCost, validateCost} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 interface StageFinancialsProps {
@@ -144,9 +144,10 @@ export default function StageFinancials({
                 <EditableField
                     label="Сумма аванса"
                     displayValue={`${formatNumber(firstAdvance.cost)} ₽`}
-                    rawValue={formatNumber(firstAdvance.cost)}
+                    rawValue={formatRawCost(firstAdvance.cost)}
                     type="text"
                     validate={validateCost}
+                    stripSpaces
                     onSave={onUpdateAdvanceCost}
                 />
                 <div
@@ -172,6 +173,7 @@ export default function StageFinancials({
                       rawValue=""
                       type="text"
                       validate={validateCost}
+                      stripSpaces
                       onSave={onUpdateAdvanceCost}
                   />
               )}
@@ -195,9 +197,10 @@ export default function StageFinancials({
                 <EditableField
                     label="Сумма второго аванса"
                     displayValue={`${formatNumber(secondAdvance.cost)} ₽`}
-                    rawValue={formatNumber(secondAdvance.cost)}
+                    rawValue={formatRawCost(secondAdvance.cost)}
                     type="text"
                     validate={validateCost}
+                    stripSpaces
                     onSave={onUpdateSecondAdvanceCost}
                 />
                 <div
@@ -223,6 +226,7 @@ export default function StageFinancials({
                       rawValue=""
                       type="text"
                       validate={validateCost}
+                      stripSpaces
                       onSave={onUpdateSecondAdvanceCost}
                   />
               )}
@@ -258,10 +262,11 @@ export default function StageFinancials({
                 <EditableField
                     label="Сумма оплаты"
                     displayValue={`${formatNumber(finalPayment.cost)} ₽`}
-                    rawValue={formatNumber(finalPayment.cost)}
-                type="text"
-                validate={validateCost}
-                onSave={onUpdateFinalCost}
+                    rawValue={formatRawCost(finalPayment.cost)}
+                    type="text"
+                    validate={validateCost}
+                    stripSpaces
+                    onSave={onUpdateFinalCost}
                 />
                 <div
                 className={`${styles.field} ${styles.fieldEditable}`}
@@ -286,6 +291,7 @@ export default function StageFinancials({
                   rawValue=""
                   type="text"
                   validate={validateCost}
+                  stripSpaces
                   onSave={onUpdateFinalCost}
               />
           )}

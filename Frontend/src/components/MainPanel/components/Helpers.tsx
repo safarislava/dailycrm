@@ -72,6 +72,7 @@ export function EditableField({
   multiline = false,
                                 step,
                                 validate,
+                                stripSpaces = false,
 }: {
   label: string
   displayValue: string
@@ -81,22 +82,26 @@ export function EditableField({
   multiline?: boolean
   step?: string
   validate?: (value: string) => string | null
+  stripSpaces?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const cancelled = useRef(false)
 
+  const shouldStrip = stripSpaces || validate === validateCost
+
   const startEdit = () => {
-    setDraft(rawValue)
+    setDraft(shouldStrip ? rawValue.replace(/\s/g, '') : rawValue)
     setError(null)
     setEditing(true)
   }
 
   const handleChange = (val: string) => {
-    setDraft(val)
+    const next = shouldStrip ? val.replace(/\s/g, '') : val
+    setDraft(next)
     if (validate) {
-      setError(validate(val))
+      setError(validate(next))
     } else {
       setError(null)
     }
@@ -229,6 +234,10 @@ export function formatNumber(value: number | string | null | undefined): string 
     return `${isNegative ? '-' : ''}${rublesFormatted},${kopecksFormatted}`
   }
   return `${isNegative ? '-' : ''}${rublesFormatted}`
+}
+
+export function formatRawCost(value: number | string | null | undefined): string {
+  return formatNumber(value).replace(/\s/g, '')
 }
 
 export function validateCost(value: string): string | null {
