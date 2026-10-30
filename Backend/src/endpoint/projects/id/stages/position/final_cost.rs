@@ -52,6 +52,6 @@ pub async fn patch(
     )
     .perform()
     .await
-    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    .map_err(ApiError::from)?;
     Ok(HttpResponse::Ok().finish())
 }
