@@ -61,6 +61,8 @@ export {
   useUpdateSubStageAdvanceConfirmedMutation,
     useUpdateSubStageSecondAdvanceConfirmedMutation,
   useUpdateSubStageFinalConfirmedMutation,
+  useAddPaymentTrancheMutation,
+  useDeletePaymentTrancheMutation,
 } from './api/stageFieldsApi'
 
 export {

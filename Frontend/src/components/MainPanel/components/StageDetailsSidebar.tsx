@@ -3,6 +3,8 @@ import {useDispatch} from 'react-redux'
 import type {AppDispatch} from '../../../store'
 import {selectStage} from '../../../store/uiSlice'
 import {
+    useAddPaymentTrancheMutation,
+    useDeletePaymentTrancheMutation,
     useGetDetailedStageQuery,
     useGetDetailedSubStageQuery,
     useListActsQuery,
@@ -106,6 +108,9 @@ export default function StageDetailsSidebar({
   const [updateSubAdvanceConfirmed] = useUpdateSubStageAdvanceConfirmedMutation()
     const [updateSubSecondAdvanceConfirmed] = useUpdateSubStageSecondAdvanceConfirmedMutation()
   const [updateSubFinalConfirmed] = useUpdateSubStageFinalConfirmedMutation()
+
+    const [addTranche] = useAddPaymentTrancheMutation()
+    const [deleteTranche] = useDeletePaymentTrancheMutation()
 
   // Handlers
   const handleUpdateTitle = async (v: string) => {
@@ -231,6 +236,44 @@ export default function StageDetailsSidebar({
     }
   }
 
+    const handleAddTranche = async (kind: 'first_advance' | 'second_advance' | 'final', amount: number) => {
+        if (isSub) {
+            await addTranche({
+                projectId,
+                parentPosition: selectedStage.parentPosition,
+                position: selectedStage.position,
+                kind,
+                amount,
+            }).unwrap()
+        } else {
+            await addTranche({
+                projectId,
+                position: selectedStage.position,
+                kind,
+                amount,
+            }).unwrap()
+        }
+    }
+
+    const handleDeleteTranche = async (kind: 'first_advance' | 'second_advance' | 'final', trancheId: string) => {
+        if (isSub) {
+            await deleteTranche({
+                projectId,
+                parentPosition: selectedStage.parentPosition,
+                position: selectedStage.position,
+                kind,
+                trancheId,
+            }).unwrap()
+        } else {
+            await deleteTranche({
+                projectId,
+                position: selectedStage.position,
+                kind,
+                trancheId,
+            }).unwrap()
+        }
+    }
+
   return (
     <>
       <StageHeader
@@ -256,6 +299,8 @@ export default function StageDetailsSidebar({
               onToggleSecondAdvancePayment={handleToggleSecondAdvancePayment}
               onUpdateFinalCost={handleUpdateFinalCost}
               onToggleFinalPayment={handleToggleFinalPayment}
+              onAddTranche={handleAddTranche}
+              onDeleteTranche={handleDeleteTranche}
             />
 
             <StageActsSection

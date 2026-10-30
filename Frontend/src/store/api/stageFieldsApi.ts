@@ -269,6 +269,83 @@ export const stageFieldsApi = baseApi.injectEndpoints({
         'Project',
       ],
     }),
+    addPaymentTranche: builder.mutation<
+        { id: string },
+        {
+          projectId: string
+          parentPosition?: number | null
+          position: number
+          kind: 'first_advance' | 'second_advance' | 'final'
+          amount: number
+        }
+    >({
+      query: ({projectId, parentPosition, position, kind, amount}) => {
+        const endpoint =
+            kind === 'first_advance'
+                ? 'advance-tranches'
+                : kind === 'second_advance'
+                    ? 'second-advance-tranches'
+                    : 'final-tranches'
+        const url =
+            parentPosition != null
+                ? `/projects/${projectId}/stages/${parentPosition}/sub/${position}/${endpoint}`
+                : `/projects/${projectId}/stages/${position}/${endpoint}`
+        return {
+          url,
+          method: 'POST',
+          body: {amount},
+        }
+      },
+      invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+        parentPosition != null
+            ? {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`}
+            : {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
+        {type: 'Stage' as const, id: projectId},
+        {
+          type: 'Comment' as const,
+          id: parentPosition != null ? `${projectId}-sub-${parentPosition}-${position}` : `${projectId}-${position}`,
+        },
+        'Project',
+      ],
+    }),
+    deletePaymentTranche: builder.mutation<
+        void,
+        {
+          projectId: string
+          parentPosition?: number | null
+          position: number
+          kind: 'first_advance' | 'second_advance' | 'final'
+          trancheId: string
+        }
+    >({
+      query: ({projectId, parentPosition, position, kind, trancheId}) => {
+        const endpoint =
+            kind === 'first_advance'
+                ? 'advance-tranches'
+                : kind === 'second_advance'
+                    ? 'second-advance-tranches'
+                    : 'final-tranches'
+        const url =
+            parentPosition != null
+                ? `/projects/${projectId}/stages/${parentPosition}/sub/${position}/${endpoint}/${trancheId}`
+                : `/projects/${projectId}/stages/${position}/${endpoint}/${trancheId}`
+        return {
+          url,
+          method: 'DELETE',
+        }
+      },
+      invalidatesTags: (_r, _e, {projectId, parentPosition, position}) => [
+        parentPosition != null
+            ? {type: 'Stage' as const, id: `detail-${projectId}-sub-${parentPosition}-${position}`}
+            : {type: 'Stage' as const, id: `detail-${projectId}-${position}`},
+        {type: 'Stage' as const, id: projectId},
+        {
+          type: 'Comment' as const,
+          id: parentPosition != null ? `${projectId}-sub-${parentPosition}-${position}` : `${projectId}-${position}`,
+        },
+        'Project',
+      ],
+    }),
   }),
 })
 
@@ -293,4 +370,6 @@ export const {
   useUpdateSubStageAdvanceConfirmedMutation,
     useUpdateSubStageSecondAdvanceConfirmedMutation,
   useUpdateSubStageFinalConfirmedMutation,
+  useAddPaymentTrancheMutation,
+  useDeletePaymentTrancheMutation,
 } = stageFieldsApi
