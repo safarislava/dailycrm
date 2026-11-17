@@ -1,27 +1,27 @@
-import React, { useState, useCallback, useMemo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import type { AppDispatch, RootState } from '../../store'
-import type { Stage } from '../../types'
-import { selectProject, selectStage } from '../../store/uiSlice'
+import React, {useCallback, useMemo, useState} from 'react'
+import {useDispatch, useSelector} from 'react-redux'
+import type {AppDispatch, RootState} from '../../store'
+import type {Stage} from '../../types'
+import {selectProject, selectStage} from '../../store/uiSlice'
 import {
-  useGetProjectsQuery,
-    useGetArchivedProjectsQuery,
-  useGetStagesQuery,
+  useAppendSubStageMutation,
+  useArchiveProjectMutation,
   useDeleteStageMutation,
+  useDeleteSubStageMutation,
+  useGetArchivedProjectsQuery,
+  useGetProjectsQuery,
+  useGetStagesQuery,
+  useRenameProjectMutation,
   useReorderStageMutation,
   useReorderSubStageMutation,
-    useArchiveProjectMutation,
-    useRestoreProjectMutation,
-  useAppendSubStageMutation,
-  useDeleteSubStageMutation,
-  useRenameProjectMutation,
+  useRestoreProjectMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import ConfirmArchiveModal from '../ConfirmArchiveModal/ConfirmArchiveModal'
 import styles from './MainPanel.module.scss'
 
 // Import extracted subcomponents
-import { FolderIcon } from './components/Helpers'
+import {FolderIcon} from './components/Helpers'
 import ProjectHeader from './components/ProjectHeader'
 import StageTree from './components/StageTree'
 import AddStageForm from './components/AddStageForm'
@@ -30,16 +30,19 @@ import StageDetailsSidebar from './components/StageDetailsSidebar'
 
 export default function MainPanel() {
   const dispatch = useDispatch<AppDispatch>()
+  const viewArchive = useSelector((s: RootState) => s.ui.viewArchive)
   const projectId     = useSelector((s: RootState) => s.ui.selectedProjectId)
   const selectedStage = useSelector((s: RootState) => s.ui.selectedStage)
   const isSub         = selectedStage ? selectedStage.parentPosition !== 0 : false
 
   const { data: projects = [] } = useGetProjectsQuery()
-    const {data: archivedProjects = []} = useGetArchivedProjectsQuery()
-    const isArchived = archivedProjects.some((p) => p.id === projectId)
-    const project = isArchived
-        ? archivedProjects.find((p) => p.id === projectId)
-        : projects.find((p) => p.id === projectId)
+  const {data: archivedProjects = []} = useGetArchivedProjectsQuery(undefined, {
+    skip: !viewArchive,
+  })
+  const isArchived = viewArchive
+  const project = isArchived
+      ? archivedProjects.find((p) => p.id === projectId)
+      : projects.find((p) => p.id === projectId)
 
   const { data: stages = [], isLoading: stagesLoading } = useGetStagesQuery(
       {projectId: projectId!, isArchived},
@@ -110,6 +113,7 @@ export default function MainPanel() {
     const handleRestore = async () => {
         if (!projectId) return
         await restoreProject(projectId)
+      dispatch(selectProject(null))
     }
 
     const pendingDeleteName = pendingDelete?.stageTitle ?? ''

@@ -1,6 +1,6 @@
 import React from 'react'
 import type {StageWithProjectTitle} from '../../../types'
-import {selectProject, selectStage} from '../../../store/uiSlice'
+import {selectProject, selectStage, setViewArchive} from '../../../store/uiSlice'
 import styles from '../Sidebar.module.scss'
 
 function deadlineDiffDays(iso: string) {
@@ -52,6 +52,7 @@ export default function DeadlineDropdown({
               key={`${item.stage_id.project_id}-${item.stage_id.position}`}
             className={styles.deadlineItem}
             onClick={() => {
+                dispatch(setViewArchive(false))
               dispatch(selectProject(item.stage_id.project_id))
               dispatch(
                 selectStage({

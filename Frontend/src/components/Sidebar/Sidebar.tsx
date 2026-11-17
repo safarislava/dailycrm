@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import type {AppDispatch, RootState} from '../../store'
-import {selectProject, setAdminPageOpen, setUserPageOpen} from '../../store/uiSlice'
+import {selectProject, setAdminPageOpen, setUserPageOpen, setViewArchive} from '../../store/uiSlice'
 import {
     useCreateProjectMutation,
     useGetArchivedProjectsQuery,
@@ -18,12 +18,12 @@ export default function Sidebar() {
   const dispatch = useDispatch<AppDispatch>()
   const selectedId = useSelector((s: RootState) => s.ui.selectedProjectId)
   const adminPageOpen = useSelector((s: RootState) => s.ui.adminPageOpen)
+    const viewArchive = useSelector((s: RootState) => s.ui.viewArchive)
 
   const [search, setSearch] = useState('')
   const [composing, setComposing] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [deadlinesOpen, setDeadlinesOpen] = useState(false)
-    const [viewArchive, setViewArchive] = useState(false)
   const bellRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -31,7 +31,9 @@ export default function Sidebar() {
   const isAdmin = me?.roles?.includes('admin')
 
     const {data: projects = [], isLoading: loadingActive} = useGetProjectsQuery()
-    const {data: archivedProjects = [], isLoading: loadingArchived} = useGetArchivedProjectsQuery()
+    const {data: archivedProjects = [], isLoading: loadingArchived} = useGetArchivedProjectsQuery(undefined, {
+        skip: !viewArchive,
+    })
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
     const [restoreProject] = useRestoreProjectMutation()
 
@@ -146,13 +148,13 @@ export default function Sidebar() {
         <div className={styles.tabs}>
             <button
                 className={`${styles.tab} ${!viewArchive ? styles.tabActive : ''}`}
-                onClick={() => setViewArchive(false)}
+                onClick={() => dispatch(setViewArchive(false))}
             >
                 Активные
             </button>
             <button
                 className={`${styles.tab} ${viewArchive ? styles.tabActive : ''}`}
-                onClick={() => setViewArchive(true)}
+                onClick={() => dispatch(setViewArchive(true))}
             >
                 Архив
             </button>
