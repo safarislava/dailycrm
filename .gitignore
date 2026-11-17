@@ -6,3 +6,4 @@
 /Backend/target/
 .env.example
 logs
+/skills/system/run-workflow/SKILL.md
