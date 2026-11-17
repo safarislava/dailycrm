@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import {createSlice, type PayloadAction} from '@reduxjs/toolkit'
 
 export type Theme = 'dark' | 'auto' | 'light'
 
@@ -13,6 +13,7 @@ interface UiState {
   userPageOpen: boolean
   adminPageOpen: boolean
   theme: Theme
+  viewArchive: boolean
 }
 
 const uiSlice = createSlice({
@@ -23,8 +24,16 @@ const uiSlice = createSlice({
     userPageOpen: false,
     adminPageOpen: false,
     theme: (localStorage.getItem('theme') as Theme | null) ?? 'auto',
+    viewArchive: false,
   } as UiState,
   reducers: {
+    setViewArchive(state, action: PayloadAction<boolean>) {
+      if (state.viewArchive !== action.payload) {
+        state.viewArchive = action.payload
+        state.selectedProjectId = null
+        state.selectedStage = null
+      }
+    },
     selectProject(state, action: PayloadAction<string | null>) {
       state.selectedProjectId = action.payload
       state.selectedStage = null
@@ -55,5 +64,5 @@ const uiSlice = createSlice({
   },
 })
 
-export const { selectProject, selectStage, setUserPageOpen, setAdminPageOpen, setTheme } = uiSlice.actions
+export const {selectProject, selectStage, setUserPageOpen, setAdminPageOpen, setTheme, setViewArchive} = uiSlice.actions
 export default uiSlice.reducer

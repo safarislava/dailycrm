@@ -1,10 +1,6 @@
 import React from 'react'
-import { selectProject } from '../../../store/uiSlice'
-import {
-  ArrowLeftIcon,
-  TrashIcon,
-  InlineEdit,
-} from './Helpers'
+import {selectProject} from '../../../store/uiSlice'
+import {ArchiveIcon, ArrowLeftIcon, InlineEdit, RestoreIcon,} from './Helpers'
 import styles from '../MainPanel.module.scss'
 
 interface ProjectHeaderProps {
@@ -14,7 +10,9 @@ interface ProjectHeaderProps {
   activeTab: 'stages' | 'dashboard'
   setActiveTab: (tab: 'stages' | 'dashboard') => void
   renameProject: (args: { id: string; title: string }) => Promise<any>
-  setPendingDelete: (deleteObj: any) => void
+    isArchived?: boolean
+    onArchive: () => void
+    onRestore: () => void
   dispatch: any
 }
 
@@ -25,7 +23,9 @@ export default function ProjectHeader({
   activeTab,
   setActiveTab,
   renameProject,
-  setPendingDelete,
+                                          isArchived = false,
+                                          onArchive,
+                                          onRestore,
   dispatch,
 }: ProjectHeaderProps) {
   return (
@@ -34,11 +34,17 @@ export default function ProjectHeader({
         <ArrowLeftIcon />
       </button>
       <div className={styles.headerInfo}>
-        <InlineEdit
-          value={projectTitle}
-          onSave={async (v) => { if (v.trim()) await renameProject({ id: projectId, title: v.trim() }) }}
-          className={styles.headerTitle}
-        />
+          {isArchived ? (
+              <span className={styles.headerTitle}>{projectTitle}</span>
+          ) : (
+              <InlineEdit
+                  value={projectTitle}
+                  onSave={async (v) => {
+                      if (v.trim()) await renameProject({id: projectId, title: v.trim()})
+                  }}
+                  className={styles.headerTitle}
+              />
+          )}
         <span className={styles.headerSub}>
           {topLevelStagesCount} {topLevelStagesCount === 1 ? 'этап' : topLevelStagesCount < 5 ? 'этапа' : 'этапов'}
         </span>
@@ -57,9 +63,16 @@ export default function ProjectHeader({
           Дашборд
         </button>
       </div>
-      <button className={styles.dangerBtn} onClick={() => setPendingDelete({ kind: 'project' })} title="Удалить проект">
-        <TrashIcon />
-      </button>
+        {isArchived ? (
+            <button className={styles.actionBtn} onClick={onRestore} title="Восстановить проект">
+                <RestoreIcon/>
+            </button>
+        ) : (
+            <button className={styles.actionBtn} onClick={onArchive} title="В архив">
+                <ArchiveIcon/>
+            </button>
+        )}
     </header>
   )
 }
+

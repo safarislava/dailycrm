@@ -32,6 +32,8 @@ import StageHeader from './stageDetails/StageHeader'
 import StageFinancials from './stageDetails/StageFinancials'
 import StageActsSection from './stageDetails/StageActsSection'
 import StageAttachmentsSection from './stageDetails/StageAttachmentsSection'
+import type {Stage, DetailedStage} from '../../../types'
+
 import StageCommentsSection from './stageDetails/StageCommentsSection'
 import {parseCost, validateCost} from './Helpers'
 import styles from '../MainPanel.module.scss'
@@ -40,6 +42,8 @@ interface StageDetailsSidebarProps {
   projectId: string
   selectedStage: { parentPosition: number; position: number }
   isSub: boolean
+    isArchived?: boolean
+    archivedStage?: Stage
   setPendingDelete: (deleteObj: any) => void
 }
 
@@ -47,6 +51,8 @@ export default function StageDetailsSidebar({
   projectId,
   selectedStage,
   isSub,
+                                                isArchived = false,
+                                                archivedStage,
   setPendingDelete,
 }: StageDetailsSidebarProps) {
   const dispatch = useDispatch<AppDispatch>()
@@ -54,33 +60,39 @@ export default function StageDetailsSidebar({
   // Queries
   const { data: topDetail, isLoading: topDetailLoading } = useGetDetailedStageQuery(
     { projectId, position: selectedStage.position },
-    { skip: isSub },
+      {skip: isSub || isArchived},
   )
   const { data: subDetail, isLoading: subDetailLoading } = useGetDetailedSubStageQuery(
     { projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position },
-    { skip: !isSub },
+      {skip: !isSub || isArchived},
   )
-  const detail = isSub ? subDetail : topDetail
-  const detailLoading = isSub ? subDetailLoading : topDetailLoading
+    const detail = isArchived ? (archivedStage as unknown as DetailedStage) : (isSub ? subDetail : topDetail)
+    const detailLoading = isArchived ? false : (isSub ? subDetailLoading : topDetailLoading)
 
-  const actArgs = { projectId, position: selectedStage.position }
-  const subActArgs = { projectId, parentPosition: selectedStage.parentPosition, position: selectedStage.position }
+    const actArgs = {projectId, position: selectedStage.position, isArchived}
+    const subActArgs = {
+        projectId,
+        parentPosition: selectedStage.parentPosition,
+        position: selectedStage.position,
+        isArchived
+    }
 
-  const { data: topActs = [] } = useListActsQuery(actArgs, { skip: isSub })
-  const { data: subActs = [] } = useListSubStageActsQuery(subActArgs, { skip: !isSub })
+    const {data: topActs = []} = useListActsQuery(actArgs, {skip: isSub || isArchived})
+    const {data: subActs = []} = useListSubStageActsQuery(subActArgs, {skip: !isSub || isArchived})
   const acts = isSub ? subActs : topActs
 
-  const { data: topAttachments = [] } = useListAttachmentsQuery(actArgs, { skip: isSub })
-  const { data: subAttachments = [] } = useListSubStageAttachmentsQuery(subActArgs, { skip: !isSub })
+    const {data: topAttachments = []} = useListAttachmentsQuery(actArgs, {skip: isSub || isArchived})
+    const {data: subAttachments = []} = useListSubStageAttachmentsQuery(subActArgs, {skip: !isSub || isArchived})
   const attachments = isSub ? subAttachments : topAttachments
 
   const { data: topComments = [] } = useListCommentsQuery(actArgs, { skip: isSub })
   const { data: subComments = [] } = useListSubStageCommentsQuery(subActArgs, { skip: !isSub })
   const comments = isSub ? subComments : topComments
 
-  const { data: topPinnedComments = [] } = useListPinnedCommentsQuery(actArgs, { skip: isSub })
-  const { data: subPinnedComments = [] } = useListPinnedSubStageCommentsQuery(subActArgs, { skip: !isSub })
-  const initialPinnedComments = isSub ? subPinnedComments : topPinnedComments
+    const {data: topPinnedComments = []} = useListPinnedCommentsQuery(actArgs, {skip: isSub || isArchived})
+    const {data: subPinnedComments = []} = useListPinnedSubStageCommentsQuery(subActArgs, {skip: !isSub || isArchived})
+    const initialPinnedComments = isArchived ? comments.filter((c) => c.is_pinned) : (isSub ? subPinnedComments : topPinnedComments)
+
 
   // Field Mutations
   const [updateTopTitle] = useUpdateStageTitleMutation()
@@ -220,6 +232,7 @@ export default function StageDetailsSidebar({
         isSub={isSub}
         selectedStage={selectedStage}
         detail={detail}
+        isArchived={isArchived}
         onBack={() => dispatch(selectStage(null))}
         setPendingDelete={setPendingDelete}
       />
@@ -230,6 +243,7 @@ export default function StageDetailsSidebar({
           <div className={styles.detailCard}>
             <StageFinancials
               detail={detail}
+              isArchived={isArchived}
               onUpdateTitle={handleUpdateTitle}
               onUpdateDeadline={handleUpdateDeadline}
               onToggleGip={handleToggleGip}
@@ -244,6 +258,7 @@ export default function StageDetailsSidebar({
               projectId={projectId}
               selectedStage={selectedStage}
               isSub={isSub}
+              isArchived={isArchived}
               acts={acts}
             />
 
@@ -251,6 +266,7 @@ export default function StageDetailsSidebar({
               projectId={projectId}
               selectedStage={selectedStage}
               isSub={isSub}
+              isArchived={isArchived}
               attachments={attachments}
             />
 
@@ -258,12 +274,14 @@ export default function StageDetailsSidebar({
               projectId={projectId}
               selectedStage={selectedStage}
               isSub={isSub}
+              isArchived={isArchived}
               comments={comments}
               initialPinnedComments={initialPinnedComments}
             />
           </div>
         )}
-        {!detailLoading && !detail && <div className={styles.loading}>Нет данных</div>}
+
+          {!detailLoading && !detail && <div className={styles.loading}>Нет данных</div>}
       </div>
     </>
   )

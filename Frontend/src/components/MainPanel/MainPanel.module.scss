@@ -114,6 +114,25 @@
   }
 }
 
+.actionBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$text-secondary;
+  flex-shrink: 0;
+  transition: color v.$transition-fast, background v.$transition-fast;
+
+  &:hover {
+    color: v.$accent;
+    background: v.$accent-light;
+  }
+}
+
+
+
 .loading {
   text-align: center;
   color: v.$text-secondary;
@@ -1563,33 +1582,39 @@
 .tabs {
   display: flex;
   align-items: center;
-  background: v.$bg-primary;
+  background: v.$bg-input;
   padding: 3px;
-  border-radius: 8px;
-  border: 1px solid v.$divider;
+  height: 36px;
+  box-sizing: border-box;
+  border-radius: 18px;
   gap: 2px;
   margin: 0 8px;
 }
 
 .tab {
-  padding: 6px 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
   font-size: 13px;
   font-weight: 500;
   color: v.$text-secondary;
-  border-radius: 6px;
+  border-radius: 15px;
   background: transparent;
   border: none;
   transition: all v.$transition-fast;
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover {
     color: v.$text-primary;
-    background: v.$bg-item-hover;
   }
 }
 
 .tabActive {
-  color: v.$accent !important;
-  background: v.$accent-light !important;
+  background: v.$bg-secondary;
+  color: v.$text-primary;
   font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }

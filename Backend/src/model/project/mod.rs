@@ -1,3 +1,4 @@
+pub mod archive;
 pub mod cache_key;
 pub mod cached_summaries;
 pub mod collecting_media;

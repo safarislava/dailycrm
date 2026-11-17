@@ -65,4 +65,22 @@ impl Storage {
         let mapped = stream.map(|res| res.map_err(|e| std::io::Error::other(e.to_string())));
         Ok(Box::pin(mapped))
     }
+
+    pub async fn write_bytes(
+        &self,
+        key: &str,
+        bytes: Vec<u8>,
+        content_type: &str,
+    ) -> Result<(), BoxError> {
+        self.op
+            .write_with(key, bytes)
+            .content_type(content_type)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn read_bytes(&self, key: &str) -> Result<Vec<u8>, BoxError> {
+        let buffer = self.op.read(key).await?;
+        Ok(buffer.to_vec())
+    }
 }

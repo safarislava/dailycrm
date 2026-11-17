@@ -6,6 +6,7 @@ import styles from '../../MainPanel.module.scss'
 
 interface StageFinancialsProps {
   detail: DetailedStage
+    isArchived?: boolean
   onUpdateTitle: (title: string) => Promise<void>
   onUpdateDeadline: (deadline: string) => Promise<void>
   onToggleGip: () => void
@@ -18,15 +19,17 @@ interface StageFinancialsProps {
 
 export default function StageFinancials({
   detail,
+                                            isArchived = false,
   onUpdateTitle,
   onUpdateDeadline,
   onToggleGip,
   onUpdateAdvanceCost,
-                                          onUpdateSecondAdvanceCost,
+                                            onUpdateSecondAdvanceCost,
   onUpdateFinalCost,
-                                          onAddTranche,
-                                          onDeleteTranche,
+                                            onAddTranche,
+                                            onDeleteTranche,
 }: StageFinancialsProps) {
+
   const [addingFirstAdvance, setAddingFirstAdvance] = useState(false)
   const [addingSecondAdvance, setAddingSecondAdvance] = useState(false)
 
@@ -73,28 +76,51 @@ export default function StageFinancials({
   return (
     <>
       <div className={styles.fields}>
-        <EditableField
-          label="Название"
-          displayValue={detail.title}
-          rawValue={detail.title}
-          onSave={onUpdateTitle}
-        />
-        <EditableField
-          label="Срок выполнения"
-          displayValue={
-            detail.deadline
-              ? new Date(detail.deadline).toLocaleDateString('ru-RU', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })
-              : '—'
-          }
-          rawValue={detail.deadline?.slice(0, 10) ?? ''}
-          type="date"
-          onSave={onUpdateDeadline}
-        />
-        <div className={`${styles.field} ${styles.fieldEditable}`} onClick={onToggleGip}>
+          {isArchived ? (
+              <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Название</span>
+                  <span className={styles.fieldValue}>{detail.title}</span>
+              </div>
+          ) : (
+              <EditableField
+                  label="Название"
+                  displayValue={detail.title}
+                  rawValue={detail.title}
+                  onSave={onUpdateTitle}
+              />
+          )}
+          {isArchived ? (
+              <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Срок выполнения</span>
+                  <span className={styles.fieldValue}>
+              {detail.deadline
+                  ? new Date(detail.deadline).toLocaleDateString('ru-RU', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                  })
+                  : '—'}
+            </span>
+              </div>
+          ) : (
+              <EditableField
+                  label="Срок выполнения"
+                  displayValue={
+                      detail.deadline
+                          ? new Date(detail.deadline).toLocaleDateString('ru-RU', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                          })
+                          : '—'
+                  }
+                  rawValue={detail.deadline?.slice(0, 10) ?? ''}
+                  type="date"
+                  onSave={onUpdateDeadline}
+              />
+          )}
+          <div className={`${styles.field} ${!isArchived ? styles.fieldEditable : ''}`}
+               onClick={!isArchived ? onToggleGip : undefined}>
           <span className={styles.fieldLabel}>Выполнение</span>
           <span className={styles.fieldValue}>
             <span className={detail.gip_confirmed ? styles.completedBadge : styles.pendingBadge}>
@@ -103,6 +129,7 @@ export default function StageFinancials({
           </span>
         </div>
       </div>
+
 
       <div className={styles.fields}>
         <div className={styles.totalCostCard}>
@@ -143,8 +170,9 @@ export default function StageFinancials({
             <PaymentCard
                 title="Аванс"
                 payment={firstAdvance}
+                isArchived={isArchived}
                 onUpdateCost={onUpdateAdvanceCost}
-                onRemovePayment={!hasSecondAdvance ? handleRemoveFirstAdvance : undefined}
+                onRemovePayment={!isArchived && !hasSecondAdvance ? handleRemoveFirstAdvance : undefined}
                 onAddTranche={(amount) => onAddTranche('first_advance', amount)}
                 onDeleteTranche={(id) => onDeleteTranche('first_advance', id)}
             />
@@ -154,14 +182,15 @@ export default function StageFinancials({
             <PaymentCard
                 title="Второй аванс"
                 payment={secondAdvance}
+                isArchived={isArchived}
                 onUpdateCost={onUpdateSecondAdvanceCost}
-                onRemovePayment={handleRemoveSecondAdvance}
+                onRemovePayment={!isArchived ? handleRemoveSecondAdvance : undefined}
                 onAddTranche={(amount) => onAddTranche('second_advance', amount)}
                 onDeleteTranche={(id) => onDeleteTranche('second_advance', id)}
             />
         )}
 
-        {!hasFirstAdvance && (
+          {!isArchived && !hasFirstAdvance && (
             <button
                 type="button"
                 className={styles.addPaymentBtn}
@@ -171,7 +200,7 @@ export default function StageFinancials({
             </button>
         )}
 
-        {hasFirstAdvance && !hasSecondAdvance && (
+          {!isArchived && hasFirstAdvance && !hasSecondAdvance && (
             <button
                 type="button"
                 className={styles.addPaymentBtn}
@@ -184,10 +213,12 @@ export default function StageFinancials({
         <PaymentCard
             title="Окончательная оплата"
             payment={finalPayment}
+            isArchived={isArchived}
             onUpdateCost={onUpdateFinalCost}
             onAddTranche={(amount) => onAddTranche('final', amount)}
             onDeleteTranche={(id) => onDeleteTranche('final', id)}
         />
+
       </div>
     </>
   )

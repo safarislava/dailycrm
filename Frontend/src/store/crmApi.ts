@@ -24,10 +24,13 @@ export {
 export {
   useGetDeadlinesQuery,
   useGetProjectsQuery,
+    useGetArchivedProjectsQuery,
   useCreateProjectMutation,
-  useDeleteProjectMutation,
+    useArchiveProjectMutation,
+    useRestoreProjectMutation,
   useRenameProjectMutation,
 } from './api/projectsApi'
+
 
 export {
   useGetStagesQuery,

@@ -3,13 +3,13 @@ use crate::endpoint::auth_header::AuthHeader;
 use crate::model::audit::AuditAction;
 use crate::model::audit::AuditedTask;
 use crate::model::contract::task::Task;
+use crate::model::project::archive::archivation::ProjectArchivation;
 use crate::model::project::id::ProjectId;
 use crate::model::project::invalidating_by_project_id::InvalidatingByProjectId;
-use crate::model::project::removal::ProjectRemoval;
 use crate::state::AppState;
 use actix_web::{HttpRequest, HttpResponse, web};
 
-pub async fn delete(
+pub async fn post(
     state: web::Data<AppState>,
     request: HttpRequest,
     project_id: ProjectId,
@@ -19,10 +19,10 @@ pub async fn delete(
         .ok_or(ApiError::Unauthorized("Unauthorized".to_string()))?;
     AuditedTask::new(
         user,
-        AuditAction::ProjectDelete,
+        AuditAction::ProjectArchive,
         project_id.id(),
         InvalidatingByProjectId::new(
-            ProjectRemoval::new(state.pool.clone(), project_id),
+            ProjectArchivation::new(state.pool.clone(), state.storage.clone(), project_id),
             state.project_cache.clone(),
             project_id,
         ),

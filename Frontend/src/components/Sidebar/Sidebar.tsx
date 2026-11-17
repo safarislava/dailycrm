@@ -1,15 +1,15 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import type {AppDispatch, RootState} from '../../store'
-import {selectProject, setAdminPageOpen, setUserPageOpen} from '../../store/uiSlice'
+import {selectProject, setAdminPageOpen, setUserPageOpen, setViewArchive} from '../../store/uiSlice'
 import {
-  useCreateProjectMutation,
-  useDeleteProjectMutation,
-  useGetDeadlinesQuery,
-  useGetProjectsQuery,
+    useCreateProjectMutation,
+    useGetArchivedProjectsQuery,
+    useGetDeadlinesQuery,
+    useGetProjectsQuery,
+    useRestoreProjectMutation,
 } from '../../store/crmApi'
 import {useGetMeQuery} from '../../store/api/usersApi'
-import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
 import DeadlineDropdown, {deadlineDiffDays} from './components/DeadlineDropdown'
 import SidebarItem from './components/SidebarItem'
 import styles from './Sidebar.module.scss'
@@ -18,6 +18,7 @@ export default function Sidebar() {
   const dispatch = useDispatch<AppDispatch>()
   const selectedId = useSelector((s: RootState) => s.ui.selectedProjectId)
   const adminPageOpen = useSelector((s: RootState) => s.ui.adminPageOpen)
+    const viewArchive = useSelector((s: RootState) => s.ui.viewArchive)
 
   const [search, setSearch] = useState('')
   const [composing, setComposing] = useState(false)
@@ -29,13 +30,16 @@ export default function Sidebar() {
   const { data: me } = useGetMeQuery()
   const isAdmin = me?.roles?.includes('admin')
 
-  const { data: projects = [], isLoading } = useGetProjectsQuery()
+    const {data: projects = [], isLoading: loadingActive} = useGetProjectsQuery()
+    const {data: archivedProjects = [], isLoading: loadingArchived} = useGetArchivedProjectsQuery(undefined, {
+        skip: !viewArchive,
+    })
   const [createProject, { isLoading: creating }] = useCreateProjectMutation()
-  const [deleteProject] = useDeleteProjectMutation()
-
-  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
+    const [restoreProject] = useRestoreProjectMutation()
 
   const { data: allDeadlines = [] } = useGetDeadlinesQuery()
+
+
 
   const deadlineItems = useMemo(() => {
     const cutoff = Date.now() + 30 * 86_400_000
@@ -68,10 +72,12 @@ export default function Sidebar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [deadlinesOpen])
 
-  const filtered = useMemo(
-    () => projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase())),
-    [projects, search],
-  )
+    const currentList = useMemo(() => {
+        const list = viewArchive ? archivedProjects : projects
+        return list.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
+    }, [viewArchive, archivedProjects, projects, search])
+
+    const isLoading = viewArchive ? loadingArchived : loadingActive
 
   const submitCreate = async () => {
     const title = newTitle.trim()
@@ -89,30 +95,16 @@ export default function Sidebar() {
     }
   }
 
-  const handleDelete = (e: React.MouseEvent, id: string, title: string) => {
+    const handleRestore = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    setPendingDelete({ id, title })
-  }
-
-  const confirmDelete = async () => {
-    if (!pendingDelete) return
-    await deleteProject(pendingDelete.id)
-    if (selectedId === pendingDelete.id) dispatch(selectProject(null))
-    setPendingDelete(null)
+        await restoreProject(id)
   }
 
   return (
     <aside className={styles.sidebar}>
-      {pendingDelete && (
-        <ConfirmDeleteModal
-          heading="Удалить проект"
-          name={pendingDelete.title}
-          onConfirm={confirmDelete}
-          onCancel={() => setPendingDelete(null)}
-        />
-      )}
       <header className={styles.header}>
-        <span className={styles.logo}>DailyCRM</span>
+
+      <span className={styles.logo}>DailyCRM</span>
         <div className={styles.headerActions}>
           {isAdmin && (
             <button
@@ -153,6 +145,21 @@ export default function Sidebar() {
         />
       )}
 
+        <div className={styles.tabs}>
+            <button
+                className={`${styles.tab} ${!viewArchive ? styles.tabActive : ''}`}
+                onClick={() => dispatch(setViewArchive(false))}
+            >
+                Активные
+            </button>
+            <button
+                className={`${styles.tab} ${viewArchive ? styles.tabActive : ''}`}
+                onClick={() => dispatch(setViewArchive(true))}
+            >
+                Архив
+            </button>
+        </div>
+
       <div className={styles.searchWrap}>
         <SearchIcon />
         <input
@@ -170,53 +177,62 @@ export default function Sidebar() {
 
       <div className={styles.list}>
         {isLoading && <div className={styles.hint}>Загрузка…</div>}
-        {!isLoading && filtered.length === 0 && (
+          {!isLoading && currentList.length === 0 && (
           <div className={styles.hint}>
-            {search ? 'Ничего не найдено' : 'Нет проектов'}
+              {search
+                  ? 'Ничего не найдено'
+                  : viewArchive
+                      ? 'В архиве пусто'
+                      : 'Нет проектов'}
           </div>
         )}
-        {filtered.map((project) => (
+          {currentList.map((project) => (
           <SidebarItem
             key={project.id}
             project={project}
             isSelected={selectedId === project.id}
+            isArchived={viewArchive}
             onSelect={() => dispatch(selectProject(project.id))}
-            onDelete={(e) => handleDelete(e, project.id, project.title)}
+            onRestore={(e) => handleRestore(e, project.id)}
           />
-        ))}
+
+          ))}
       </div>
 
-      <div className={styles.footer}>
-        {composing ? (
-          <div className={styles.createRow}>
-            <input
-              className={styles.createInput}
-              placeholder="Название проекта…"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={handleCreateKey}
-              onBlur={() => {
-                setComposing(false)
-                setNewTitle('')
-              }}
-              autoFocus
-            />
-            <button
-              className={styles.createBtn}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={submitCreate}
-              disabled={!newTitle.trim() || creating}
-            >
-              <SendIcon />
-            </button>
-          </div>
-        ) : (
-          <button className={styles.newProjectBtn} onClick={() => setComposing(true)}>
-            <ComposeIcon />
-            Новый проект
-          </button>
+        {!viewArchive && (
+            <div className={styles.footer}>
+                {composing ? (
+                    <div className={styles.createRow}>
+                        <input
+                            className={styles.createInput}
+                            placeholder="Название проекта…"
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            onKeyDown={handleCreateKey}
+                            onBlur={() => {
+                                setComposing(false)
+                                setNewTitle('')
+                            }}
+                            autoFocus
+                        />
+                        <button
+                            className={styles.createBtn}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={submitCreate}
+                            disabled={!newTitle.trim() || creating}
+                        >
+                            <SendIcon/>
+                        </button>
+                    </div>
+                ) : (
+                    <button className={styles.newProjectBtn} onClick={() => setComposing(true)}>
+                        <ComposeIcon/>
+                        Новый проект
+                    </button>
+                )}
+            </div>
         )}
-      </div>
+
     </aside>
   )
 }
