@@ -52,6 +52,45 @@ pub fn configure(config: &mut web::ServiceConfig) {
                     .wrap(JwtMiddleware)
                     .service(web::resource("/invites").post(endpoint::invites::create::post))
                     .service(
+                        web::scope("/archive/projects")
+                            .service(
+                                web::resource("")
+                                    .get(endpoint::archive::projects::get::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/restore")
+                                    .post(endpoint::archive::projects::id::restore::post),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages")
+                                    .get(endpoint::archive::projects::id::stages::get::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/comments")
+                                    .get(endpoint::archive::projects::id::stages::position::comments::list::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/comments")
+                                    .get(endpoint::archive::projects::id::stages::position::comments::list::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/act/{act_id}/download")
+                                    .get(endpoint::archive::projects::id::stages::position::attachments::download::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/act/{act_id}/download")
+                                    .get(endpoint::archive::projects::id::stages::position::attachments::download::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/attachments/{attachment_id}/download")
+                                    .get(endpoint::archive::projects::id::stages::position::attachments::download::get),
+                            )
+                            .service(
+                                web::resource("/{project_id}/stages/{stage_id}/sub/{sub_id}/attachments/{attachment_id}/download")
+                                    .get(endpoint::archive::projects::id::stages::position::attachments::download::get),
+                            ),
+                    )
+                    .service(
                         web::scope("/projects")
                             .service(web::resource("/deadlines").get(endpoint::projects::deadlines::get::get))
                             .service(
@@ -62,6 +101,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
                             .service(
                                 web::resource("/{project_id}")
                                     .delete(endpoint::projects::id::delete::delete),
+                            )
+                            .service(
+                                web::resource("/{project_id}/archive")
+                                    .post(endpoint::projects::id::archive::post),
                             )
                             .service(
                                 web::resource("/{project_id}/title")
