@@ -72,3 +72,87 @@ impl<M: CommentMedia> Printer<M> for ArchivedCommentSummaries {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::project::id::ProjectId;
+    use opendal::Operator;
+    use opendal::services::Memory;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    #[derive(Default)]
+    struct TestCommentMedia {
+        comments: Vec<(Uuid, String, String, bool)>,
+    }
+
+    impl CommentMedia for TestCommentMedia {
+        fn add_comment(
+            &mut self,
+            id: Uuid,
+            text: &str,
+            author: &str,
+            is_system: bool,
+            _created_at: DateTime<Utc>,
+            _is_pinned: bool,
+        ) {
+            self.comments
+                .push((id, text.to_string(), author.to_string(), is_system));
+        }
+    }
+
+    #[actix_web::test]
+    async fn prints_comments_for_specific_stage_from_archive() {
+        let op = Operator::new(Memory::default()).unwrap();
+        let storage = Arc::new(Storage::new(op));
+        let project_id = ProjectId::new(Uuid::new_v4());
+        let stage_id = StageId::new(project_id, 1);
+        let comment_id = Uuid::new_v4();
+
+        let payload = json!({
+            "comments": [
+                {
+                    "id": comment_id.to_string(),
+                    "parent_position": 0,
+                    "stage_position": 1,
+                    "author": "Alice",
+                    "text": "Hello archive",
+                    "is_system": false,
+                    "created_at": "2026-11-17T12:00:00Z",
+                    "is_pinned": false
+                },
+                {
+                    "id": Uuid::new_v4().to_string(),
+                    "parent_position": 0,
+                    "stage_position": 2,
+                    "author": "Bob",
+                    "text": "Other stage comment",
+                    "is_system": true,
+                    "created_at": "2026-11-17T12:05:00Z",
+                    "is_pinned": false
+                }
+            ]
+        });
+
+        let key = format!("archives/{}.json", project_id.id());
+        storage
+            .write_bytes(
+                &key,
+                serde_json::to_vec(&payload).unwrap(),
+                "application/json",
+            )
+            .await
+            .unwrap();
+
+        let summaries = ArchivedCommentSummaries::new(storage, stage_id, None);
+        let mut media = TestCommentMedia::default();
+        summaries.print(&mut media).await.unwrap();
+
+        assert_eq!(media.comments.len(), 1);
+        assert_eq!(media.comments[0].0, comment_id);
+        assert_eq!(media.comments[0].1, "Hello archive");
+        assert_eq!(media.comments[0].2, "Alice");
+        assert!(!media.comments[0].3);
+    }
+}

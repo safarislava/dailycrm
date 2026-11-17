@@ -70,3 +70,64 @@ impl Task for ArchivedAttachmentDownload {
         Ok((stream, size_bytes, mime_type, disposition))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures_util::StreamExt;
+    use opendal::Operator;
+    use opendal::services::Memory;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    #[actix_web::test]
+    async fn downloads_file_from_archive() {
+        let op = Operator::new(Memory::default()).unwrap();
+        let storage = Arc::new(Storage::new(op));
+        let project_id = ProjectId::new(Uuid::new_v4());
+        let file_id = Uuid::new_v4();
+
+        let payload = json!({
+            "attachments": [
+                {
+                    "id": file_id.to_string(),
+                    "parent_position": 0,
+                    "stage_position": 1,
+                    "filename": "act_01.pdf",
+                    "mime_type": "application/pdf",
+                    "size_bytes": 13,
+                    "is_act": true
+                }
+            ]
+        });
+
+        let json_key = format!("archives/{}.json", project_id.id());
+        storage
+            .write_bytes(
+                &json_key,
+                serde_json::to_vec(&payload).unwrap(),
+                "application/json",
+            )
+            .await
+            .unwrap();
+
+        let file_bytes = b"hello act pdf";
+        storage
+            .write_bytes(&file_id.to_string(), file_bytes.to_vec(), "application/pdf")
+            .await
+            .unwrap();
+
+        let task = ArchivedAttachmentDownload::new(storage, project_id, AttachmentId::new(file_id));
+        let (mut stream, size, mime, disposition) = task.perform().await.unwrap();
+
+        assert_eq!(size, 13);
+        assert_eq!(mime, "application/pdf");
+        assert!(disposition.contains("act_01.pdf"));
+
+        let mut read_bytes = Vec::new();
+        while let Some(chunk) = stream.next().await {
+            read_bytes.extend_from_slice(&chunk.unwrap());
+        }
+        assert_eq!(read_bytes, file_bytes);
+    }
+}

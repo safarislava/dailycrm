@@ -61,3 +61,68 @@ impl<M: StageMedia> Printer<M> for ArchivedStageSummaries {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::project::stage::collecting_media::CollectingStageMedia;
+    use opendal::Operator;
+    use opendal::services::Memory;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    #[actix_web::test]
+    async fn prints_stages_from_archive_json() {
+        let op = Operator::new(Memory::default()).unwrap();
+        let storage = Arc::new(Storage::new(op));
+        let project_id = ProjectId::new(Uuid::new_v4());
+
+        let payload = json!({
+            "id": project_id.id(),
+            "title": "Archived Project",
+            "stages": [
+                {
+                    "parent_position": 0,
+                    "position": 1,
+                    "title": "Stage 1",
+                    "deadline": "2026-12-31T00:00:00Z",
+                    "completed": true,
+                    "gip_confirmed": true,
+                    "has_act": true,
+                    "payments": [
+                        {
+                            "kind": "first_advance",
+                            "cost": "100.50",
+                            "confirmed": true,
+                            "tranches": []
+                        }
+                    ]
+                }
+            ]
+        });
+
+        let key = format!("archives/{}.json", project_id.id());
+        storage
+            .write_bytes(
+                &key,
+                serde_json::to_vec(&payload).unwrap(),
+                "application/json",
+            )
+            .await
+            .unwrap();
+
+        let summaries = ArchivedStageSummaries::new(storage, project_id);
+        let mut media = CollectingStageMedia::new();
+        summaries.print(&mut media).await.unwrap();
+
+        let items = media.items();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].title, "Stage 1");
+        assert_eq!(items[0].position, 1);
+        assert!(items[0].completed);
+        assert!(items[0].gip_confirmed);
+        assert!(items[0].has_act);
+        assert_eq!(items[0].payments.len(), 1);
+        assert_eq!(items[0].payments[0].kind, "first_advance");
+    }
+}
