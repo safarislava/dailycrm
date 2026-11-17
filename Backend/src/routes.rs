@@ -99,10 +99,6 @@ pub fn configure(config: &mut web::ServiceConfig) {
                                     .post(endpoint::projects::create::create),
                             )
                             .service(
-                                web::resource("/{project_id}")
-                                    .delete(endpoint::projects::id::delete::delete),
-                            )
-                            .service(
                                 web::resource("/{project_id}/archive")
                                     .post(endpoint::projects::id::archive::post),
                             )
