@@ -10,6 +10,8 @@ pub enum AuditAction {
         new_title: String,
     },
     ProjectDelete,
+    ProjectArchive,
+    ProjectRestore,
     StageCreate,
     StageRename {
         new_title: String,
@@ -54,6 +56,8 @@ impl fmt::Display for AuditAction {
                 write!(f, "project_rename(title: '{new_title}')")
             }
             Self::ProjectDelete => write!(f, "project_delete"),
+            Self::ProjectArchive => write!(f, "project_archive"),
+            Self::ProjectRestore => write!(f, "project_restore"),
             Self::StageCreate => write!(f, "stage_create"),
             Self::StageRename { new_title } => {
                 write!(f, "stage_rename(title: '{new_title}')")
@@ -172,6 +176,14 @@ mod tests {
                 }
             ),
             "act_upload(file: 'act_01.pdf')"
+        );
+        assert_eq!(
+            format!("{}", AuditAction::ProjectArchive),
+            "project_archive"
+        );
+        assert_eq!(
+            format!("{}", AuditAction::ProjectRestore),
+            "project_restore"
         );
     }
 }
