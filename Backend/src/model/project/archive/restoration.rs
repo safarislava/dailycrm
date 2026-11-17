@@ -66,7 +66,7 @@ impl Task for ProjectRestoration {
         sqlx::query(
             "INSERT INTO stages (project_id, parent_position, position, title, deadline, gip_confirmed)
              SELECT $1, parent_position, position, title, deadline, gip_confirmed
-             FROM json_to_recordset($2) AS s(
+             FROM jsonb_to_recordset($2) AS s(
                  parent_position INT,
                  position        INT,
                  title           VARCHAR(255),
@@ -83,7 +83,7 @@ impl Task for ProjectRestoration {
         sqlx::query(
             "INSERT INTO stage_payments (project_id, parent_position, stage_position, kind, cost, confirmed)
              SELECT $1, parent_position, stage_position, kind, cost, confirmed
-             FROM json_to_recordset($2) AS p(
+             FROM jsonb_to_recordset($2) AS p(
                  parent_position INT,
                  stage_position  INT,
                  kind            VARCHAR(32),
@@ -99,7 +99,7 @@ impl Task for ProjectRestoration {
         sqlx::query(
             "INSERT INTO stage_payment_tranches (id, project_id, parent_position, stage_position, kind, amount, created_at, created_by)
              SELECT id, $1, parent_position, stage_position, kind, amount, created_at, created_by
-             FROM json_to_recordset($2) AS t(
+             FROM jsonb_to_recordset($2) AS t(
                  id              UUID,
                  parent_position INT,
                  stage_position  INT,
@@ -117,7 +117,7 @@ impl Task for ProjectRestoration {
         sqlx::query(
             "INSERT INTO attachments (id, project_id, parent_position, stage_position, filename, mime_type, size_bytes, is_act)
              SELECT id, $1, parent_position, stage_position, filename, mime_type, size_bytes, is_act
-             FROM json_to_recordset($2) AS a(
+             FROM jsonb_to_recordset($2) AS a(
                  id              UUID,
                  parent_position INT,
                  stage_position  INT,
@@ -135,7 +135,7 @@ impl Task for ProjectRestoration {
         sqlx::query(
             "INSERT INTO stage_comments (id, project_id, parent_position, stage_position, author_id, text, created_at, is_system, is_pinned)
              SELECT id, $1, parent_position, stage_position, author_id, text, created_at, is_system, is_pinned
-             FROM json_to_recordset($2) AS c(
+             FROM jsonb_to_recordset($2) AS c(
                  id              UUID,
                  parent_position INT,
                  stage_position  INT,
