@@ -173,11 +173,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 10px;
+  margin: 6px 10px 8px;
   padding: 0 12px;
   height: 36px;
   background: v.$bg-input;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .searchIcon {
@@ -273,20 +273,26 @@
 // ── Sidebar Tabs ──────────────────────────────────────────
 .tabs {
   display: flex;
-  margin: 6px 12px 2px;
+  margin: 8px 10px 0;
   padding: 3px;
+  height: 36px;
+  box-sizing: border-box;
   background: v.$bg-input;
-  border-radius: 8px;
+  border-radius: 18px;
   gap: 2px;
 }
 
 .tab {
   flex: 1;
-  padding: 6px 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
   font-size: 13px;
   font-weight: 500;
   color: v.$text-secondary;
-  border-radius: 6px;
+  border-radius: 15px;
   background: transparent;
   border: none;
   transition: all v.$transition-fast;
@@ -303,7 +309,7 @@
   background: v.$bg-secondary;
   color: v.$text-primary;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 
