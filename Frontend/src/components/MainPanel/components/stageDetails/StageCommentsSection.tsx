@@ -18,6 +18,7 @@ interface StageCommentsSectionProps {
   projectId: string
   selectedStage: { parentPosition: number; position: number }
   isSub: boolean
+    isArchived?: boolean
   comments: Comment[]
   initialPinnedComments: Comment[]
 }
@@ -26,9 +27,11 @@ export default function StageCommentsSection({
   projectId,
   selectedStage,
   isSub,
+                                                 isArchived = false,
   comments,
   initialPinnedComments,
 }: StageCommentsSectionProps) {
+
   const dispatch = useDispatch<AppDispatch>()
 
   const [addTopComment, { isLoading: addingTopComment }] = useAddCommentMutation()
@@ -182,20 +185,25 @@ export default function StageCommentsSection({
                         minute: '2-digit',
                       })}
                     </span>
-                    <button
-                      className={`${styles.commentPinBtn} ${styles.commentPinned}`}
-                      title="Открепить"
-                      onClick={() => handleTogglePinComment(c.id, false)}
-                    >
-                      <PinIcon filled />
-                    </button>
-                    <button
-                      className={styles.commentDeleteBtn}
-                      title="Удалить"
-                      onClick={() => handleDeleteComment(c.id)}
-                    >
-                      <CloseIcon />
-                    </button>
+                      {!isArchived && (
+                          <button
+                              className={`${styles.commentPinBtn} ${styles.commentPinned}`}
+                              title="Открепить"
+                              onClick={() => handleTogglePinComment(c.id, false)}
+                          >
+                              <PinIcon filled/>
+                          </button>
+                      )}
+                      {!isArchived && (
+                          <button
+                              className={styles.commentDeleteBtn}
+                              title="Удалить"
+                              onClick={() => handleDeleteComment(c.id)}
+                          >
+                              <CloseIcon/>
+                          </button>
+                      )}
+
                   </div>
                   <p className={styles.commentText}>{c.text}</p>
                 </div>
@@ -240,20 +248,24 @@ export default function StageCommentsSection({
                       minute: '2-digit',
                     })}
                   </span>
-                  <button
-                    className={styles.commentPinBtn}
-                    title="Закрепить"
-                    onClick={() => handleTogglePinComment(c.id, true)}
-                  >
-                    <PinIcon />
-                  </button>
-                  <button
-                    className={styles.commentDeleteBtn}
-                    title="Удалить"
-                    onClick={() => handleDeleteComment(c.id)}
-                  >
-                    <CloseIcon />
-                  </button>
+                    {!isArchived && (
+                        <button
+                            className={styles.commentPinBtn}
+                            title="Закрепить"
+                            onClick={() => handleTogglePinComment(c.id, true)}
+                        >
+                            <PinIcon/>
+                        </button>
+                    )}
+                    {!isArchived && (
+                        <button
+                            className={styles.commentDeleteBtn}
+                            title="Удалить"
+                            onClick={() => handleDeleteComment(c.id)}
+                        >
+                            <CloseIcon/>
+                        </button>
+                    )}
                 </div>
                 <p className={styles.commentText}>{c.text}</p>
               </div>
@@ -261,28 +273,31 @@ export default function StageCommentsSection({
           )}
       </div>
 
-      <div className={styles.commentInputRow}>
-        <textarea
-          className={styles.commentInput}
-          placeholder="Написать комментарий…"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSendComment()
-            }
-          }}
-          rows={1}
-        />
-        <button
-          className={styles.sendBtn}
-          disabled={!commentText.trim() || addingComment}
-          onClick={handleSendComment}
-        >
-          <SendIcon />
-        </button>
-      </div>
+        {!isArchived && (
+            <div className={styles.commentInputRow}>
+          <textarea
+              className={styles.commentInput}
+              placeholder="Написать комментарий…"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSendComment()
+                  }
+              }}
+              rows={1}
+          />
+                <button
+                    className={styles.sendBtn}
+                    disabled={!commentText.trim() || addingComment}
+                    onClick={handleSendComment}
+                >
+                    <SendIcon/>
+                </button>
+            </div>
+        )}
     </div>
   )
 }
+

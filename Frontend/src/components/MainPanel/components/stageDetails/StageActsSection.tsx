@@ -8,6 +8,7 @@ interface StageActsSectionProps {
   projectId: string
   selectedStage: { parentPosition: number; position: number }
   isSub: boolean
+    isArchived?: boolean
   acts: Act[]
 }
 
@@ -15,6 +16,7 @@ export default function StageActsSection({
   projectId,
   selectedStage,
   isSub,
+                                             isArchived = false,
   acts,
 }: StageActsSectionProps) {
   const [uploadTopAct, { isLoading: uploadingTopAct }] = useUploadActMutation()
@@ -64,17 +66,19 @@ export default function StageActsSection({
           <span className={styles.attachmentsSectionLabel}>Акты</span>
           {acts.length > 0 && <span className={styles.completedBadge}>Акт загружен</span>}
         </div>
-        <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
-          {uploadingAct ? <SpinnerIcon /> : <PaperclipIcon />}
-          {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
-          <input
-            ref={actFileInputRef}
-            type="file"
-            className={styles.fileInputHidden}
-            onChange={handleActFileChange}
-            disabled={uploadingAct}
-          />
-        </label>
+          {!isArchived && (
+              <label className={`${styles.attachUploadBtn} ${uploadingAct ? styles.attachUploadDisabled : ''}`}>
+                  {uploadingAct ? <SpinnerIcon/> : <PaperclipIcon/>}
+                  {uploadingAct ? 'Загрузка…' : 'Загрузить акт'}
+                  <input
+                      ref={actFileInputRef}
+                      type="file"
+                      className={styles.fileInputHidden}
+                      onChange={handleActFileChange}
+                      disabled={uploadingAct}
+                  />
+              </label>
+          )}
       </div>
       {actUploadError && <p className={styles.uploadError}>{actUploadError}</p>}
       {acts.length === 0 && !uploadingAct && <p className={styles.attachmentsEmpty}>Нет актов</p>}
@@ -87,11 +91,14 @@ export default function StageActsSection({
             </button>
             <span className={styles.attachMeta}>{formatBytes(act.size_bytes)}</span>
           </div>
-          <button className={styles.attachDeleteBtn} title="Удалить акт" onClick={() => handleDeleteAct(act.id)}>
-            <CloseIcon />
-          </button>
+            {!isArchived && (
+                <button className={styles.attachDeleteBtn} title="Удалить акт" onClick={() => handleDeleteAct(act.id)}>
+                    <CloseIcon/>
+                </button>
+            )}
         </div>
       ))}
     </div>
   )
 }
+

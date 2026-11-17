@@ -13,6 +13,7 @@ interface StageAttachmentsSectionProps {
   projectId: string
   selectedStage: { parentPosition: number; position: number }
   isSub: boolean
+    isArchived?: boolean
   attachments: Attachment[]
 }
 
@@ -20,6 +21,7 @@ export default function StageAttachmentsSection({
   projectId,
   selectedStage,
   isSub,
+                                                    isArchived = false,
   attachments,
 }: StageAttachmentsSectionProps) {
   const [uploadTopFile, { isLoading: uploadingTopFile }] = useUploadAttachmentMutation()
@@ -67,20 +69,22 @@ export default function StageAttachmentsSection({
     <div className={styles.attachmentsSection}>
       <div className={styles.attachmentsHeader}>
         <span className={styles.attachmentsSectionLabel}>Файлы</span>
-        <label
-          className={`${styles.attachUploadBtn} ${uploadingFile ? styles.attachUploadDisabled : ''}`}
-          title="Прикрепить файл"
-        >
-          {uploadingFile ? <SpinnerIcon /> : <PaperclipIcon />}
-          {uploadingFile ? 'Загрузка…' : 'Прикрепить'}
-          <input
-            ref={fileInputRef}
-            type="file"
-            className={styles.fileInputHidden}
-            onChange={handleFileChange}
-            disabled={uploadingFile}
-          />
-        </label>
+          {!isArchived && (
+              <label
+                  className={`${styles.attachUploadBtn} ${uploadingFile ? styles.attachUploadDisabled : ''}`}
+                  title="Прикрепить файл"
+              >
+                  {uploadingFile ? <SpinnerIcon/> : <PaperclipIcon/>}
+                  {uploadingFile ? 'Загрузка…' : 'Прикрепить'}
+                  <input
+                      ref={fileInputRef}
+                      type="file"
+                      className={styles.fileInputHidden}
+                      onChange={handleFileChange}
+                      disabled={uploadingFile}
+                  />
+              </label>
+          )}
       </div>
       {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
       {attachments.length === 0 && !uploadingFile && (
@@ -95,15 +99,18 @@ export default function StageAttachmentsSection({
             </button>
             <span className={styles.attachMeta}>{formatBytes(a.size_bytes)}</span>
           </div>
-          <button
-            className={styles.attachDeleteBtn}
-            title="Удалить файл"
-            onClick={() => handleDeleteAttachment(a.id)}
-          >
-            <CloseIcon />
-          </button>
+            {!isArchived && (
+                <button
+                    className={styles.attachDeleteBtn}
+                    title="Удалить файл"
+                    onClick={() => handleDeleteAttachment(a.id)}
+                >
+                    <CloseIcon/>
+                </button>
+            )}
         </div>
       ))}
     </div>
   )
 }
+

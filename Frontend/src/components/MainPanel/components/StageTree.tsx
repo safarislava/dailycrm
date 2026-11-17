@@ -16,6 +16,7 @@ interface StageTreeProps {
   projectId: string
   stagesLoading: boolean
   stages: Stage[]
+    isArchived?: boolean
   setPendingDelete: (deleteObj: any) => void
   reorderStage: (args: { projectId: string; position: number; to: number }) => Promise<any>
   reorderSubStage: (args: { projectId: string; parentPosition: number; position: number; to: number }) => Promise<any>
@@ -27,12 +28,14 @@ export default function StageTree({
   projectId,
   stagesLoading,
   stages,
+                                      isArchived = false,
   setPendingDelete,
   reorderStage,
   reorderSubStage,
   appendSubStage,
   dispatch,
 }: StageTreeProps) {
+
   const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set())
   const [addingSubTo, setAddingSubTo]       = useState<number | null>(null)
   const [subTitle, setSubTitle]             = useState('')
@@ -97,7 +100,7 @@ export default function StageTree({
         <div className={styles.noStages}>
           <ListIcon />
           <p>Нет этапов</p>
-          <span>Введите название ниже, чтобы добавить первый</span>
+            <span>{isArchived ? 'В проекте нет этапов' : 'Введите название ниже, чтобы добавить первый'}</span>
         </div>
       )}
       {topLevelStages.map((stage) => {
@@ -118,11 +121,26 @@ export default function StageTree({
                   dispatch(selectStage({ parentPosition: 0, position: stage.position }))
                 }
               }}
-              draggable
-              onDragStart={(e) => { e.stopPropagation(); setDragPos(stage.position) }}
-              onDragOver={(e) => { if (dragPos !== null) { e.preventDefault(); setDragOverPos(stage.position) } }}
+              draggable={!isArchived}
+              onDragStart={(e) => {
+                  if (!isArchived) {
+                      e.stopPropagation();
+                      setDragPos(stage.position)
+                  }
+              }}
+              onDragOver={(e) => {
+                  if (!isArchived && dragPos !== null) {
+                      e.preventDefault();
+                      setDragOverPos(stage.position)
+                  }
+              }}
               onDragLeave={() => setDragOverPos((p) => (p === stage.position ? null : p))}
-              onDrop={(e) => { e.preventDefault(); handleStageDrop(stage.position) }}
+              onDrop={(e) => {
+                  if (!isArchived) {
+                      e.preventDefault();
+                      handleStageDrop(stage.position)
+                  }
+              }}
               onDragEnd={() => { setDragPos(null); setDragOverPos(null) }}
             >
               {(children.length > 0 || expanded) ? (
@@ -147,20 +165,30 @@ export default function StageTree({
                   </span>
                 )}
               </div>
-              <button
-                className={styles.stageAddSub}
-                onClick={(e) => { e.stopPropagation(); startAddSub(stage.position) }}
-                title="Добавить подэтап"
-              >
-                <PlusIcon />
-              </button>
-              <button
-                className={styles.stageDelete}
-                onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'stage', pos: stage.position, stageTitle: stage.title }) }}
-                title="Удалить этап"
-              >
-                <CloseIcon />
-              </button>
+                {!isArchived && (
+                    <button
+                        className={styles.stageAddSub}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            startAddSub(stage.position)
+                        }}
+                        title="Добавить подэтап"
+                    >
+                        <PlusIcon/>
+                    </button>
+                )}
+                {!isArchived && (
+                    <button
+                        className={styles.stageDelete}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setPendingDelete({kind: 'stage', pos: stage.position, stageTitle: stage.title})
+                        }}
+                        title="Удалить этап"
+                    >
+                        <CloseIcon/>
+                    </button>
+                )}
             </div>
 
             {(expanded || addingHere) && (
@@ -178,11 +206,26 @@ export default function StageTree({
                         dispatch(selectStage({ parentPosition: stage.position, position: child.position }))
                       }
                     }}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); setDragSub({ parent: stage.position, pos: child.position }) }}
-                    onDragOver={(e) => { if (dragSub?.parent === stage.position) { e.preventDefault(); setDragOverSub({ parent: stage.position, pos: child.position }) } }}
+                    draggable={!isArchived}
+                    onDragStart={(e) => {
+                        if (!isArchived) {
+                            e.stopPropagation();
+                            setDragSub({parent: stage.position, pos: child.position})
+                        }
+                    }}
+                    onDragOver={(e) => {
+                        if (!isArchived && dragSub?.parent === stage.position) {
+                            e.preventDefault();
+                            setDragOverSub({parent: stage.position, pos: child.position})
+                        }
+                    }}
                     onDragLeave={() => setDragOverSub((s) => (s?.parent === stage.position && s?.pos === child.position ? null : s))}
-                    onDrop={(e) => { e.preventDefault(); handleSubDrop(stage.position, child.position) }}
+                    onDrop={(e) => {
+                        if (!isArchived) {
+                            e.preventDefault();
+                            handleSubDrop(stage.position, child.position)
+                        }
+                    }}
                     onDragEnd={() => { setDragSub(null); setDragOverSub(null) }}
                   >
                     <span className={styles.subStageIndent} />
@@ -197,17 +240,28 @@ export default function StageTree({
                         </span>
                       )}
                     </div>
-                    <button
-                      className={styles.stageDelete}
-                      onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: 'sub', parentPos: stage.position, pos: child.position, stageTitle: child.title }) }}
-                      title="Удалить подэтап"
-                    >
-                      <CloseIcon />
-                    </button>
+                      {!isArchived && (
+                          <button
+                              className={styles.stageDelete}
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPendingDelete({
+                                      kind: 'sub',
+                                      parentPos: stage.position,
+                                      pos: child.position,
+                                      stageTitle: child.title
+                                  })
+                              }}
+                              title="Удалить подэтап"
+                          >
+                              <CloseIcon/>
+                          </button>
+                      )}
                   </div>
                 ))}
 
-                {addingHere && (
+
+                  {addingHere && (
                   <div className={styles.subStageInputRow}>
                     <span className={styles.subStageIndent} />
                     <input

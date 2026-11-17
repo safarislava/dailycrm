@@ -1,12 +1,13 @@
 import React from 'react'
-import type { DetailedStage } from '../../../../types'
-import { ArrowLeftIcon, TrashIcon } from '../Helpers'
+import type {DetailedStage} from '../../../../types'
+import {ArrowLeftIcon, TrashIcon} from '../Helpers'
 import styles from '../../MainPanel.module.scss'
 
 interface StageHeaderProps {
   isSub: boolean
   selectedStage: { parentPosition: number; position: number }
   detail: DetailedStage | undefined
+    isArchived?: boolean
   onBack: () => void
   setPendingDelete: (deleteObj: any) => void
 }
@@ -15,6 +16,7 @@ export default function StageHeader({
   isSub,
   selectedStage,
   detail,
+                                        isArchived = false,
   onBack,
   setPendingDelete,
 }: StageHeaderProps) {
@@ -34,27 +36,30 @@ export default function StageHeader({
             : `Детали этапа ${selectedStage.position}`}
         </span>
       </div>
-      <button
-        className={styles.dangerBtn}
-        onClick={() =>
-          detail &&
-          (isSub
-            ? setPendingDelete({
-                kind: 'sub',
-                parentPos: selectedStage.parentPosition,
-                pos: selectedStage.position,
-                stageTitle: detail.title,
-              })
-            : setPendingDelete({
-                kind: 'stage',
-                pos: selectedStage.position,
-                stageTitle: detail.title,
-              }))
-        }
-        title="Удалить этап"
-      >
-        <TrashIcon />
-      </button>
+        {!isArchived && (
+            <button
+                className={styles.dangerBtn}
+                onClick={() =>
+                    detail &&
+                    (isSub
+                        ? setPendingDelete({
+                            kind: 'sub',
+                            parentPos: selectedStage.parentPosition,
+                            pos: selectedStage.position,
+                            stageTitle: detail.title,
+                        })
+                        : setPendingDelete({
+                            kind: 'stage',
+                            pos: selectedStage.position,
+                            stageTitle: detail.title,
+                        }))
+                }
+                title="Удалить этап"
+            >
+                <TrashIcon/>
+            </button>
+        )}
     </header>
   )
 }
+

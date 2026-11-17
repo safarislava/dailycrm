@@ -1,0 +1,76 @@
+@use '../../styles/variables' as v;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: v.$bg-secondary;
+  border-radius: v.$radius-lg;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 24px 64px v.$shadow-modal;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.description {
+  font-size: 14px;
+  color: v.$text-secondary;
+  line-height: 1.5;
+
+  strong {
+    color: v.$text-primary;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  transition: background v.$transition-fast, color v.$transition-fast;
+
+  &:hover {
+    background: v.$bg-input;
+    color: v.$text-primary;
+  }
+}
+
+.confirmBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  font-weight: 600;
+  background: v.$accent;
+  color: #fff;
+  transition: background v.$transition-fast;
+
+  &:hover {
+    background: v.$accent-hover;
+  }
+}

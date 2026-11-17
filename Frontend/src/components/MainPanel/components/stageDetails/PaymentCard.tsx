@@ -6,6 +6,7 @@ import styles from '../../MainPanel.module.scss'
 interface PaymentCardProps {
     title: string
     payment?: StagePayment
+    isArchived?: boolean
     onUpdateCost: (cost: string) => Promise<void>
     onRemovePayment?: () => Promise<void>
     onAddTranche: (amount: number) => Promise<void>
@@ -15,11 +16,13 @@ interface PaymentCardProps {
 export default function PaymentCard({
                                         title,
                                         payment,
+                                        isArchived = false,
                                         onUpdateCost,
                                         onRemovePayment,
                                         onAddTranche,
                                         onDeleteTranche,
                                     }: PaymentCardProps) {
+
     const [showPartForm, setShowPartForm] = useState(false)
     const [partAmount, setPartAmount] = useState('')
     const [partError, setPartError] = useState<string | null>(null)
@@ -100,7 +103,7 @@ export default function PaymentCard({
             <div className={styles.paymentBlockHeader}>
                 <span className={styles.paymentBlockTitle}>{title}</span>
                 <div className={styles.paymentHeaderActions}>
-                    {cost > 0 && remaining > 0 && !showPartForm && (
+                    {!isArchived && cost > 0 && remaining > 0 && !showPartForm && (
                         <button
                             type="button"
                             className={styles.addPartHeaderBtn}
@@ -113,7 +116,7 @@ export default function PaymentCard({
                             + Внести часть
                         </button>
                     )}
-                    {onRemovePayment && (
+                    {!isArchived && onRemovePayment && (
                         <button
                             type="button"
                             className={styles.removePaymentBtn}
@@ -125,7 +128,41 @@ export default function PaymentCard({
                 </div>
             </div>
 
-            {rawCost != null ? (
+            {isArchived ? (
+                <div className={styles.splitRow}>
+                    <div className={styles.field}>
+                        <span className={styles.fieldLabel}>Плановая сумма</span>
+                        <span className={styles.fieldValue}>{rawCost != null ? `${formatNumber(cost)} ₽` : '—'}</span>
+                    </div>
+                    <div
+                        className={`${styles.field} ${cost > 0 ? styles.fieldEditable : ''}`}
+                        onClick={() => {
+                            if (cost > 0) {
+                                setIsHistoryExpanded(!isHistoryExpanded)
+                            }
+                        }}
+                        title={cost > 0 ? 'История платежей' : ''}
+                    >
+                        <span className={styles.fieldLabel}>Статус оплаты</span>
+                        <span className={styles.fieldValue}>
+                          {isFullyPaid && (
+                              <span className={styles.completedBadge}>Оплачен</span>
+                          )}
+                            {isPartiallyPaid && (
+                                <span
+                                    className={styles.partialBadge}
+                                    title={`Оплачено ${formatNumber(paidAmount)} из ${formatNumber(cost)} ₽ (Остаток: ${formatNumber(remaining)} ₽)`}
+                                >
+                                Оплачено {formatNumber(paidAmount)} ₽
+                              </span>
+                            )}
+                            {!isFullyPaid && !isPartiallyPaid && (
+                                <span className={styles.pendingBadge}>Не оплачен</span>
+                            )}
+                        </span>
+                    </div>
+                </div>
+            ) : rawCost != null ? (
                 <div className={styles.splitRow}>
                     <EditableField
                         label="Плановая сумма"
@@ -177,6 +214,7 @@ export default function PaymentCard({
                     onSave={onUpdateCost}
                 />
             )}
+
 
             {showPartForm && (
                 <div>
@@ -252,19 +290,22 @@ export default function PaymentCard({
                         </span>
                                                 <span className={styles.trancheDate}>{dateStr}</span>
                                             </div>
-                                            <button
-                                                type="button"
-                                                className={styles.trancheDeleteBtn}
-                                                title="Удалить платеж"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    onDeleteTranche(t.id)
-                                                }}
-                                            >
-                                                ×
-                                            </button>
+                                            {!isArchived && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.trancheDeleteBtn}
+                                                    title="Удалить платеж"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onDeleteTranche(t.id)
+                                                    }}
+                                                >
+                                                    ×
+                                                </button>
+                                            )}
                                         </div>
                                     )
+
                                 })
                             )}
                         </div>

@@ -270,6 +270,43 @@
   }
 }
 
+// ── Sidebar Tabs ──────────────────────────────────────────
+.tabs {
+  display: flex;
+  margin: 6px 12px 2px;
+  padding: 3px;
+  background: v.$bg-input;
+  border-radius: 8px;
+  gap: 2px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$text-secondary;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  transition: all v.$transition-fast;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+
+  &:hover {
+    color: v.$text-primary;
+  }
+}
+
+.tabActive {
+  background: v.$bg-secondary;
+  color: v.$text-primary;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
 // ── List ─────────────────────────────────────────────────
 .list {
   flex: 1;
@@ -298,7 +335,9 @@
   &:hover {
     background: v.$bg-item-hover;
 
-    .itemDelete { opacity: 1; }
+    .itemAction, .itemDelete {
+      opacity: 1;
+    }
   }
 
   &.active {
@@ -341,7 +380,7 @@
   color: v.$text-secondary;
 }
 
-.itemDelete {
+.itemAction, .itemDelete {
   opacity: 0;
   width: 28px;
   height: 28px;
@@ -355,8 +394,8 @@
     background v.$transition-fast;
 
   &:hover {
-    color: v.$danger;
-    background: v.$danger-light;
+    color: v.$accent;
+    background: v.$accent-light;
     opacity: 1 !important;
   }
 

@@ -1,5 +1,6 @@
 import React from 'react'
-import type { Project } from '../../../types'
+import type {Project} from '../../../types'
+import {RestoreIcon} from '../../ui/icons'
 import styles from '../Sidebar.module.scss'
 
 const AVATAR_COLORS = [
@@ -32,15 +33,17 @@ function formatUpdatedAt(iso: string): string {
 interface SidebarItemProps {
   project: Project
   isSelected: boolean
+  isArchived?: boolean
   onSelect: () => void
-  onDelete: (e: React.MouseEvent) => void
+  onRestore?: (e: React.MouseEvent) => void
 }
 
 export default function SidebarItem({
   project,
   isSelected,
+                                      isArchived = false,
   onSelect,
-  onDelete,
+                                      onRestore,
 }: SidebarItemProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -64,22 +67,16 @@ export default function SidebarItem({
         <span className={styles.itemTitle}>{project.title}</span>
         <span className={styles.itemDate}>{formatUpdatedAt(project.updated_at)}</span>
       </div>
-      <button
-        className={styles.itemDelete}
-        onClick={onDelete}
-        title="Удалить"
-        tabIndex={0}
-      >
-        <CloseIcon size={11} />
-      </button>
+      {isArchived && onRestore && (
+          <button
+              className={styles.itemAction}
+              onClick={onRestore}
+              title="Восстановить проект"
+              tabIndex={0}
+          >
+            <RestoreIcon size={14}/>
+          </button>
+      )}
     </div>
-  )
-}
-
-function CloseIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
   )
 }

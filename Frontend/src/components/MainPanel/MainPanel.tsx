@@ -5,16 +5,19 @@ import type { Stage } from '../../types'
 import { selectProject, selectStage } from '../../store/uiSlice'
 import {
   useGetProjectsQuery,
+    useGetArchivedProjectsQuery,
   useGetStagesQuery,
   useDeleteStageMutation,
   useReorderStageMutation,
   useReorderSubStageMutation,
-  useDeleteProjectMutation,
+    useArchiveProjectMutation,
+    useRestoreProjectMutation,
   useAppendSubStageMutation,
   useDeleteSubStageMutation,
   useRenameProjectMutation,
 } from '../../store/crmApi'
 import ConfirmDeleteModal from '../ConfirmDeleteModal/ConfirmDeleteModal'
+import ConfirmArchiveModal from '../ConfirmArchiveModal/ConfirmArchiveModal'
 import styles from './MainPanel.module.scss'
 
 // Import extracted subcomponents
@@ -32,13 +35,19 @@ export default function MainPanel() {
   const isSub         = selectedStage ? selectedStage.parentPosition !== 0 : false
 
   const { data: projects = [] } = useGetProjectsQuery()
-  const project = projects.find((p) => p.id === projectId)
+    const {data: archivedProjects = []} = useGetArchivedProjectsQuery()
+    const isArchived = archivedProjects.some((p) => p.id === projectId)
+    const project = isArchived
+        ? archivedProjects.find((p) => p.id === projectId)
+        : projects.find((p) => p.id === projectId)
 
   const { data: stages = [], isLoading: stagesLoading } = useGetStagesQuery(
-    projectId!, { skip: !projectId },
+      {projectId: projectId!, isArchived},
+      {skip: !projectId},
   )
 
   const [activeTab, setActiveTab] = useState<'stages' | 'dashboard'>('stages')
+    const [showArchiveModal, setShowArchiveModal] = useState(false)
 
   const getStageLabel = useCallback((stage: Stage) => {
     if (stage.parent_position === 0) {
@@ -62,13 +71,13 @@ export default function MainPanel() {
   const [deleteStage]     = useDeleteStageMutation()
   const [reorderStage]    = useReorderStageMutation()
   const [reorderSubStage] = useReorderSubStageMutation()
-  const [deleteProject]   = useDeleteProjectMutation()
+    const [archiveProject] = useArchiveProjectMutation()
+    const [restoreProject] = useRestoreProjectMutation()
   const [appendSubStage]  = useAppendSubStageMutation()
   const [deleteSubStage]  = useDeleteSubStageMutation()
   const [renameProject]   = useRenameProjectMutation()
 
   type PendingDelete =
-    | { kind: 'project' }
     | { kind: 'stage'; pos: number; stageTitle: string }
     | { kind: 'sub'; parentPos: number; pos: number; stageTitle: string }
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
@@ -79,10 +88,7 @@ export default function MainPanel() {
 
   const confirmDelete = async () => {
     if (!pendingDelete || !projectId) return
-    if (pendingDelete.kind === 'project') {
-      await deleteProject(projectId)
-      dispatch(selectProject(null))
-    } else if (pendingDelete.kind === 'stage') {
+      if (pendingDelete.kind === 'stage') {
       await deleteStage({ projectId, position: pendingDelete.pos })
       if (selectedStage?.parentPosition === 0 && selectedStage.position === pendingDelete.pos)
         dispatch(selectStage(null))
@@ -94,12 +100,19 @@ export default function MainPanel() {
     setPendingDelete(null)
   }
 
-  const pendingDeleteName =
-    pendingDelete?.kind === 'project'
-      ? (project?.title ?? '')
-      : pendingDelete?.kind === 'stage' || pendingDelete?.kind === 'sub'
-      ? pendingDelete.stageTitle
-      : ''
+    const confirmArchive = async () => {
+        if (!projectId) return
+        await archiveProject(projectId)
+        dispatch(selectProject(null))
+        setShowArchiveModal(false)
+    }
+
+    const handleRestore = async () => {
+        if (!projectId) return
+        await restoreProject(projectId)
+    }
+
+    const pendingDeleteName = pendingDelete?.stageTitle ?? ''
 
   // ── Empty state ────────────────────────────────────────────
   if (!projectId) {
@@ -112,13 +125,17 @@ export default function MainPanel() {
     )
   }
 
+    const currentStage = stages.find(
+        s => s.parent_position === selectedStage?.parentPosition && s.position === selectedStage?.position
+    )
+
   // ── Stage detail ───────────────────────────────────────────
   if (selectedStage !== null) {
     return (
       <div className={styles.panel}>
         {pendingDelete && (
           <ConfirmDeleteModal
-            heading={pendingDelete.kind === 'project' ? 'Удалить проект' : 'Удалить этап'}
+              heading="Удалить этап"
             name={pendingDeleteName}
             onConfirm={confirmDelete}
             onCancel={() => setPendingDelete(null)}
@@ -128,6 +145,8 @@ export default function MainPanel() {
           projectId={projectId}
           selectedStage={selectedStage}
           isSub={isSub}
+          isArchived={isArchived}
+          archivedStage={currentStage}
           setPendingDelete={setPendingDelete}
         />
       </div>
@@ -139,12 +158,21 @@ export default function MainPanel() {
     <div className={styles.panel}>
       {pendingDelete && (
         <ConfirmDeleteModal
-          heading={pendingDelete.kind === 'project' ? 'Удалить проект' : 'Удалить этап'}
+            heading="Удалить этап"
           name={pendingDeleteName}
           onConfirm={confirmDelete}
           onCancel={() => setPendingDelete(null)}
         />
       )}
+
+        {showArchiveModal && (
+            <ConfirmArchiveModal
+                heading="Архивировать проект"
+                name={project?.title ?? ''}
+                onConfirm={confirmArchive}
+                onCancel={() => setShowArchiveModal(false)}
+            />
+        )}
 
       <ProjectHeader
         projectId={projectId}
@@ -153,7 +181,9 @@ export default function MainPanel() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         renameProject={renameProject}
-        setPendingDelete={setPendingDelete}
+        isArchived={isArchived}
+        onArchive={() => setShowArchiveModal(true)}
+        onRestore={handleRestore}
         dispatch={dispatch}
       />
 
@@ -172,13 +202,14 @@ export default function MainPanel() {
             projectId={projectId}
             stagesLoading={stagesLoading}
             stages={stages}
+            isArchived={isArchived}
             setPendingDelete={setPendingDelete}
             reorderStage={reorderStage}
             reorderSubStage={reorderSubStage}
             appendSubStage={appendSubStage}
             dispatch={dispatch}
           />
-          <AddStageForm projectId={projectId} />
+            {!isArchived && <AddStageForm projectId={projectId}/>}
         </>
       )}
     </div>

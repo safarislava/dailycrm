@@ -3,11 +3,19 @@ import type { Stage } from '../../types'
 
 export const stagesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getStages: builder.query<Stage[], string>({
-      query: (projectId) => `/projects/${projectId}/stages`,
-      providesTags: (_r, _e, projectId) => [{ type: 'Stage', id: projectId }],
+      getStages: builder.query<Stage[], string | { projectId: string; isArchived?: boolean }>({
+          query: (arg) => {
+              const projectId = typeof arg === 'string' ? arg : arg.projectId
+              const isArchived = typeof arg === 'object' && arg.isArchived
+              return isArchived ? `/archive/projects/${projectId}/stages` : `/projects/${projectId}/stages`
+          },
+          providesTags: (_r, _e, arg) => {
+              const projectId = typeof arg === 'string' ? arg : arg.projectId
+              return [{type: 'Stage', id: projectId}]
+          },
     }),
-    appendStage: builder.mutation<void, { projectId: string; title: string }>({
+
+      appendStage: builder.mutation<void, { projectId: string; title: string }>({
       query: ({ projectId, title }) => ({
         url: `/projects/${projectId}/stages`,
         method: 'POST',
